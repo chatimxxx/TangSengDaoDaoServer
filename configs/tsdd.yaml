@@ -19,6 +19,7 @@ wukongIM:
 
 ##################### db ####################
 db:
+  initDb: false
   mysqlAddr: "root:12345678@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=true" # mysql连接地址
   redisAddr: "127.0.0.1:6379" # redis地址
   redisPass: "" # redis密码

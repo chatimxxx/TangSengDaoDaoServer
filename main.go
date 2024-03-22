@@ -90,7 +90,7 @@ func runAPI(ctx *config.Context) {
 		gin.Logger()(c)
 	})
 	// 模块安装
-	err := module.Setup(ctx)
+	err := module.Setup(ctx, ctx.GetConfig().DB.InitDb)
 	if err != nil {
 		panic(err)
 	}
