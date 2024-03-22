@@ -23,7 +23,7 @@ func TestAddUser(t *testing.T) {
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
 
-	req, _ := http.NewRequest("POST", "/v1/manager/adduser", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{
+	req, _ := http.NewRequest("POST", "/v1/manager/user/add", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{
 		"name":     "张三",
 		"zone":     "0086",
 		"phone":    "13600000002",
@@ -188,12 +188,13 @@ func TestUserDisablelist(t *testing.T) {
 	assert.Equal(t, true, strings.Contains(w.Body.String(), `"name":"111"`))
 }
 func TestAddAdminUser(t *testing.T) {
+	fmt.Println(util.MD5(util.MD5("admin")))
 	s, ctx := testutil.NewTestServer()
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/manager", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{
+	req, _ := http.NewRequest("POST", "/v1/manager/user/admin", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{
 		"login_name": "admin1",
 		"password":   "111",
 		"name":       "管理员",

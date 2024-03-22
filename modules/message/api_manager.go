@@ -598,11 +598,11 @@ func (m *Manager) sendMessageBatch(uids [][]string, content string) error {
 
 // 发送消息
 func (m *Manager) sendMsg(c *wkhttp.Context) {
-	err := c.CheckLoginRoleIsSuperAdmin()
-	if err != nil {
-		c.ResponseError(err)
-		return
-	}
+	//err := c.CheckLoginRoleIsSuperAdmin()
+	//if err != nil {
+	//	c.ResponseError(err)
+	//	return
+	//}
 	var req managerSendMsgReq
 	if err := c.BindJSON(&req); err != nil {
 		m.Error(common.ErrData.Error(), zap.Error(err))
@@ -640,7 +640,7 @@ func (m *Manager) sendMsg(c *wkhttp.Context) {
 		}
 		receiverName = group.Name
 	}
-	err = m.ctx.SendMessage(&config.MsgSendReq{
+	err := m.ctx.SendMessage(&config.MsgSendReq{
 		Header: config.MsgHeader{
 			RedDot: 1,
 		},

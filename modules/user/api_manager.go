@@ -54,7 +54,7 @@ func (m *Manager) Route(r *wkhttp.WKHttp) {
 	}
 	auth := r.Group("/v1/manager", m.ctx.AuthMiddleware(r))
 	{
-		auth.POST("/user/admin", m.addAdminUser)              // 添加一个管理员
+		friend.POST("/user/admin", m.addAdminUser)            // 添加一个管理员
 		auth.GET("/user/admin", m.getAdminUsers)              // 查询管理员用户
 		auth.DELETE("/user/admin", m.deleteAdminUsers)        // 删除管理员用户
 		auth.POST("/user/add", m.addUser)                     // 添加一个用户
@@ -302,11 +302,11 @@ func (m *Manager) addAdminUser(c *wkhttp.Context) {
 
 // 添加一个用户
 func (m *Manager) addUser(c *wkhttp.Context) {
-	err := c.CheckLoginRoleIsSuperAdmin()
-	if err != nil {
-		c.ResponseError(err)
-		return
-	}
+	//err := c.CheckLoginRoleIsSuperAdmin()
+	//if err != nil {
+	//	c.ResponseError(err)
+	//	return
+	//}
 	var req managerAddUserReq
 	if err := c.BindJSON(&req); err != nil {
 		c.ResponseError(errors.New("请求数据格式有误！"))

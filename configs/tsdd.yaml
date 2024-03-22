@@ -13,15 +13,15 @@ groupUpgradeWhenMemberCount: 1000 # 群组人数达到多少人时，群组自�
 eventPoolSize: 100 # 事件池大小
 
 ##################### 悟空IM配置 ####################
-#wukongIM:
-#  apiURL: "" # 悟空IM的api地址 格式： http://xx.xx.xx.xx:5001
-#  managerToken: "" # 悟空IM的管理者token 悟空IM配置了就需要填写，没配置就不需要
+wukongIM:
+  apiURL: "http://192.168.10.105:5001" # 悟空IM的api地址 格式： http://xx.xx.xx.xx:5001
+  managerToken: "" # 悟空IM的管理者token 悟空IM配置了就需要填写，没配置就不需要
 
 ##################### db ####################
 db:
-  mysqlAddr: "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=true" # mysql连接地址
+  mysqlAddr: "root:12345678@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=true" # mysql连接地址
   redisAddr: "127.0.0.1:6379" # redis地址
-  redisPass: "123456" # redis密码
+  redisPass: "" # redis密码
   asynctaskRedisAddr: "127.0.0.1:6379" # 异步任务的redis地址 不写默认为RedisAddr的地址
 
 ##################### 外网配置 ####################
@@ -102,31 +102,31 @@ smsCode: "123456" # 测试短信验证码， 如果不为空，则短信验证�
 #    projectId: "" # serviceAccount的JSON中的project_id值
 #    channelID: "" # 忽略占位
 ##################### 注册 ####################
-#register:
-#  off: false # 是否关闭注册
-#  onlyChina: false # 是否只允许中国手机号注册
-#  stickerAddOff: false # 是否关闭注册添加表情
+register:
+  off: false # 是否关闭注册
+  onlyChina: false # 是否只允许中国手机号注册
+  stickerAddOff: false # 是否关闭注册添加表情
 
 ##################### 内置账户配置 ####################
-#account:
-#  systemUID: "u_10000" # 系统账户uid
-#  fileHelperUID: "fileHelper" # 文件助手uid
-#  systemGroupID: "g_10000" # 系统群组id
-#  systemGroupName: "意见反馈群" # 系统群组名称
-#  adminUID: "admin" # 管理员uid
+account:
+  systemUID: "u_10000" # 系统账户uid
+  fileHelperUID: "fileHelper" # 文件助手uid
+  systemGroupID: "g_10000" # 系统群组id
+  systemGroupName: "意见反馈群" # 系统群组名称
+  adminUID: "admin" # 管理员uid
 
 ##################### 头像 #####################
-#avatar:
-#  defaultBaseURL: "" # 默认头像cdn地址
-#  default: "assets/assets/avatar.png" # 默认头像
-#  defaultCount: 900 # 默认头像数量
-#  partition: 100 # 头像分区数量
+avatar:
+  defaultBaseURL: "" # 默认头像cdn地址
+  default: "assets/assets/avatar.png" # 默认头像
+  defaultCount: 900 # 默认头像数量
+  partition: 100 # 头像分区数量
 
 ##################### 短号配置 ####################
-#shortNo:
-#  numOn: false # 短号是否为纯数字
-#  numLen: 7 # 短号长度
-#  editOff: false # 是否允许修改短号
+shortNo:
+  numOn: false # 短号是否为纯数字
+  numLen: 7 # 短号长度
+  editOff: false # 是否允许修改短号
 
 ##################### 机器人配置 ####################
 #robot:
