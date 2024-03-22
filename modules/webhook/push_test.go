@@ -3,7 +3,7 @@ package webhook
 import (
 	"testing"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	"github.com/stretchr/testify/assert"
 )
 

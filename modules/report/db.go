@@ -1,9 +1,9 @@
 package report
 
 import (
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	dba "github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/util"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	dba "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/gocraft/dbr/v2"
 )
 

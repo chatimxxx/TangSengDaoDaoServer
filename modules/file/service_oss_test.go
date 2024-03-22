@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/file"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/testutil"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/testutil"
 	"github.com/stretchr/testify/assert"
 )
 

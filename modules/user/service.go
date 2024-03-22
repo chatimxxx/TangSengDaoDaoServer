@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/source"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/log"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/util"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"go.uber.org/zap"
 )
 

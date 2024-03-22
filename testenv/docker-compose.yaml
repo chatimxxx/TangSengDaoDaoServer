@@ -15,7 +15,7 @@ services:
     ports:
       - 3306:3306    
   wukongim: # wukongim底层通讯服务
-    image: wukongim/wukongim:latest
+    image: zyuan909/wukongim:latest
     restart: always
     volumes:
       - ./wukongimdata:/root/wukongim

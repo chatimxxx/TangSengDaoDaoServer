@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"path/filepath"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/log"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
 	"go.uber.org/zap"
 )
 

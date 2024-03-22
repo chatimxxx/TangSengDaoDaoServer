@@ -4,13 +4,13 @@ go 1.20
 
 require (
 	firebase.google.com/go/v4 v4.13.0
-	github.com/TangSengDaoDao/TangSengDaoDaoServerLib v1.0.7-0.20240205110210-3093686109a7
 	github.com/alibabacloud-go/darabonba-openapi v0.2.1
 	github.com/alibabacloud-go/sms-intl-20180501 v1.0.1
 	github.com/alibabacloud-go/tea v1.2.1
 	github.com/aliyun/alibaba-cloud-sdk-go v1.62.487
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.7+incompatible
 	github.com/apistd/uni-go-sdk v0.0.2
+	github.com/chatimxxx/TangSengDaoDaoServerLib v1.0.1
 	github.com/disintegration/imaging v1.6.2
 	github.com/eapache/queue v1.1.0
 	github.com/ethereum/go-ethereum v1.12.2
@@ -165,4 +165,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/TangSengDaoDao/TangSengDaoDaoServerLib => /home/code/go/src/chat_im/TangSengDaoDaoServerLib
+//replace github.com/chatimxxx/TangSengDaoDaoServerLib => /home/code/go/src/chat_im/TangSengDaoDaoServerLib

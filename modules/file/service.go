@@ -18,10 +18,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/log"
-	limlog "github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/log"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/util"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
+	limlog "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/disintegration/imaging"
 	"go.uber.org/zap"
 )

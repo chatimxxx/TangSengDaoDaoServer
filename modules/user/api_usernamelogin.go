@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/wkhttp"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"

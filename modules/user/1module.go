@@ -4,10 +4,10 @@ import (
 	"embed"
 	"fmt"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/common"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/model"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/register"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/model"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/register"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )

@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/wkhttp"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/testutil"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/testutil"
 	"github.com/stretchr/testify/assert"
 )
 

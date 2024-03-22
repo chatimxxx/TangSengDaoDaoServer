@@ -1,16 +1,18 @@
 build:
-	docker build -t tangsengdaodaoserver .
+	docker build -t tsdd_server .
 push:
-	docker tag tangsengdaodaoserver registry.cn-shanghai.aliyuncs.com/wukongim/tangsengdaodaoserver:latest
-	docker push registry.cn-shanghai.aliyuncs.com/wukongim/wukongchatserver:latest
+	docker login
+	docker tag tsdd_server zyuan909/tsdd_server:latest
+	docker push zyuan909/tsdd_server:latest
 deploy:
-	docker build -t tangsengdaodaoserver .
-	docker tag tangsengdaodaoserver registry.cn-shanghai.aliyuncs.com/wukongim/tangsengdaodaoserver:latest
-	docker push registry.cn-shanghai.aliyuncs.com/wukongim/tangsengdaodaoserver:latest
+	docker login
+	docker build -t tsdd_server .
+	docker tag tsdd_server zyuan909/tsdd_server:latest
+	docker push zyuan909/tsdd_server:latest
 deploy-v1.5:
-	docker build -t tangsengdaodaoserver .
-	docker tag tangsengdaodaoserver registry.cn-shanghai.aliyuncs.com/wukongim/tangsengdaodaoserver:v1.5
-	docker push registry.cn-shanghai.aliyuncs.com/wukongim/tangsengdaodaoserver:v1.5
+	docker build -t tsdd_server .
+	docker tag tsdd_server zyuan909/tsdd_server:v1.5
+	docker push zyuan909/tsdd_server:v1.5
 run-dev:
 	docker-compose build;docker-compose up -d
 stop-dev:

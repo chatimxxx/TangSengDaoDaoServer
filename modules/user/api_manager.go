@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/base/event"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/common"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/log"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/wkevent"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/wkhttp"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkevent"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )

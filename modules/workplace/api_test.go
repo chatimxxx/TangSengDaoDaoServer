@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/pkg/util"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/testutil"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/testutil"
 	"github.com/stretchr/testify/assert"
 )
 

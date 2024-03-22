@@ -1,8 +1,8 @@
 package common
 
 import (
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	dbs "github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/db"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	dbs "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
 	"github.com/gocraft/dbr/v2"
 )
 

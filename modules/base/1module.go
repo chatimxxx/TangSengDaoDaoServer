@@ -4,8 +4,8 @@ import (
 	"embed"
 
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/base/app"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/register"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/register"
 )
 
 //go:embed sql

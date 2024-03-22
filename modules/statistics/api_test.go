@@ -8,7 +8,7 @@ import (
 
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/group"
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/user"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/testutil"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/testutil"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/log"
 	unisms "github.com/apistd/uni-go-sdk/sms"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
 	"go.uber.org/zap"
 )
 

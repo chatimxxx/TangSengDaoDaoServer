@@ -7,8 +7,8 @@ import (
 	message "firebase.google.com/go/v4/messaging"
 	"fmt"
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/user"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/log"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
 	"google.golang.org/api/option"
 )
 

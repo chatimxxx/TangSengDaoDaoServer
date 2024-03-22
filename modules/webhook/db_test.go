@@ -7,7 +7,7 @@ package webhook
 // 	"github.com/stretchr/testify/assert"
 // 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/internal/api/group"
 // 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/user"
-// 	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/db"
+// 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
 // )
 
 // func TestGetThirdName(t *testing.T) {

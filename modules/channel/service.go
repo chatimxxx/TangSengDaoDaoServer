@@ -2,7 +2,7 @@ package channel
 
 import (
 	chservice "github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/channel/service"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 )
 
 type service struct {

@@ -7,9 +7,9 @@ import (
 
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/pkg/log"
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/pkg/util"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/common"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/config"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServerLib/pkg/wkhttp"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
 	"go.uber.org/zap"
 )
 
