@@ -13,7 +13,6 @@ type appConfigDB struct {
 }
 
 func newAppConfigDB(ctx *config.Context) *appConfigDB {
-
 	return &appConfigDB{
 		session: ctx.DB(),
 		ctx:     ctx,

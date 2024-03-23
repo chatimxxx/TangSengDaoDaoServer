@@ -92,6 +92,7 @@ func (cn *Common) Route(r *wkhttp.WKHttp) {
 
 	appConfigM, err := cn.insertAppConfigIfNeed()
 	if err != nil {
+		cn.ctx.Log.Error(fmt.Sprintf("设置系统密钥错误   %v", err))
 		panic(err)
 	}
 	// 设置系统私钥
@@ -196,7 +197,6 @@ func (cn *Common) chatBgList(c *wkhttp.Context) {
 	c.Response(resps)
 }
 func (cn *Common) insertAppConfigIfNeed() (*appConfigModel, error) {
-
 	appConfigM, err := cn.appConfigDB.query()
 	if err != nil {
 		return nil, err
@@ -237,7 +237,6 @@ func (cn *Common) insertAppConfigIfNeed() (*appConfigModel, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	appConfigM = &appConfigModel{
 		RSAPrivateKey: privateKeyBuff.String(),
 		RSAPublicKey:  publicKeyBuff.String(),
