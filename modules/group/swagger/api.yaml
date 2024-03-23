@@ -59,7 +59,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/group/disablelist:
     get:
       tags:
@@ -100,7 +100,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/group/liftban/{groupNo}/{status}:
     put:
       tags:
@@ -133,7 +133,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/groups/{group_no}/forbidden/{on}:
     put:
       tags:
@@ -166,7 +166,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/groups/{group_no}/members:
     get:
       tags:
@@ -209,7 +209,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "groupManager"
@@ -239,7 +239,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/groups/{group_no}/members/blacklist:
     get:
       tags:
@@ -285,7 +285,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /group/create:
     post:
       tags:
@@ -329,7 +329,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /group/my:
     get:
       tags:
@@ -351,7 +351,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /group/forbidden_times:
     get:
       tags:
@@ -381,7 +381,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /group/invites/{invite_no}:
     get:
       tags:
@@ -438,7 +438,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /group/invite/sure:
     post:
       tags:
@@ -466,7 +466,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}:
     get:
       tags:
@@ -494,7 +494,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     put:
       tags:
         - "group"
@@ -531,7 +531,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/members:
     post:
       tags:
@@ -570,7 +570,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "group"
@@ -608,7 +608,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     get:
       tags:
         - "group"
@@ -649,7 +649,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/membersync:
     get:
       tags:
@@ -687,7 +687,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/setting:
     put:
       tags:
@@ -725,7 +725,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/members/{uid}:
     put:
       tags:
@@ -763,7 +763,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/exit:
     post:
       tags:
@@ -791,7 +791,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/managers:
     post:
       tags:
@@ -828,7 +828,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "group"
@@ -864,7 +864,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/forbidden/{on}:
     post:
       tags:
@@ -898,7 +898,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/qrcode:
     get:
       tags:
@@ -936,7 +936,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/transfer/{to_uid}:
     post:
       tags:
@@ -969,7 +969,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/member/invite:
     post:
       tags:
@@ -1012,7 +1012,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/member/h5confirm:
     get:
       tags:
@@ -1049,7 +1049,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/blacklist/{action}:
     post:
       tags:
@@ -1082,7 +1082,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/forbidden_with_member:
     post:
       tags:
@@ -1126,7 +1126,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /groups/{group_no}/avatar:
     post:
       tags:
@@ -1159,7 +1159,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     get:
       tags:
         - "group"

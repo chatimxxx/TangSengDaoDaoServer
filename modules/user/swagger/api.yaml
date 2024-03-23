@@ -104,7 +104,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/user/list:
     get:
       tags:
@@ -155,7 +155,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/user/disablelist:
     get:
       tags:
@@ -217,7 +217,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/user/friends:
     get:
       tags:
@@ -259,7 +259,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/user/blacklist:
     get:
       tags:
@@ -295,7 +295,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/user/online:
     get:
       tags:
@@ -340,7 +340,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/user/liftban/{uid}/{status}:
     put:
       tags:
@@ -373,7 +373,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/user/updatepassword:
     post:
       tags:
@@ -409,7 +409,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/user/admin:
     post:
       tags:
@@ -448,7 +448,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     get:
       tags:
         - "userManager"
@@ -483,7 +483,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "userManager"
@@ -510,7 +510,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/register:
     post:
       tags:
@@ -906,7 +906,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/login_authcode/{auth_code}:
     post:
       tags:
@@ -990,7 +990,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /user/pwdforget:
     post:
@@ -1033,7 +1033,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/usernameregister:
     post:
       tags:
@@ -1175,7 +1175,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/web3verifytext:
     get:
       tags:
@@ -1286,7 +1286,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /user/pwdforget_web3:
     post:
@@ -1361,7 +1361,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /user/my/setting:
     put:
@@ -1395,7 +1395,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /user/blacklist/{uid}:
     post:
@@ -1424,7 +1424,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "user"
@@ -1451,7 +1451,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/blacklists:
     get:
       tags:
@@ -1484,7 +1484,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /user/chatpwd:
     post:
@@ -1521,7 +1521,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/lockscreenpwd:
     post:
       tags:
@@ -1554,7 +1554,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "user"
@@ -1575,7 +1575,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /user/lock_after_minute:
     put:
@@ -1609,7 +1609,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /user/qrcode:
     get:
@@ -1636,7 +1636,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/customerservices:
     get:
       tags:
@@ -1666,7 +1666,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/maillist:
     post:
       tags:
@@ -1706,7 +1706,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     get:
       tags:
         - "user"
@@ -1747,7 +1747,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /user/destroy/{code}:
     delete:
@@ -1776,7 +1776,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/sms/destroy:
     get:
       tags:
@@ -1798,7 +1798,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /users/{uid}:
     get:
@@ -1827,7 +1827,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /user/devices:
     get:
@@ -1867,7 +1867,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/devices/{devices_id}:
     delete:
       tags:
@@ -1895,7 +1895,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/online:
     get:
       tags:
@@ -1947,7 +1947,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     post:
       tags:
         - "user"
@@ -1977,7 +1977,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/loginuuid:
     get:
       tags:
@@ -2047,7 +2047,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /user/reddot/{category}:
     get:
       tags:
@@ -2082,7 +2082,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "user"
@@ -2109,7 +2109,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /users/{uid}/avatar:
     post:
       tags:
@@ -2142,7 +2142,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     get:
       tags:
         - "user"
@@ -2204,7 +2204,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /users/{uid}/im:
     get:
       tags:

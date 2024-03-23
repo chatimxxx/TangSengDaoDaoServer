@@ -12,9 +12,7 @@ import (
 var sqlFS embed.FS
 
 func init() {
-
 	register.AddModule(func(ctx interface{}) register.Module {
-
 		return register.Module{
 			SetupAPI: func() register.APIRouter {
 				return app.New(ctx.(*config.Context))

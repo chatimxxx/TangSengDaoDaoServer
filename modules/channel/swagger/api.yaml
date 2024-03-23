@@ -38,13 +38,13 @@ paths:
         200:
           description: "返回"
           schema:
-              $ref: "#/definitions/channel"
+            $ref: "#/definitions/channel"
         400:
           description: "错误"
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /channels/{channel_id}/{channel_type}/message/autodelete:
     post:
       tags:
@@ -76,18 +76,18 @@ paths:
             properties:
               msg_auto_delete:
                 type: integer
-                description: "定时删除时间(单位秒)"  
+                description: "定时删除时间(单位秒)"
       responses:
         200:
           description: "返回"
           schema:
-              $ref: "#/definitions/response"
+            $ref: "#/definitions/response"
         400:
           description: "错误"
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []      
+        - token: [ ]
 securityDefinitions:
   token:
     type: "apiKey"

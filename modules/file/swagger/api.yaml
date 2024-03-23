@@ -48,7 +48,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     post:
       tags:
         - "file"
@@ -79,7 +79,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /file/preview/{path}:
     get:
       tags:

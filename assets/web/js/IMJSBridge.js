@@ -1,4 +1,3 @@
-
 window.im = {}
 // 配置
 window.limconfig = {};
@@ -42,10 +41,10 @@ function connectWebViewJavascriptBridge(callback) {
 }
 
 /**
-通过config接口注入权限验证配置
-所有需要使用JS-SDK的页面必须先注入配置信息，否则将无法调用
-（同一个url仅需调用一次，对于变化url的SPA的web app可在每次url变化时进行调用）。
-**/
+ 通过config接口注入权限验证配置
+ 所有需要使用JS-SDK的页面必须先注入配置信息，否则将无法调用
+ （同一个url仅需调用一次，对于变化url的SPA的web app可在每次url变化时进行调用）。
+ **/
 im.config = function (cfg) {
     window.limconfig = cfg;
 }
@@ -55,7 +54,7 @@ im.onError = function (errFunc) {
 
 /**
  *  初始化
- * @param {*} callback 
+ * @param {*} callback
  */
 im.onReady = function (callback) {
 
@@ -80,13 +79,13 @@ im.onReady = function (callback) {
 
 
 /**
-  调用方法
-  method: 方法名
-  options 参数
-  successCallback: 成功回调
-  errorCallback：错误回调
-  completeCallback: 完成回调
-**/
+ 调用方法
+ method: 方法名
+ options 参数
+ successCallback: 成功回调
+ errorCallback：错误回调
+ completeCallback: 完成回调
+ **/
 im.call = function (method, params) {
     if (window.IMJSBridge) {
         window.IMJSBridge.callHandler(method, params ? params.options : undefined, function (response) {

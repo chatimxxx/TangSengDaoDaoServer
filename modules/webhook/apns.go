@@ -7,7 +7,7 @@ import (
 	"github.com/sideshow/apns2/certificate"
 )
 
-//APNS APNS
+// APNS APNS
 type APNS struct {
 	client      *apns2.Client
 	p12FilePath string

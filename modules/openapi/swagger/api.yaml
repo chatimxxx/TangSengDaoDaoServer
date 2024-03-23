@@ -40,7 +40,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: [] 
+        - token: [ ]
   /openapi/access_token:
     get:
       tags:
@@ -62,7 +62,7 @@ paths:
           name: "app_key"
           type: "string"
           description: "授权code"
-          required: true  
+          required: true
       responses:
         200:
           description: "返回"
@@ -97,7 +97,7 @@ paths:
         400:
           description: "错误"
           schema:
-            $ref: "#/definitions/response"          
+            $ref: "#/definitions/response"
 
 securityDefinitions:
   token:
@@ -106,41 +106,41 @@ securityDefinitions:
     name: "token"
     description: "用户token"
 definitions:
-    accessTokenResp:
-      type: "object"
-      properties:
-        access_token:
-          type: string
-          description: "access_token"
-        expire:
-          type: integer
-          description: "expire过期时间 单位秒" 
-    userinfoResp:
-      type: "object"
-      properties:
-        uid:
-          type: string
-          description: "用户唯一id"
-        name:
-          type: string
-          description: "用户名称" 
-        avatar:
-          type: string
-          description: "用户头像"    
-        app_id:
-          type: string
-          description: "应用ID"   
-    authcodeResp:
-      type: "object"
-      properties:
-        authcode:
-          type: string
-          description: "authcode"
-    response:
-      type: "object"
-      properties:
-        status:
-          type: integer
-          format: int
-        msg:
-          type: "string"      
+  accessTokenResp:
+    type: "object"
+    properties:
+      access_token:
+        type: string
+        description: "access_token"
+      expire:
+        type: integer
+        description: "expire过期时间 单位秒"
+  userinfoResp:
+    type: "object"
+    properties:
+      uid:
+        type: string
+        description: "用户唯一id"
+      name:
+        type: string
+        description: "用户名称"
+      avatar:
+        type: string
+        description: "用户头像"
+      app_id:
+        type: string
+        description: "应用ID"
+  authcodeResp:
+    type: "object"
+    properties:
+      authcode:
+        type: string
+        description: "authcode"
+  response:
+    type: "object"
+    properties:
+      status:
+        type: integer
+        format: int
+      msg:
+        type: "string"

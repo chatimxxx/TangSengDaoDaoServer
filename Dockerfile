@@ -36,7 +36,7 @@ COPY --from=build /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 RUN \ 
     mkdir -p /usr/share/zoneinfo/Asia && \
     ln -s /etc/localtime /usr/share/zoneinfo/Asia/Shanghai
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 WORKDIR /home
 COPY --from=build /go/release/app /home
 COPY --from=build /go/release/assets /home/assets

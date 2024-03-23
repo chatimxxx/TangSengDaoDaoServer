@@ -58,7 +58,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/message/sendfriends:
     post:
       tags:
@@ -99,7 +99,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/message:
     get:
       tags:
@@ -165,7 +165,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "messageManager"
@@ -187,7 +187,7 @@ paths:
               channel_id:
                 type: string
                 description: "频道ID"
-              from_uid: 
+              from_uid:
                 type: string
                 description: "发送者 群聊为空 单聊则为消息发送者uid，注意channel_id和from_uid不能相同"
               channel_type:
@@ -196,11 +196,11 @@ paths:
               list:
                 type: array
                 items:
-                  properties: 
-                    message_id: 
+                  properties:
+                    message_id:
                       type: string
                       description: "消息ID"
-                    message_seq: 
+                    message_seq:
                       type: integer
                       description: "消息序号"
       responses:
@@ -213,7 +213,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/message/sendall:
     post:
       tags:
@@ -246,7 +246,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/message/record:
     get:
       tags:
@@ -282,7 +282,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/message/recordpersonal:
     get:
       tags:
@@ -323,7 +323,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/message/prohibit_words:
     post:
       tags:
@@ -351,7 +351,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     get:
       tags:
         - "messageManager"
@@ -408,7 +408,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "messageManager"
@@ -434,7 +434,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message:
     delete:
       tags:
@@ -477,7 +477,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/revoke:
     post:
       tags:
@@ -518,7 +518,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/offset:
     post:
       tags:
@@ -557,7 +557,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/voicereaded:
     put:
       tags:
@@ -599,7 +599,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/search:
     post:
       tags:
@@ -646,7 +646,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/typing:
     post:
       tags:
@@ -682,7 +682,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/channel/sync:
     post:
       tags:
@@ -753,7 +753,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/extra/sync:
     post:
       tags:
@@ -800,7 +800,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/readed:
     post:
       tags:
@@ -841,7 +841,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/sync/sensitivewords:
     get:
       tags:
@@ -875,7 +875,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
   /message/prohibit_words/sync:
     get:
@@ -922,7 +922,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/edit:
     post:
       tags:
@@ -964,7 +964,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/reminder/sync:
     post:
       tags:
@@ -1007,7 +1007,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /message/reminder/done:
     post:
       tags:
@@ -1039,7 +1039,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /replies:
     post:
       tags:
@@ -1090,7 +1090,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /messages/{message_id}/replies:
     get:
       tags:
@@ -1128,7 +1128,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /messages/{message_id}/receipt:
     get:
       tags:
@@ -1169,7 +1169,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /reactions:
     post:
       tags:
@@ -1211,7 +1211,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /reactions/sync:
     post:
       tags:
@@ -1255,7 +1255,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /reply_total/sync:
     post:
       tags:
@@ -1310,8 +1310,8 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
-  /message/send: 
+        - token: [ ]
+  /message/send:
     post:
       tags:
         - "message"
@@ -1340,7 +1340,7 @@ paths:
                 type: integer
                 format: int
                 description: "接受channel类型"
-              payload: 
+              payload:
                 type: object
                 description: "消息正文"
               is_verify:
@@ -1350,13 +1350,13 @@ paths:
         200:
           description: "返回"
           schema:
-             $ref: "#/definitions/response"
+            $ref: "#/definitions/response"
         400:
           description: "错误"
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 securityDefinitions:
   token:
     type: "apiKey"

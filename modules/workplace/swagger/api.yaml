@@ -46,7 +46,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     get:
       tags:
         - "workplaceManager"
@@ -78,7 +78,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/workplace/category/reorder:
     put:
       tags:
@@ -112,8 +112,8 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
-  /manager/workplace/categorys/{category_no}: 
+        - token: [ ]
+  /manager/workplace/categorys/{category_no}:
     put:
       tags:
         - "workplaceManager"
@@ -152,8 +152,8 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
-    delete: 
+        - token: [ ]
+    delete:
       tags:
         - "workplaceManager"
       summary: "删除分类"
@@ -181,7 +181,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/workplace/categorys/{category_no}/app:
     get:
       tags:
@@ -211,7 +211,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     post:
       tags:
         - "workplaceManager"
@@ -250,7 +250,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/workplace/categorys/{category_no}/apps/{app_id}:
     delete:
       tags:
@@ -283,7 +283,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/workplace/categorys/{category_no}/app/reorder:
     put:
       tags:
@@ -323,7 +323,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/workplace/app:
     post:
       tags:
@@ -377,7 +377,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     get:
       tags:
         - "workplaceManager"
@@ -393,17 +393,17 @@ paths:
           name: "page_index"
           type: integer
           description: "页码"
-          required: true 
+          required: true
         - in: "query"
           name: "page_size"
           type: integer
           description: "每页数据"
-          required: true 
+          required: true
         - in: "query"
           name: "keyword"
           type: string
           description: "搜索关键字"
-          required: true 
+          required: true
       responses:
         200:
           description: "返回"
@@ -476,7 +476,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "workplaceManager"
@@ -503,7 +503,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/workplace/banner:
     post:
       tags:
@@ -548,7 +548,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     get:
       tags:
         - "workplaceManager"
@@ -571,7 +571,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/workplace/banners/{banner_no}:
     put:
       tags:
@@ -608,7 +608,7 @@ paths:
               jump_type:
                 type: integer
                 description: "打开方式 0.网页 1.原生"
-              route: 
+              route:
                 type: string
                 description: "打开地址"
       responses:
@@ -621,7 +621,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "workplaceManager"
@@ -648,7 +648,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /manager/workplace/banner/reorder:
     put:
       tags:
@@ -683,7 +683,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /workplace/banner:
     get:
       tags:
@@ -707,7 +707,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /workplace/app:
     get:
       tags:
@@ -731,7 +731,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /workplace/apps/{app_id}:
     post:
       tags:
@@ -759,7 +759,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "workplace"
@@ -786,7 +786,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /workplace/app/reorder:
     put:
       tags:
@@ -820,7 +820,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /workplace/category:
     get:
       tags:
@@ -853,7 +853,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /workplace/categorys/{category_no}/app:
     get:
       tags:
@@ -883,7 +883,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /workplace/apps/{app_id}/record:
     post:
       tags:
@@ -911,7 +911,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
     delete:
       tags:
         - "workplace"
@@ -938,7 +938,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
   /workplace/app/record:
     get:
       tags:
@@ -962,7 +962,7 @@ paths:
           schema:
             $ref: "#/definitions/response"
       security:
-        - token: []
+        - token: [ ]
 
 securityDefinitions:
   token:

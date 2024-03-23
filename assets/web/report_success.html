@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0,maximum-scale=1.0,minimum=1.0,user-scalable=no">
+          content="width=device-width, initial-scale=1.0,maximum-scale=1.0,minimum=1.0,user-scalable=no">
     <meta name="format-detection" content="telephone=no, email=no">
-    <link rel="stylesheet" type="text/css" href="css/report.css" />
+    <link rel="stylesheet" type="text/css" href="css/report.css"/>
     <script type="text/javascript" src="js/config.js"></script>
     <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
     <script type="text/javascript" src="js/IMJSBridge.js"></script>
@@ -18,7 +18,7 @@
 
     <div class="reportSuccessBox">
         <div class="successIcon">
-            <img src="images/report_success.png" style="width: 48px;height: 48px;" />
+            <img src="images/report_success.png" style="width: 48px;height: 48px;"/>
         </div>
         <div class="reportTip">投诉已提交</div>
         <div class="reportDesc">
@@ -40,6 +40,7 @@
 
     //异步加载css,js文件
     var Head = document.getElementsByTagName('head')[0], style = document.createElement('style');
+
     function linkScript(parm, fn) {
         var linkScript;
         if (/\.css[^\.]*$/.test(parm)) {
@@ -57,6 +58,7 @@
             if (fn) fn()
         }
     }
+
     let mode = getQueryString("mode")
     if (mode == 'dark') {
         linkScript("css/report.dark.css");

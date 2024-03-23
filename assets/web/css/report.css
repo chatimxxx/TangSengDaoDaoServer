@@ -2,7 +2,7 @@
 body {
     background-color: #FAFAFA;
     height: 100%;
-    margin:0px;
+    margin: 0px;
     padding: 0px;
 }
 
@@ -99,7 +99,7 @@ body {
 }
 
 .reportForm .item .title {
-   padding: 10px 0px 10px 0px;
+    padding: 10px 0px 10px 0px;
 }
 
 .reportForm .item ul li {
@@ -128,14 +128,15 @@ body {
     color: white;
 }
 
-.reportSuccessBox{
+.reportSuccessBox {
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-.reportNoticeTitle{
+
+.reportNoticeTitle {
     width: 100%;
     height: 100%;
     display: flex;
