@@ -10,7 +10,7 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.62.487
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.7+incompatible
 	github.com/apistd/uni-go-sdk v0.0.2
-	github.com/chatimxxx/TangSengDaoDaoServerLib v1.0.3
+	github.com/chatimxxx/TangSengDaoDaoServerLib v1.0.4
 	github.com/disintegration/imaging v1.6.2
 	github.com/eapache/queue v1.1.0
 	github.com/ethereum/go-ethereum v1.12.2
