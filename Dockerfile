@@ -3,6 +3,11 @@ FROM golang:1.20 as build
 #ENV GOPROXY https://goproxy.cn,direct
 #ENV GO111MODULE on
 
+# 更新软件包索引并安装bash
+RUN apt-get update && apt-get install -y \
+    bash \
+ && rm -rf /var/lib/apt/lists/*
+
 
 WORKDIR /go/cache
 
