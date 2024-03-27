@@ -14,9 +14,7 @@ var sqlFS embed.FS
 var swaggerContent string
 
 func init() {
-
 	register.AddModule(func(ctx interface{}) register.Module {
-
 		return register.Module{
 			Name: "robot",
 			SetupAPI: func() register.APIRouter {

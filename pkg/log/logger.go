@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"time"
 
 	"go.uber.org/zap"
@@ -159,7 +160,6 @@ type TLog struct {
 
 // NewLIMLog NewLIMLog
 func NewTLog(prefix string) *TLog {
-
 	return &TLog{prefix: prefix}
 }
 
@@ -175,7 +175,8 @@ func (t *TLog) Debug(msg string, fields ...zap.Field) {
 
 // Error Error
 func (t *TLog) Error(msg string, fields ...zap.Field) {
-	Error(fmt.Sprintf("【%s】%s", t.prefix, msg), fields...)
+	_, file, line, _ := runtime.Caller(1)
+	Error(fmt.Sprintf("【%s】【%s-%d】%s", t.prefix, file, line, msg), fields...)
 }
 
 // Warn Warn
