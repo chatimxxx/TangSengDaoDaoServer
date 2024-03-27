@@ -7,8 +7,8 @@ push:
 deploy:
 	docker login
 	docker build -t tsdd_server .
-	docker tag tsdd_server zyuan909/tsdd_server:v1.0.4
-	docker push zyuan909/tsdd_server:v1.0.4
+	docker tag tsdd_server zyuan909/tsdd_server:v1.0.5
+	docker push zyuan909/tsdd_server:v1.0.5
 deploy-v1.5:
 	docker build -t tsdd_server .
 	docker tag tsdd_server zyuan909/tsdd_server:v1.5
