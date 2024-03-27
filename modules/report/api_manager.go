@@ -59,7 +59,7 @@ func (m *Manager) reportList(c *wkhttp.Context) {
 		return
 	}
 	queryChannelType, _ := strconv.Atoi(channelType)
-	list, err := m.managerDB.list(uint64(pageSize), uint64(pageIndex), queryChannelType)
+	list, err := m.managerDB.list(pageSize, pageIndex, queryChannelType)
 	if err != nil {
 		m.Error("查询举报列表错误", zap.Error(err))
 		c.ResponseError(errors.New("查询举报列表错误"))
@@ -106,20 +106,20 @@ func (m *Manager) reportList(c *wkhttp.Context) {
 			var username string
 			var channelName string
 			for _, user := range users {
-				if user.UID == report.UID {
-					username = user.Name
+				if *user.UID == report.UID {
+					username = *user.Name
 				}
 			}
 			if report.ChannelType == common.ChannelTypeGroup.Uint8() {
 				for _, group := range reprotGroups {
-					if group.GroupNo == report.ChannelID {
-						channelName = group.Name
+					if *group.GroupNo == report.ChannelID {
+						channelName = *group.Name
 					}
 				}
 			} else {
 				for _, user := range reprotUsers {
-					if user.UID == report.ChannelID {
-						channelName = user.Name
+					if *user.UID == report.ChannelID {
+						channelName = *user.Name
 					}
 				}
 			}

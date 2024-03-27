@@ -83,8 +83,12 @@ func New(ctx *config.Context) *Webhook {
 			ctx.GetConfig().Push.FIREBASE.PackageName: NewFIREBASEPush(firebase.PackageName, firebase.JsonPath, firebase.ProjectId, ""),
 		}
 	}
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &Webhook{
-		db:           NewDB(ctx.DB()),
+		db:           NewDB(db),
 		supportTypes: supportTypes,
 		ctx:          ctx,
 		Log:          log.NewTLog("Webhook"),
@@ -173,14 +177,12 @@ func (w *Webhook) handleMessageNotify(messages []MsgResp) ([]string, error) {
 	}
 
 	confMessages := make([]*config.MessageResp, 0, len(messages))
-
-	tx, _ := w.ctx.DB().Begin()
-	defer func() {
-		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
-			panic(err)
-		}
-	}()
+	db, err := w.ctx.DB()
+	if err != nil {
+		w.Error("开始事务失败！", zap.Error(err))
+		return nil, err
+	}
+	tx := db.Begin()
 	for _, message := range messages {
 		messageIDs = append(messageIDs, fmt.Sprintf("%d", message.MessageID))
 
@@ -192,7 +194,7 @@ func (w *Webhook) handleMessageNotify(messages []MsgResp) ([]string, error) {
 			fakeChannelID = common.GetFakeChannelIDWith(message.FromUID, message.ChannelID)
 		}
 		messageM := message.toModel()
-		messageM.ChannelID = fakeChannelID
+		messageM.ChannelID = &fakeChannelID
 		err := w.messageDB.insertOrUpdateTx(messageM, tx)
 		if err != nil {
 			_ = tx.Rollback()
@@ -202,7 +204,7 @@ func (w *Webhook) handleMessageNotify(messages []MsgResp) ([]string, error) {
 		confMessages = append(confMessages, message.toConfigMessageResp())
 
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		_ = tx.Rollback()
 		w.Error("提交事务失败！", zap.Error(err))
 		return nil, err
@@ -595,21 +597,26 @@ func (m *MsgResp) toModel() *messageModel {
 	if m.Expire > 0 {
 		expireAt = uint32(m.Timestamp) + m.Expire
 	}
+	MessageID := fmt.Sprintf("%d", m.MessageID)
+	MessageSeq := int64(m.MessageSeq)
+	Header := util.ToJson(m.Header)
+	Payload := string(m.Payload)
+	IsDeleted := 0
 	return &messageModel{
-		MessageID:   fmt.Sprintf("%d", m.MessageID),
-		MessageSeq:  int64(m.MessageSeq),
-		ClientMsgNo: m.ClientMsgNo,
-		Header:      util.ToJson(m.Header),
-		Setting:     m.Setting,
-		Signal:      signal,
-		FromUID:     m.FromUID,
-		ChannelID:   m.ChannelID,
-		ChannelType: m.ChannelType,
-		Expire:      m.Expire,
-		ExpireAt:    expireAt,
-		Timestamp:   m.Timestamp,
-		Payload:     string(m.Payload),
-		IsDeleted:   0,
+		MessageID:   &MessageID,
+		MessageSeq:  &MessageSeq,
+		ClientMsgNo: &m.ClientMsgNo,
+		Header:      &Header,
+		Setting:     &m.Setting,
+		Signal:      &signal,
+		FromUID:     &m.FromUID,
+		ChannelID:   &m.ChannelID,
+		ChannelType: &m.ChannelType,
+		Expire:      &m.Expire,
+		ExpireAt:    &expireAt,
+		Timestamp:   &m.Timestamp,
+		Payload:     &Payload,
+		IsDeleted:   &IsDeleted,
 	}
 }
 

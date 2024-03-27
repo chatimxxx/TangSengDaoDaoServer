@@ -88,7 +88,7 @@ func (u *User) usernameLogin(c *wkhttp.Context) {
 		return
 	}
 
-	if util.MD5(util.MD5(req.Password)) != userInfo.Password {
+	if util.MD5(util.MD5(req.Password)) != *userInfo.Password {
 		c.ResponseError(errors.New("密码不正确！"))
 		return
 	}
@@ -99,7 +99,7 @@ func (u *User) usernameLogin(c *wkhttp.Context) {
 		return
 	}
 	needUploadWeb3PublicKey := 0
-	if userInfo.Web3PublicKey == "" {
+	if *userInfo.Web3PublicKey == "" {
 		needUploadWeb3PublicKey = 1
 	}
 	c.Response(map[string]interface{}{
@@ -107,7 +107,7 @@ func (u *User) usernameLogin(c *wkhttp.Context) {
 		"need_upload_web3publickey": needUploadWeb3PublicKey,
 	})
 	publicIP := util.GetClientPublicIP(c.Request)
-	go u.sentWelcomeMsg(publicIP, userInfo.UID)
+	go u.sentWelcomeMsg(publicIP, *userInfo.UID)
 }
 func (u *User) registerWithUsername(username string, name string, password string, flag int, device *deviceReq, c *wkhttp.Context) {
 	registerSpan := u.ctx.Tracer().StartSpan(
@@ -131,7 +131,7 @@ func (u *User) registerWithUsername(username string, name string, password strin
 		Flag:     flag,
 		Device:   device,
 	}
-	tx, _ := u.db.session.Begin()
+	tx := u.db.db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -140,8 +140,7 @@ func (u *User) registerWithUsername(username string, name string, password strin
 	}()
 	publicIP := util.GetClientPublicIP(c.Request)
 	result, err := u.createUserWithRespAndTx(registerSpanCtx, model, publicIP, tx, func() error {
-		err := tx.Commit()
-		if err != nil {
+		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
 			u.Error("数据库事务提交失败", zap.Error(err))
 			c.ResponseError(errors.New("数据库事务提交失败"))
@@ -199,7 +198,7 @@ func (u *User) resetPwdWithWeb3PublicKey(c *wkhttp.Context) {
 		c.ResponseError(errors.New("该用户不存在"))
 		return
 	}
-	if user.Web3PublicKey == "" {
+	if *user.Web3PublicKey == "" {
 		c.ResponseError(errors.New("该用户未上传公钥"))
 		return
 	}
@@ -216,7 +215,7 @@ func (u *User) resetPwdWithWeb3PublicKey(c *wkhttp.Context) {
 		return
 	}
 
-	verify, err := u.verifySignature(user.Web3PublicKey, req.VerifyText, req.SignText)
+	verify, err := u.verifySignature(*user.Web3PublicKey, req.VerifyText, req.SignText)
 	if err != nil {
 		c.ResponseError(errors.New("校验签名错误"))
 		return
@@ -228,7 +227,7 @@ func (u *User) resetPwdWithWeb3PublicKey(c *wkhttp.Context) {
 
 	updateMap := map[string]interface{}{}
 	updateMap["password"] = util.MD5(util.MD5(req.Password))
-	err = u.db.updateUser(updateMap, user.UID)
+	err = u.db.updateUser(updateMap, *user.UID)
 	if err != nil {
 		u.Error("修改用户密码错误", zap.Error(err))
 		c.ResponseError(err)
@@ -288,11 +287,11 @@ func (u *User) uploadWeb3PublicKey(c *wkhttp.Context) {
 		c.ResponseError(err)
 		return
 	}
-	if userInfo == nil || userInfo.Status == 0 || userInfo.IsDestroy == 1 {
+	if userInfo == nil || *userInfo.Status == 0 || *userInfo.IsDestroy == 1 {
 		c.ResponseError(errors.New("该用户不存在或被封禁"))
 		return
 	}
-	if userInfo.Web3PublicKey != "" {
+	if *userInfo.Web3PublicKey != "" {
 		c.ResponseError(errors.New("该用户已上传过公钥信息"))
 		return
 	}
@@ -348,7 +347,7 @@ func (u *User) web3verifySignature(c *wkhttp.Context) {
 		c.ResponseError(errors.New("该用户不存在"))
 		return
 	}
-	if user.Web3PublicKey == "" {
+	if *user.Web3PublicKey == "" {
 		c.ResponseError(errors.New("该用户未上传公钥"))
 		return
 	}
@@ -365,7 +364,7 @@ func (u *User) web3verifySignature(c *wkhttp.Context) {
 		return
 	}
 
-	verify, err := u.verifySignature(user.Web3PublicKey, req.VerifyText, req.SignText)
+	verify, err := u.verifySignature(*user.Web3PublicKey, req.VerifyText, req.SignText)
 	if err != nil {
 		c.ResponseError(errors.New("校验签名错误"))
 		return
@@ -399,11 +398,11 @@ func (u *User) getVerifyText(c *wkhttp.Context) {
 		c.ResponseError(err)
 		return
 	}
-	if user == nil || user.IsDestroy == 1 || user.Status == 0 {
+	if user == nil || *user.IsDestroy == 1 || *user.Status == 0 {
 		c.ResponseError(errors.New("该用户不存在或被禁用"))
 		return
 	}
-	if user.Web3PublicKey == "" {
+	if *user.Web3PublicKey == "" {
 		c.ResponseError(errors.New("该用户尚未上传公钥"))
 		return
 	}
@@ -455,11 +454,11 @@ func (u *User) updatePwd(c *wkhttp.Context) {
 		return
 	}
 	oldPwd := util.MD5(util.MD5(req.Password))
-	if oldPwd != userInfo.Password {
+	if oldPwd != *userInfo.Password {
 		c.ResponseError(errors.New("旧密码错误"))
 		return
 	}
-	err = u.db.UpdateUsersWithField("password", util.MD5(util.MD5(req.NewPassword)), userInfo.UID)
+	err = u.db.UpdateUsersWithField("password", util.MD5(util.MD5(req.NewPassword)), *userInfo.UID)
 	if err != nil {
 		u.Error("修改登录密码错误", zap.Error(err))
 		c.ResponseError(errors.New("修改登录密码错误"))

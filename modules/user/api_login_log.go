@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
 	"go.uber.org/zap"
@@ -15,14 +16,18 @@ type LoginLog struct {
 
 // NewLoginLog 创建
 func NewLoginLog(ctx *config.Context) *LoginLog {
-	return &LoginLog{ctx: ctx, Log: log.NewTLog("loginLog"), loginLogDB: NewLoginLogDB(ctx.DB())}
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
+	return &LoginLog{ctx: ctx, Log: log.NewTLog("loginLog"), loginLogDB: NewLoginLogDB(db)}
 }
 
 // add 添加登录日志
 func (l *LoginLog) add(uid string, publicIP string) {
 	err := l.loginLogDB.insert(&LoginLogModel{
-		UID:     uid,
-		LoginIP: publicIP,
+		UID:     &uid,
+		LoginIP: &publicIP,
 	})
 	if err != nil {
 		l.Error("添加登录日志错误", zap.Error(err))
@@ -38,9 +43,9 @@ func (l *LoginLog) getLastLoginIP(uid string) *loginLogResp {
 	}
 	if model != nil {
 		return &loginLogResp{
-			UID:      model.UID,
+			UID:      *model.UID,
 			CreateAt: model.CreatedAt.String(),
-			LoginIP:  model.LoginIP,
+			LoginIP:  *model.LoginIP,
 		}
 	}
 	return nil

@@ -70,7 +70,7 @@ func (m *manager) reorderBanner(c *wkhttp.Context) {
 		c.ResponseError(common.ErrData)
 		return
 	}
-	tx, _ := m.ctx.DB().Begin()
+	tx := m.ctx.DB().Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -88,8 +88,7 @@ func (m *manager) reorderBanner(c *wkhttp.Context) {
 		}
 		tempSortNum--
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		m.Error("数据库事物提交失败", zap.Error(err))
 		c.ResponseError(errors.New("数据库事物提交失败"))
 		tx.Rollback()
@@ -308,7 +307,7 @@ func (m *manager) addCategoryApp(c *wkhttp.Context) {
 	if maxSortNumApp != nil {
 		maxNum = maxSortNumApp.SortNum
 	}
-	tx, _ := m.ctx.DB().Begin()
+	tx := m.ctx.DB().Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -330,8 +329,7 @@ func (m *manager) addCategoryApp(c *wkhttp.Context) {
 		}
 		tempSortNum--
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		m.Error("数据库事物提交失败", zap.Error(err))
 		c.ResponseError(errors.New("数据库事物提交失败"))
 		tx.Rollback()
@@ -363,7 +361,7 @@ func (m *manager) reorderCategoryApp(c *wkhttp.Context) {
 		c.ResponseError(errors.New("应用ID不能为空"))
 		return
 	}
-	tx, _ := m.ctx.DB().Begin()
+	tx := m.ctx.DB().Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -381,8 +379,7 @@ func (m *manager) reorderCategoryApp(c *wkhttp.Context) {
 		}
 		tempSortNum--
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		m.Error("数据库事物提交失败", zap.Error(err))
 		c.ResponseError(errors.New("数据库事物提交失败"))
 		tx.Rollback()
@@ -651,7 +648,7 @@ func (m *manager) deleteApp(c *wkhttp.Context) {
 		c.ResponseOK()
 		return
 	}
-	tx, _ := m.ctx.DB().Begin()
+	tx := m.ctx.DB().Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -686,7 +683,7 @@ func (m *manager) deleteApp(c *wkhttp.Context) {
 		c.ResponseError(errors.New("删除用户app使用记录错误"))
 		return
 	}
-	if err = tx.Commit(); err != nil {
+	if err = tx.Commit().Error; err != nil {
 		m.Error("数据库事物提交失败", zap.Error(err))
 		c.ResponseError(errors.New("数据库事物提交失败"))
 		tx.Rollback()
@@ -710,7 +707,7 @@ func (m *manager) reorderCategory(c *wkhttp.Context) {
 		c.ResponseError(common.ErrData)
 		return
 	}
-	tx, _ := m.ctx.DB().Begin()
+	tx := m.ctx.DB().Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -728,8 +725,7 @@ func (m *manager) reorderCategory(c *wkhttp.Context) {
 		}
 		tempSortNum--
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		m.Error("数据库事物提交失败", zap.Error(err))
 		c.ResponseError(errors.New("数据库事物提交失败"))
 		tx.Rollback()

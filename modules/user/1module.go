@@ -33,7 +33,7 @@ func init() {
 				return api
 			},
 			Swagger: swaggerContent,
-			SQLDir:  register.NewSQLFS(sqlFS),
+			SQLDir:  register.NewSqlFS(sqlFS),
 			IMDatasource: register.IMDatasource{
 				SystemUIDs: func() ([]string, error) {
 					users, err := api.userService.GetUsersWithCategories([]string{CategoryCustomerService, CategorySystem})

@@ -21,7 +21,6 @@ type Service struct {
 
 // NewService NewService
 func NewService(ctx *config.Context) *Service {
-
 	return &Service{
 		ctx:       ctx,
 		Log:       log.NewTLog("Eastic"),

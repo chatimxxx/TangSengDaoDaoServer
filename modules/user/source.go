@@ -21,10 +21,10 @@ func (u *User) GetUserByVercode(vercode string) (*source.UserModel, error) {
 		return nil, nil
 	}
 	return &source.UserModel{
-		UID:       model.UID,
-		Name:      model.Name,
-		Vercode:   model.Vercode,
-		QRVercode: model.QRVercode}, nil
+		UID:       *model.UID,
+		Name:      *model.Name,
+		Vercode:   *model.Vercode,
+		QRVercode: *model.QRVercode}, nil
 }
 
 // GetUserByQRVercode 通过二维码验证码获取用户信息
@@ -42,10 +42,10 @@ func (u *User) GetUserByQRVercode(qrvercode string) (*source.UserModel, error) {
 		return nil, nil
 	}
 	return &source.UserModel{
-		UID:       model.UID,
-		Name:      model.Name,
-		Vercode:   model.Vercode,
-		QRVercode: model.QRVercode}, nil
+		UID:       *model.UID,
+		Name:      *model.Name,
+		Vercode:   *model.Vercode,
+		QRVercode: *model.QRVercode}, nil
 }
 
 // GetFriendByVercode 通过vercode获取好友信息
@@ -62,9 +62,9 @@ func (u *User) GetFriendByVercode(vercode string) (*source.FriendModel, error) {
 		return nil, errors.New("验证码错误")
 	}
 	return &source.FriendModel{
-		UID:     model.UID,
-		ToUID:   model.ToUID,
-		Vercode: model.Vercode,
+		UID:     *model.UID,
+		ToUID:   *model.ToUID,
+		Vercode: *model.Vercode,
 	}, nil
 }
 
@@ -83,10 +83,10 @@ func (u *User) GetFriendByVercodes(vercodes []string) ([]*source.FriendModel, er
 	friends := make([]*source.FriendModel, 0)
 	for _, model := range models {
 		friends = append(friends, &source.FriendModel{
-			UID:     model.UID,
-			ToUID:   model.ToUID,
-			Vercode: model.Vercode,
-			Name:    model.Name,
+			UID:     *model.UID,
+			ToUID:   *model.ToUID,
+			Vercode: *model.Vercode,
+			Name:    *model.Name,
 		})
 	}
 	return friends, nil
@@ -106,9 +106,9 @@ func (u *User) GetUserByUID(uid string) (*source.UserModel, error) {
 		return nil, errors.New("用户不存在")
 	}
 	return &source.UserModel{
-		UID:     model.UID,
-		Name:    model.Name,
-		Vercode: model.Vercode,
+		UID:     *model.UID,
+		Name:    *model.Name,
+		Vercode: *model.Vercode,
 	}, err
 }
 
@@ -125,7 +125,7 @@ func (u *User) GetUserByMailListVercode(vercode string) (*source.UserModel, erro
 	if model == nil {
 		return nil, errors.New("验证码错误")
 	}
-	user, err := u.db.QueryByPhone(model.Zone, model.Phone)
+	user, err := u.db.QueryByPhone(*model.Zone, *model.Phone)
 	if err != nil {
 		u.Error("通过手机号查询用户错误", zap.Error(err))
 		return nil, err
@@ -134,10 +134,10 @@ func (u *User) GetUserByMailListVercode(vercode string) (*source.UserModel, erro
 		return nil, errors.New("该手机号未注册")
 	}
 	return &source.UserModel{
-		Name:            user.Name,
-		UID:             user.UID,
-		QRVercode:       user.QRVercode,
-		Vercode:         user.Vercode,
-		MailListVercode: model.Vercode,
+		Name:            *user.Name,
+		UID:             *user.UID,
+		QRVercode:       *user.QRVercode,
+		Vercode:         *user.Vercode,
+		MailListVercode: *model.Vercode,
 	}, nil
 }

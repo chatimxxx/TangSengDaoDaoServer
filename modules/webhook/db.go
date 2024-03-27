@@ -1,18 +1,16 @@
 package webhook
 
-import (
-	"github.com/gocraft/dbr/v2"
-)
+import "gorm.io/gorm"
 
 // DB DB
 type DB struct {
-	session *dbr.Session
+	db *gorm.DB
 }
 
 // NewDB NewDB
-func NewDB(session *dbr.Session) *DB {
+func NewDB(db *gorm.DB) *DB {
 	return &DB{
-		session: session,
+		db: db,
 	}
 }
 
@@ -26,7 +24,7 @@ func (db *DB) GetThirdName(fromUID string, toUID string, groupNo string) (string
 	var nameInGroup string // 群内备注
 
 	if toUID == "" && groupNo == "" {
-		_, err := db.session.Select("name").From("`user`").Where("uid=?", fromUID).Load(&name)
+		err := db.db.Select("name").Table("`user`").Where("uid=?", fromUID).First(&name).Error
 		if err != nil {
 			return "", "", "", nil
 		}
@@ -35,8 +33,8 @@ func (db *DB) GetThirdName(fromUID string, toUID string, groupNo string) (string
 			Name   string
 			Remark string
 		}
-		builder := db.session.SelectBySql("select `user`.name,IFNULL(friend.remark,'') remark from `user` left join friend on `user`.uid=friend.to_uid and friend.uid=? where `user`.uid=? ", toUID, fromUID)
-		_, err := builder.Load(&nameStruct)
+		builder := db.db.Exec("select `user`.name,IFNULL(friend.remark,'') remark from `user` left join friend on `user`.uid=friend.to_uid and friend.uid=? where `user`.uid=? ", toUID, fromUID)
+		err := builder.First(&nameStruct).Error
 		if err != nil {
 			return "", "", "", err
 		}
@@ -47,7 +45,7 @@ func (db *DB) GetThirdName(fromUID string, toUID string, groupNo string) (string
 			Name        string
 			NameInGroup string
 		}
-		_, err := db.session.SelectBySql("select `user`.name,IFNULL(group_member.remark,'') name_in_group from `user` left join group_member on group_member.group_no=?  and `user`.uid=group_member.uid and group_member.is_deleted=0 where `user`.uid=? ", groupNo, fromUID).Load(&nameStruct)
+		err := db.db.Exec("select `user`.name,IFNULL(group_member.remark,'') name_in_group from `user` left join group_member on group_member.group_no=?  and `user`.uid=group_member.uid and group_member.is_deleted=0 where `user`.uid=? ", groupNo, fromUID).First(&nameStruct).Error
 		if err != nil {
 			return "", "", "", err
 		}
@@ -59,7 +57,7 @@ func (db *DB) GetThirdName(fromUID string, toUID string, groupNo string) (string
 			Remark      string
 			NameInGroup string
 		}
-		_, err := db.session.SelectBySql("select `user`.name,IFNULL(group_member.remark,'') name_in_group,IFNULL(friend.remark ,'') remark from `user` left join group_member on  group_member.group_no=?  and `user`.uid=group_member.uid and group_member.is_deleted=0 left join friend on `user`.uid=friend.to_uid and `user`.uid=? and friend.uid=? where `user`.uid=?", groupNo, fromUID, toUID, fromUID).Load(&nameStruct)
+		err := db.db.Exec("select `user`.name,IFNULL(group_member.remark,'') name_in_group,IFNULL(friend.remark ,'') remark from `user` left join group_member on  group_member.group_no=?  and `user`.uid=group_member.uid and group_member.is_deleted=0 left join friend on `user`.uid=friend.to_uid and `user`.uid=? and friend.uid=? where `user`.uid=?", groupNo, fromUID, toUID, fromUID).First(&nameStruct).Error
 		if err != nil {
 			return "", "", "", err
 		}
@@ -73,6 +71,6 @@ func (db *DB) GetThirdName(fromUID string, toUID string, groupNo string) (string
 // GetGroupName 获取群名
 func (db *DB) GetGroupName(groupNo string) (string, error) {
 	var name string
-	_, err := db.session.Select("name").From("`group`").Where("group_no=?", groupNo).Load(&name)
+	err := db.db.Select("name").Table("`group`").Where("group_no=?", groupNo).First(&name).Error
 	return name, err
 }

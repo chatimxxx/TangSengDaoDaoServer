@@ -1,38 +1,41 @@
 package user
 
 import (
+	"fmt"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
 )
 
 type githubDB struct {
-	session *dbr.Session
-	ctx     *config.Context
+	db  *gorm.DB
+	ctx *config.Context
 }
 
 func newGithubDB(ctx *config.Context) *githubDB {
-
+	d, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &githubDB{
-		ctx:     ctx,
-		session: ctx.DB(),
+		ctx: ctx,
+		db:  d,
 	}
 }
 
 func (d *githubDB) insert(m *githubUserInfoModel) error {
-	_, err := d.session.InsertInto("github_user").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+	err := d.db.Table("github_user").Create(m).Error
 	return err
 }
 
-func (d *githubDB) insertTx(m *githubUserInfoModel, tx *dbr.Tx) error {
-	_, err := tx.InsertInto("github_user").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+func (d *githubDB) insertTx(m *githubUserInfoModel, tx *gorm.DB) error {
+	err := tx.Table("github_user").Create(m).Error
 	return err
 }
 func (d *githubDB) queryWithLogin(login string) (*githubUserInfoModel, error) {
-	var m *githubUserInfoModel
-	_, err := d.session.Select("*").From("github_user").Where("login=?", login).Load(&m)
-	return m, err
+	var m githubUserInfoModel
+	err := d.db.Table("github_user").Where("login=?", login).First(&m).Error
+	return &m, err
 }
 
 type githubUserInfoModel struct {

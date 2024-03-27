@@ -37,11 +37,15 @@ func (o *OnlineService) listenOnlineStatus(onlineStatusList []config.OnlineStatu
 	if len(onlineStatusList) <= 0 {
 		return
 	}
-
-	tx, _ := o.ctx.DB().Begin()
+	db, err := o.ctx.DB()
+	if err != nil {
+		o.Error("开始事务失败")
+		return
+	}
+	tx := db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			panic(err)
 		}
 	}()
@@ -55,13 +59,16 @@ func (o *OnlineService) listenOnlineStatus(onlineStatusList []config.OnlineStatu
 		if onlineStatus.Online {
 			status = 1
 		}
+		LastOffline := int(time.Now().Unix())
+		LastOnline := int(time.Now().Unix())
+		Version := time.Now().UnixNano() / 1000
 		err := o.onlineDB.insertOrUpdateUserOnlineTx(&onlineStatusModel{
-			UID:         onlineStatus.UID,
-			DeviceFlag:  onlineStatus.DeviceFlag,
-			LastOffline: int(time.Now().Unix()),
-			LastOnline:  int(time.Now().Unix()),
-			Online:      status,
-			Version:     time.Now().UnixNano() / 1000,
+			UID:         &onlineStatus.UID,
+			DeviceFlag:  &onlineStatus.DeviceFlag,
+			LastOffline: &LastOffline,
+			LastOnline:  &LastOnline,
+			Online:      &status,
+			Version:     &Version,
 		}, tx)
 		if err != nil {
 			tx.Rollback()
@@ -69,7 +76,7 @@ func (o *OnlineService) listenOnlineStatus(onlineStatusList []config.OnlineStatu
 			return
 		}
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		o.Error("提交在线状态数据库的事务失败！！", zap.Error(err))
 		return
@@ -85,10 +92,10 @@ func (o *OnlineService) GetUserLastOnlineStatus(uids []string) ([]*config.Online
 	if len(onlineModels) > 0 {
 		for _, onlineM := range onlineModels {
 			resps = append(resps, &config.OnlinestatusResp{
-				UID:         onlineM.UID,
-				DeviceFlag:  onlineM.DeviceFlag,
-				LastOffline: onlineM.LastOffline,
-				Online:      onlineM.Online,
+				UID:         *onlineM.UID,
+				DeviceFlag:  *onlineM.DeviceFlag,
+				LastOffline: *onlineM.LastOffline,
+				Online:      *onlineM.Online,
 			})
 		}
 	}

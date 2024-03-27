@@ -41,13 +41,7 @@ func (g *Group) groupMemberInviteAdd(c *wkhttp.Context) {
 
 	inviteNo := util.GenerUUID()
 
-	tx, _ := g.db.session.Begin()
-	defer func() {
-		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
-			panic(err)
-		}
-	}()
+	tx := g.db.db.Begin()
 	eventID, err := g.ctx.EventBegin(&wkevent.Data{
 		Event: event.GroupMemberInviteRequest,
 		Type:  wkevent.Message,
@@ -66,12 +60,13 @@ func (g *Group) groupMemberInviteAdd(c *wkhttp.Context) {
 		c.ResponseError(errors.New("开启事件失败！"))
 		return
 	}
+	Status := InviteStatusWait
 	inviteModel := &InviteModel{
-		InviteNo: inviteNo,
-		GroupNo:  groupNo,
-		Inviter:  loginUID,
-		Remark:   req.Remark,
-		Status:   InviteStatusWait,
+		InviteNo: &inviteNo,
+		GroupNo:  &groupNo,
+		Inviter:  &loginUID,
+		Remark:   &req.Remark,
+		Status:   &Status,
 	}
 	err = g.db.InsertInviteTx(inviteModel, tx)
 	if err != nil {
@@ -82,11 +77,11 @@ func (g *Group) groupMemberInviteAdd(c *wkhttp.Context) {
 	}
 	for _, uid := range req.UIDS {
 		item := &InviteItemModel{
-			InviteNo: inviteNo,
-			GroupNo:  groupNo,
-			Inviter:  loginUID,
-			UID:      uid,
-			Status:   InviteStatusWait,
+			InviteNo: &inviteNo,
+			GroupNo:  &groupNo,
+			Inviter:  &loginUID,
+			UID:      &uid,
+			Status:   &Status,
 		}
 		err := g.db.InsertInviteItemTx(item, tx)
 		if err != nil {
@@ -97,7 +92,7 @@ func (g *Group) groupMemberInviteAdd(c *wkhttp.Context) {
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		g.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
@@ -172,7 +167,7 @@ func (g *Group) groupMemberInviteSure(c *wkhttp.Context) {
 		c.ResponseError(errors.New("没有查询到邀请信息！"))
 		return
 	}
-	if inviteDetailModel.Status != InviteStatusWait {
+	if *inviteDetailModel.Status != InviteStatusWait {
 		c.ResponseError(errors.New("邀请信息不是待邀请状态！"))
 		return
 	}
@@ -192,13 +187,13 @@ func (g *Group) groupMemberInviteSure(c *wkhttp.Context) {
 	members := make([]string, 0, len(inviteItemDetilModels))
 	groupNo := inviteItemDetilModels[0].GroupNo
 	inviter := inviteItemDetilModels[0].Inviter
-	for _, inviteItemDetilModel := range inviteItemDetilModels {
-		members = append(members, inviteItemDetilModel.UID)
+	for _, inviteItemDetailModel := range inviteItemDetilModels {
+		members = append(members, *inviteItemDetailModel.UID)
 	}
 	/**
 	添加成员
 	**/
-	inviterUser, err := g.userDB.QueryByUID(inviter)
+	inviterUser, err := g.userDB.QueryByUID(*inviter)
 	if err != nil {
 		g.Error("查询邀请者的用户信息失败！", zap.Error(err))
 		c.ResponseError(errors.New("查询邀请者的用户信息失败！"))
@@ -211,13 +206,12 @@ func (g *Group) groupMemberInviteSure(c *wkhttp.Context) {
 
 	}
 	allower := authMap["allower"].(string)
-	tx, _ := g.ctx.DB().Begin()
-	defer func() {
-		if err := recover(); err != nil {
-			tx.Rollback()
-			panic(err)
-		}
-	}()
+	db, err := g.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
 	err = g.db.UpdateInviteStatusTx(allower, InviteStatusOK, inviteNo, tx)
 	if err != nil {
 		tx.Rollback()
@@ -232,14 +226,14 @@ func (g *Group) groupMemberInviteSure(c *wkhttp.Context) {
 		c.ResponseError(errors.New("更新邀请信息项状态失败！"))
 		return
 	}
-	commitCallback, err := g.addMembersTx(members, groupNo, inviterUser.UID, inviterUser.Name, tx)
+	commitCallback, err := g.addMembersTx(members, *groupNo, *inviterUser.UID, *inviterUser.Name, tx)
 	if err != nil {
 		tx.Rollback()
 		g.Error("添加成员失败！", zap.Error(err))
 		c.ResponseError(errors.New("添加成员失败！"))
 		return
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		g.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
@@ -302,17 +296,17 @@ type InviteDetailResp struct {
 // From From
 func (i InviteDetailResp) From(model *InviteDetailModel, items []*InviteItemDetailModel) InviteDetailResp {
 	resp := InviteDetailResp{}
-	resp.InviteNo = model.InviteNo
-	resp.GroupNo = model.GroupNo
-	resp.Inviter = model.Inviter
-	resp.Remark = model.Remark
+	resp.InviteNo = *model.InviteNo
+	resp.GroupNo = *model.GroupNo
+	resp.Inviter = *model.Inviter
+	resp.Remark = *model.Remark
 	resp.InviterName = model.InviterName
-	resp.Status = model.Status
+	resp.Status = *model.Status
 	if len(items) > 0 {
 		itemResps := make([]InviteItemDetailResp, 0, len(items))
 		for _, item := range items {
 			itemResps = append(itemResps, InviteItemDetailResp{
-				UID:  item.UID,
+				UID:  *item.UID,
 				Name: item.Name,
 			})
 		}

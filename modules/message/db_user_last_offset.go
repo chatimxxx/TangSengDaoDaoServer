@@ -2,39 +2,45 @@ package message
 
 import (
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
+	"time"
 )
 
 type userLastOffsetDB struct {
-	ctx     *config.Context
-	session *dbr.Session
+	ctx *config.Context
+	db  *gorm.DB
 }
 
 func newUserLastOffsetDB(ctx *config.Context) *userLastOffsetDB {
-
+	db, err := ctx.DB()
+	if err != nil {
+		panic("服务初始化失败")
+		return nil
+	}
 	return &userLastOffsetDB{
-		ctx:     ctx,
-		session: ctx.DB(),
+		ctx: ctx,
+		db:  db,
 	}
 }
 
-func (d *userLastOffsetDB) insertOrUpdateTx(tx *dbr.Tx, model *userLastOffsetModel) error {
+func (d *userLastOffsetDB) insertOrUpdateTx(tx *gorm.DB, model *userLastOffsetModel) error {
 	sq := "INSERT INTO user_last_offset (uid,channel_id,channel_type,message_seq) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE message_seq=IF(message_seq<VALUES(message_seq),VALUES(message_seq),message_seq)"
-	_, err := tx.InsertBySql(sq, model.UID, model.ChannelID, model.ChannelType, model.MessageSeq).Exec()
+	err := tx.Exec(sq, model.UID, model.ChannelID, model.ChannelType, model.MessageSeq).Error
 	return err
 }
 
 func (d *userLastOffsetDB) queryWithUID(uid string) ([]*userLastOffsetModel, error) {
-	var models []*userLastOffsetModel
-	_, err := d.session.Select("*").From("user_last_offset").Where("uid=?", uid).Load(&models)
-	return models, err
+	var ms []*userLastOffsetModel
+	err := d.db.Table("user_last_offset").Where("uid=?", uid).Find(&ms).Error
+	return ms, err
 }
 
 type userLastOffsetModel struct {
-	UID         string
-	ChannelID   string
-	ChannelType uint8
-	MessageSeq  int64
-	db.BaseModel
+	UID         *string
+	ChannelID   *string
+	ChannelType *uint8
+	MessageSeq  *int64
+	Id          *int64
+	CreatedAt   *time.Time
+	UpdatedAt   *time.Time
 }

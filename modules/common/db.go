@@ -2,95 +2,88 @@ package common
 
 import (
 	dbs "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
 )
 
-type db struct {
-	session *dbr.Session
+type DB struct {
+	db *gorm.DB
 }
 
-func newDB(session *dbr.Session) *db {
-	return &db{
-		session: session,
+func newDB(db *gorm.DB) *DB {
+	return &DB{
+		db: db,
 	}
 }
 
 // 添加版本升级
-func (d *db) insertAppVersion(m *appVersionModel) (int64, error) {
-	result, err := d.session.InsertInto("app_version").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+func (d *DB) insertAppVersion(m *appVersionModel) (int64, error) {
+	err := d.db.Table("app_version").Create(m).Error
 	if err != nil {
 		return 0, err
 	}
-	id, err := result.LastInsertId()
-	return id, err
+	return *m.Id, err
 }
 
 // 查询某个系统的最新版本
-func (d *db) queryNewVersion(os string) (*appVersionModel, error) {
+func (d *DB) queryNewVersion(os string) (*appVersionModel, error) {
 	var model *appVersionModel
-	_, err := d.session.Select("*").From("app_version").Where("os=?", os).OrderDir("created_at", false).Limit(1).Load(&model)
+	err := d.db.Table("app_version").Where("os=?", os).Order("created_at").Limit(1).First(&model).Error
 	return model, err
 }
 
 // 查询版本升级列表
-func (d *db) queryAppVersionListWithPage(pageSize, page uint64) ([]*appVersionModel, error) {
+func (d *DB) queryAppVersionListWithPage(pageSize, page int) ([]*appVersionModel, error) {
 	var models []*appVersionModel
-	_, err := d.session.Select("*").From("app_version").Offset((page-1)*pageSize).Limit(pageSize).OrderDir("updated_at", false).Load(&models)
+	err := d.db.Table("app_version").Offset((page - 1) * pageSize).Limit(pageSize).Order("updated_at").Find(&models).Error
 	return models, err
 }
 
 // 模糊查询用户数量
-func (d *db) queryCount() (int64, error) {
+func (d *DB) queryCount() (int64, error) {
 	var count int64
-	_, err := d.session.Select("count(*)").From("app_version").Load(&count)
+	err := d.db.Table("app_version").Count(&count).Error
 	return count, err
 }
 
 // 查询所有背景图片
-func (d *db) queryChatBgs() ([]*chatBgModel, error) {
+func (d *DB) queryChatBgs() ([]*chatBgModel, error) {
 	var models []*chatBgModel
-	_, err := d.session.Select("*").From("chat_bg").Load(&models)
+	err := d.db.Table("chat_bg").Find(&models).Error
 	return models, err
 }
 
 // 查询app模块
-func (d *db) queryAppModule() ([]*appModuleModel, error) {
+func (d *DB) queryAppModule() ([]*appModuleModel, error) {
 	var list []*appModuleModel
-	_, err := d.session.Select("*").From("app_module").OrderDir("created_at", true).Load(&list)
+	err := d.db.Table("app_module").Order("created_at ASC").Find(&list).Error
 	return list, err
 }
 
 // 查询某个app模块
-func (d *db) queryAppModuleWithSid(sid string) (*appModuleModel, error) {
-	var m *appModuleModel
-	_, err := d.session.Select("*").From("app_module").Where("sid=?", sid).Load(&m)
-	return m, err
+func (d *DB) queryAppModuleWithSid(sid string) (*appModuleModel, error) {
+	var m appModuleModel
+	err := d.db.Table("app_module").Where("sid=?", sid).First(&m).Error
+	return &m, err
 }
 
 // 新增app模块
-func (d *db) insertAppModule(m *appModuleModel) (int64, error) {
-	result, err := d.session.InsertInto("app_module").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+func (d *DB) insertAppModule(m *appModuleModel) (int64, error) {
+	err := d.db.Table("app_module").Create(m).Error
 	if err != nil {
 		return 0, err
 	}
-	id, err := result.LastInsertId()
-	return id, err
+	return *m.Id, err
 }
 
 // 修改app模块
-func (d *db) updateAppModule(m *appModuleModel) error {
-	_, err := d.session.Update("app_module").SetMap(map[string]interface{}{
-		"name":   m.Name,
-		"desc":   m.Desc,
-		"status": m.Status,
-	}).Where("id=?", m.Id).Exec()
+func (d *DB) updateAppModule(m *appModuleModel) error {
+	err := d.db.Table("app_module").Updates(&m).Where("id=?", m.Id).Error
 	return err
 }
 
 // 删除模块
-func (d *db) deleteAppModule(sid string) error {
-	_, err := d.session.DeleteFrom("app_module").Where("sid=?", sid).Exec()
+func (d *DB) deleteAppModule(sid string) error {
+	err := d.db.Table("app_module").Where("sid=?", sid).Delete(nil).Error
 	return err
 }
 

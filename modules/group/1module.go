@@ -18,7 +18,6 @@ var swaggerContent string
 
 func init() {
 	register.AddModule(func(ctx interface{}) register.Module {
-
 		fmt.Println("register......")
 		api := New(ctx.(*config.Context))
 		return register.Module{
@@ -26,7 +25,7 @@ func init() {
 			SetupAPI: func() register.APIRouter {
 				return api
 			},
-			SQLDir:  register.NewSQLFS(sqlFS),
+			SQLDir:  register.NewSqlFS(sqlFS),
 			Swagger: swaggerContent,
 			IMDatasource: register.IMDatasource{
 				HasData: func(channelID string, channelType uint8) register.IMDatasourceType {

@@ -60,11 +60,11 @@ func (m *Manager) list(c *wkhttp.Context) {
 
 	for _, menu := range list {
 		resps = append(resps, &robotMenu{
-			Id:        menu.Id,
-			CMD:       menu.CMD,
-			Remark:    menu.Remark,
-			Type:      menu.Type,
-			RobotID:   menu.RobotID,
+			Id:        *menu.Id,
+			CMD:       *menu.CMD,
+			Remark:    *menu.Remark,
+			Type:      *menu.Type,
+			RobotID:   *menu.RobotID,
 			CreatedAt: menu.CreatedAt.String(),
 			UpdatedAt: menu.UpdatedAt.String(),
 		})
@@ -93,13 +93,7 @@ func (m *Manager) delete(c *wkhttp.Context) {
 		c.ResponseError(errors.New("操作的机器人不存在"))
 		return
 	}
-	tx, _ := m.db.session.Begin()
-	defer func() {
-		if err := recover(); err != nil {
-			tx.Rollback()
-			panic(err)
-		}
-	}()
+	tx := m.db.db.Begin()
 	err = m.db.deleteMenuWithID(robot_id, id, tx)
 	if err != nil {
 		tx.Rollback()
@@ -107,7 +101,8 @@ func (m *Manager) delete(c *wkhttp.Context) {
 		c.ResponseError(errors.New("删除机器人菜单失败"))
 		return
 	}
-	robot.Version = m.ctx.GenSeq(common.RobotSeqKey)
+	Version, _ := m.ctx.GenSeq(common.RobotSeqKey)
+	robot.Version = &Version
 	err = m.db.updateRobotTx(robot, tx)
 	if err != nil {
 		tx.Rollback()
@@ -115,9 +110,8 @@ func (m *Manager) delete(c *wkhttp.Context) {
 		c.ResponseError(errors.New("修改机器人版本号错误"))
 		return
 	}
-	err = tx.Commit()
-	if err != nil {
-		tx.RollbackUnlessCommitted()
+	if err = tx.Commit().Error; err != nil {
+		tx.Rollback()
 		m.Error("数据库事物提交失败", zap.Error(err))
 		c.ResponseError(errors.New("数据库事物提交失败"))
 		return
@@ -144,7 +138,8 @@ func (m *Manager) updateRobotStatus(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询操作的机器人错误"))
 		return
 	}
-	robot.Status = int(status)
+	Status := int(status)
+	robot.Status = &Status
 	if robot == nil {
 		c.ResponseError(errors.New("操作的机器人不存在"))
 		return

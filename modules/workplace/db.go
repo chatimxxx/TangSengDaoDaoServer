@@ -1,119 +1,118 @@
 package workplace
 
 import (
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/pkg/util"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	dba "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
 )
 
 type db struct {
-	session *dbr.Session
-	ctx     *config.Context
+	db  *gorm.DB
+	ctx *config.Context
 }
 
 func newDB(ctx *config.Context) *db {
 	return &db{
-		ctx:     ctx,
-		session: ctx.DB(),
+		ctx: ctx,
+		db:  ctx.DB(),
 	}
 }
-func (d *db) updateUserAppSortNumWithTx(uid, appId string, sortNum int, tx *dbr.Tx) error {
-	_, err := tx.Update("workplace_user_app").SetMap(map[string]interface{}{
+func (d *db) updateUserAppSortNumWithTx(uid, appId string, sortNum int, tx *gorm.DB) error {
+	err := tx.Table("workplace_user_app").Updates(map[string]interface{}{
 		"sort_num": sortNum,
-	}).Where("uid=? and app_id=?", uid, appId).Exec()
+	}).Where("uid=? and app_id=?", uid, appId).Error
 	return err
 }
 
 func (d *db) insertUserApp(app *userAppModel) error {
-	_, err := d.session.InsertInto("workplace_user_app").Columns(util.AttrToUnderscore(app)...).Record(app).Exec()
+	err := d.db.Table("workplace_user_app").Create(app).Error
 	return err
 }
 
 func (d *db) queryUserAppMaxSortNumWithUID(uid string) (*userAppModel, error) {
-	var m *userAppModel
-	_, err := d.session.Select("*").From("workplace_user_app").Where("uid=?", uid).OrderDir("sort_num", false).Limit(1).Load(&m)
-	return m, err
+	var m userAppModel
+	err := d.db.Table("workplace_user_app").Where("uid=?", uid).Order("sort_num DESC").Limit(1).Find(&m).Error
+	return &m, err
 }
 
 func (d *db) deleteUserAppWithAppId(uid, appId string) error {
-	_, err := d.session.DeleteFrom("workplace_user_app").Where("app_id=? and uid=?", appId, uid).Exec()
+	err := d.db.Table("workplace_user_app").Where("app_id=? and uid=?", appId, uid).Delete(nil).Error
 	return err
 }
 
 func (d *db) queryCategory() ([]*categoryModel, error) {
-	var models []*categoryModel
-	_, err := d.session.Select("*").From("workplace_category").OrderDir("sort_num", false).Load(&models)
-	return models, err
+	var ms []*categoryModel
+	err := d.db.Table("workplace_category").Order("sort_num DESC").Find(&ms).Error
+	return ms, err
 }
 
 func (d *db) queryAppWithAppIds(ids []string) ([]*appModel, error) {
-	var models []*appModel
-	_, err := d.session.Select("*").From("workplace_app").Where("app_id in ?", ids).Load(&models)
-	return models, err
+	var ms []*appModel
+	err := d.db.Table("workplace_app").Where("app_id in ?", ids).Find(&ms).Error
+	return ms, err
 }
 
 func (d *db) queryAppWithUid(uid string) ([]*appModel, error) {
-	var models []*appModel
-	_, err := d.session.Select("*").From("workplace_user_app").Where("uid=?", uid).Load(&models)
-	return models, err
+	var ms []*appModel
+	err := d.db.Table("workplace_user_app").Where("uid=?", uid).Find(&ms).Error
+	return ms, err
 }
 
 func (d *db) queryAppWithAppId(appId string) (*appModel, error) {
-	var app *appModel
-	_, err := d.session.Select("*").From("workplace_app").Where("app_id=?", appId).Load(&app)
-	return app, err
+	var app appModel
+	err := d.db.Table("workplace_app").Where("app_id=?", appId).First(&app).Error
+	return &app, err
 }
 
 func (d *db) queryAppWithCategroyNo(categoryNo string) ([]*cAppModel, error) {
-	var apps []*cAppModel
-	_, err := d.session.Select("workplace_category_app.sort_num,workplace_app.app_id,workplace_app.icon,workplace_app.name,workplace_app.description,workplace_app.app_category,workplace_app.jump_type,workplace_app.status,workplace_app.app_route,workplace_app.web_route,workplace_app.is_paid_app,workplace_app.created_at").From("workplace_category_app").LeftJoin("workplace_app", "workplace_category_app.app_id=workplace_app.app_id").Where("workplace_category_app.category_no=?", categoryNo).OrderDir("workplace_category_app.sort_num", false).Load(&apps)
-	return apps, err
+	var ms []*cAppModel
+	err := d.db.Select("workplace_category_app.sort_num,workplace_app.app_id,workplace_app.icon,workplace_app.name,workplace_app.description,workplace_app.app_category,workplace_app.jump_type,workplace_app.status,workplace_app.app_route,workplace_app.web_route,workplace_app.is_paid_app,workplace_app.created_at").Table("workplace_category_app").Joins("workplace_app on workplace_category_app.app_id=workplace_app.app_id").Where("workplace_category_app.category_no=?", categoryNo).Order("workplace_category_app.sort_num DESC").Find(&ms).Error
+	return ms, err
 }
 
 func (d *db) queryUserAppWithAPPId(uid string, appId string) (*userAppModel, error) {
-	var app *userAppModel
-	_, err := d.session.Select("*").From("workplace_user_app").Where("uid=? and app_id=?", uid, appId).Load(&app)
-	return app, err
+	var app userAppModel
+	err := d.db.Table("workplace_user_app").Where("uid=? and app_id=?", uid, appId).First(&app).Error
+	return &app, err
 }
 
 func (d *db) queryUserApp(uid string) ([]*userAppModel, error) {
-	var models []*userAppModel
-	_, err := d.session.Select("*").From("workplace_user_app").Where("uid=?", uid).OrderDir("sort_num", false).Load(&models)
-	return models, err
+	var ms []*userAppModel
+	err := d.db.Table("workplace_user_app").Where("uid=?", uid).Order("sort_num DESC").Find(&ms).Error
+	return ms, err
 }
 
 func (d *db) queryBanner() ([]*bannerModel, error) {
-	var models []*bannerModel
-	_, err := d.session.Select("*").From("workplace_banner").OrderDir("sort_num", false).Load(&models)
-	return models, err
+	var ms []*bannerModel
+	err := d.db.Table("workplace_banner").Order("sort_num DESC").Find(&ms).Error
+	return ms, err
 }
 
 func (d *db) insertRecord(record *recordModel) error {
-	_, err := d.session.InsertInto("workplace_app_user_record").Columns(util.AttrToUnderscore(record)...).Record(record).Exec()
+	err := d.db.Table("workplace_app_user_record").Create(record).Error
 	return err
 }
 
 func (d *db) queryRecordWithUid(uid string) ([]*recordModel, error) {
-	var models []*recordModel
-	_, err := d.session.Select("*").From("workplace_app_user_record").Where("uid=?", uid).OrderDir("count", false).Load(&models)
-	return models, err
+	var ms []*recordModel
+	err := d.db.Table("workplace_app_user_record").Where("uid=?", uid).Order("count DESC").Find(&ms).Error
+	return ms, err
 }
 
 func (d *db) queryRecordWithUidAndAppId(uid, appId string) (*recordModel, error) {
-	var record *recordModel
-	_, err := d.session.Select("*").From("workplace_app_user_record").Where("uid=? and app_id=?", uid, appId).Load(&record)
-	return record, err
+	var record recordModel
+	err := d.db.Table("workplace_app_user_record").Where("uid=? and app_id=?", uid, appId).First(&record).Error
+	return &record, err
 }
 
 func (d *db) updateRecordCount(record *recordModel) error {
-	_, err := d.session.Update("workplace_app_user_record").SetMap(map[string]interface{}{
+	err := d.db.Table("workplace_app_user_record").Updates(map[string]interface{}{
 		"count": record.Count,
-	}).Where("uid=? and app_id=?", record.Uid, record.AppId).Exec()
+	}).Where("uid=? and app_id=?", record.Uid, record.AppId).Error
 	return err
 }
 func (d *db) deleteRecord(uid, appId string) error {
-	_, err := d.session.DeleteFrom("workplace_app_user_record").Where("app_id=? and uid=?", appId, uid).Exec()
+	err := d.db.Table("workplace_app_user_record").Where("app_id=? and uid=?", appId, uid).Delete(nil).Error
 	return err
 }
 

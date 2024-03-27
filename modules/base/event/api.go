@@ -2,12 +2,12 @@ package event
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/file"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
 	"go.uber.org/zap"
 
 	et "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkevent"
@@ -68,9 +68,13 @@ type Event struct {
 
 // New 创建一个事件
 func New(ctx *config.Context) *Event {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	e := &Event{
 		ctx:         ctx,
-		db:          NewDB(ctx.DB()),
+		db:          NewDB(db),
 		Log:         log.NewTLog("Event"),
 		fileService: file.NewService(ctx),
 	}
@@ -79,15 +83,17 @@ func New(ctx *config.Context) *Event {
 }
 
 // Begin 开启事件
-func (e *Event) Begin(data *et.Data, tx *dbr.Tx) (int64, error) {
+func (e *Event) Begin(data *et.Data, tx *gorm.DB) (int64, error) {
 	// if !e.Support(data.Type.Int()) {
 	// 	e.Error("不支持的事件类型！", zap.Int("eventType", data.Type.Int()))
 	// 	return 0, errors.New("不支持的事件类型！")
 	// }
+	t := data.Type.Int()
+	d := util.ToJson(data.Data)
 	eventID, err := e.db.InsertTx(&Model{
-		Event: data.Event,
-		Type:  data.Type.Int(),
-		Data:  util.ToJson(data.Data),
+		Event: &data.Event,
+		Type:  &t,
+		Data:  &d,
 	}, tx)
 	return eventID, err
 }

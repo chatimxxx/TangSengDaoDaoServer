@@ -152,7 +152,11 @@ var webhookDB *DB
 // 获取和缓存发送者的显示名称
 func getAndCacheShowNameForFromUID(msgResp msgOfflineNotify, ctx *config.Context) (string, error) {
 	if webhookDB == nil {
-		webhookDB = NewDB(ctx.DB())
+		db, err := ctx.DB()
+		if err != nil {
+			return "", err
+		}
+		webhookDB = NewDB(db)
 	}
 
 	var name, // 发送者常用名
@@ -225,7 +229,11 @@ func getAndCacheShowNameForFromUID(msgResp msgOfflineNotify, ctx *config.Context
 // 获取和缓存群名
 func getAndCacheGroupName(msgResp msgOfflineNotify, ctx *config.Context) (string, error) {
 	if webhookDB == nil {
-		webhookDB = NewDB(ctx.DB())
+		db, err := ctx.DB()
+		if err != nil {
+			return "", err
+		}
+		webhookDB = NewDB(db)
 	}
 
 	key := fmt.Sprintf("%s%s", groupNameCachePrefix, msgResp.ChannelID)

@@ -1,34 +1,39 @@
 package report
 
 import (
+	"fmt"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	dba "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
 )
 
 type managerDB struct {
-	session *dbr.Session
-	ctx     *config.Context
+	db  *gorm.DB
+	ctx *config.Context
 }
 
 func newManagerDB(ctx *config.Context) *managerDB {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &managerDB{
-		ctx:     ctx,
-		session: ctx.DB(),
+		ctx: ctx,
+		db:  db,
 	}
 }
 
 // 查询举报列表
-func (m *managerDB) list(pageSize, page uint64, channelType int) ([]*managerReportModel, error) {
-	var list []*managerReportModel
-	_, err := m.session.Select("report.*,report_category.category_name").From("report").LeftJoin("report_category", "report.category_no=report_category.category_no").Where("report.channel_type=?", channelType).Offset((page-1)*pageSize).Limit(pageSize).OrderDir("report.created_at", false).Load(&list)
-	return list, err
+func (m *managerDB) list(pageSize, page int, channelType int) ([]*managerReportModel, error) {
+	var ms []*managerReportModel
+	err := m.db.Select("report.*,report_category.category_name").Table("report").Joins("report_category on report.category_no=report_category.category_no").Where("report.channel_type=?", channelType).Offset((page - 1) * pageSize).Limit(pageSize).Order("report.created_at DESC").Find(&ms).Error
+	return ms, err
 }
 
 // 查询总用户
 func (m *managerDB) queryReportCount(channelType int) (int64, error) {
 	var count int64
-	_, err := m.session.Select("count(*)").From("report").Where("channel_type=?", channelType).Load(&count)
+	err := m.db.Table("report").Where("channel_type=?", channelType).Count(&count).Error
 	return count, err
 }
 

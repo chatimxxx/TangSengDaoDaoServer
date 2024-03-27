@@ -10,7 +10,6 @@ import (
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkevent"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
 	"go.uber.org/zap"
@@ -27,10 +26,14 @@ type Manager struct {
 
 // NewManager NewManager
 func NewManager(ctx *config.Context) *Manager {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &Manager{
 		ctx:       ctx,
 		Log:       log.NewTLog("groupManager"),
-		managerDB: newManagerDB(ctx.DB()),
+		managerDB: newManagerDB(db),
 		userDB:    user.NewDB(ctx),
 		db:        NewDB(ctx),
 	}
@@ -62,7 +65,7 @@ func (m *Manager) list(c *wkhttp.Context) {
 	var list []*managerGroupModel
 	var count int64
 	if keyword == "" {
-		list, err = m.managerDB.listWithPage(uint64(pageSize), uint64(pageIndex))
+		list, err = m.managerDB.listWithPage(pageSize, pageIndex)
 		if err != nil {
 			m.Error("查询群列表错误", zap.Error(err))
 			c.ResponseError(errors.New("查询群列表错误"))
@@ -75,7 +78,7 @@ func (m *Manager) list(c *wkhttp.Context) {
 			return
 		}
 	} else {
-		list, err = m.managerDB.listWithPageAndKeyword(keyword, uint64(pageSize), uint64(pageIndex))
+		list, err = m.managerDB.listWithPageAndKeyword(keyword, pageSize, pageIndex)
 		if err != nil {
 			m.Error("查询群列表错误", zap.Error(err))
 			c.ResponseError(errors.New("查询群列表错误"))
@@ -106,8 +109,8 @@ func (m *Manager) getRespList(list []*managerGroupModel) ([]*managerGroupResp, e
 		uids := make([]string, 0)
 		groupNos := make([]string, 0)
 		for _, group := range list {
-			uids = append(uids, group.Creator)
-			groupNos = append(groupNos, group.GroupNo)
+			uids = append(uids, *group.Creator)
+			groupNos = append(groupNos, *group.GroupNo)
 		}
 		users, err := m.userDB.QueryByUIDs(uids)
 		if err != nil {
@@ -126,7 +129,7 @@ func (m *Manager) getRespList(list []*managerGroupModel) ([]*managerGroupResp, e
 			if len(users) > 0 {
 				for _, user := range users {
 					if user.UID == group.Creator {
-						createName = user.Name
+						createName = *user.Name
 						break
 					}
 				}
@@ -135,7 +138,7 @@ func (m *Manager) getRespList(list []*managerGroupModel) ([]*managerGroupResp, e
 			var count int = 0
 			if len(memberCounts) > 0 {
 				for _, memberCount := range memberCounts {
-					if memberCount.GroupNo == group.GroupNo {
+					if memberCount.GroupNo == *group.GroupNo {
 						count = memberCount.MemberCount
 						break
 					}
@@ -143,13 +146,13 @@ func (m *Manager) getRespList(list []*managerGroupModel) ([]*managerGroupResp, e
 			}
 
 			result = append(result, &managerGroupResp{
-				Name:        group.Name,
-				Creator:     group.Creator,
-				GroupNo:     group.GroupNo,
+				Name:        *group.Name,
+				Creator:     *group.Creator,
+				GroupNo:     *group.GroupNo,
 				CreateName:  createName,
 				CreateAt:    group.CreatedAt.String(),
-				Status:      group.Status,
-				Forbidden:   group.Forbidden,
+				Status:      *group.Status,
+				Forbidden:   *group.Forbidden,
 				MemberCount: count,
 			})
 		}
@@ -165,7 +168,7 @@ func (m *Manager) disablelist(c *wkhttp.Context) {
 		return
 	}
 	pageIndex, pageSize := c.GetPage()
-	list, err := m.managerDB.queryGroupsWithStatus(GroupStatusDisabled, uint64(pageSize), uint64(pageIndex))
+	list, err := m.managerDB.queryGroupsWithStatus(GroupStatusDisabled, pageSize, pageIndex)
 	if err != nil {
 		m.Error("查询群列表错误", zap.Error(err))
 		c.ResponseError(errors.New("查询群列表错误"))
@@ -221,7 +224,7 @@ func (m *Manager) leftbangroup(c *wkhttp.Context) {
 		return
 	}
 
-	if groupStatus == group.Status {
+	if groupStatus == *group.Status {
 		c.ResponseOK()
 		return
 	}
@@ -233,24 +236,28 @@ func (m *Manager) leftbangroup(c *wkhttp.Context) {
 		ChannelID:   groupNo,
 		ChannelType: common.ChannelTypeGroup.Uint8(),
 		Ban:         ban,
-		Large:       group.GroupType,
+		Large:       *group.GroupType,
 	})
 	if err != nil {
 		m.Error("调用IM修改channel信息服务失败！", zap.Error(err))
 		c.ResponseError(errors.New("调用IM修改channel信息服务失败！"))
 		return
 	}
-	group.Status = groupStatus
+	group.Status = &groupStatus
 	//通知群成员更新群资料
 	// todo
-	tx, err := m.ctx.DB().Begin()
-	util.CheckErr(err)
+	db, err := m.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
 	groupMap := make(map[string]string)
 	groupMap["status"] = strconv.Itoa(groupStatus)
 	err = m.db.UpdateTx(group, tx)
 	if err != nil {
 		tx.Rollback()
-		m.Error("更新群信息失败！", zap.Error(err), zap.String("group_no", group.GroupNo), zap.Any("groupMap", groupMap))
+		m.Error("更新群信息失败！", zap.Error(err), zap.String("group_no", *group.GroupNo), zap.Any("groupMap", groupMap))
 		c.ResponseError(errors.New("更新群信息失败！"))
 		return
 	}
@@ -266,8 +273,8 @@ func (m *Manager) leftbangroup(c *wkhttp.Context) {
 			Data:         groupMap,
 		},
 	}, tx)
-	if err := tx.Commit(); err != nil {
-		tx.RollbackUnlessCommitted()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		m.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
 		return
@@ -300,8 +307,8 @@ func (m *Manager) forbidden(c *wkhttp.Context) {
 		c.ResponseError(errors.New("群不存在！"))
 		return
 	}
-	forbidden, _ := strconv.ParseInt(on, 10, 64)
-	groupModel.Forbidden = int(forbidden)
+	forbidden, _ := strconv.Atoi(on)
+	groupModel.Forbidden = &forbidden
 
 	whitelistUIDs := make([]string, 0)
 	if forbidden == 1 {
@@ -315,7 +322,7 @@ func (m *Manager) forbidden(c *wkhttp.Context) {
 	// 群全员禁言
 	err = m.ctx.IMWhitelistSet(config.ChannelWhitelistReq{
 		ChannelReq: config.ChannelReq{
-			ChannelID:   groupModel.GroupNo,
+			ChannelID:   *groupModel.GroupNo,
 			ChannelType: common.ChannelTypeGroup.Uint8(),
 		},
 		UIDs: whitelistUIDs,
@@ -325,14 +332,16 @@ func (m *Manager) forbidden(c *wkhttp.Context) {
 		c.ResponseError(errors.New(err.Error()))
 		return
 	}
-
-	tx, err := m.ctx.DB().Begin()
-	util.CheckErr(err)
-
+	db, err := m.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
 	err = m.db.UpdateTx(groupModel, tx)
 	if err != nil {
 		tx.Rollback()
-		m.Error("更新群信息失败！", zap.Error(err), zap.String("group_no", groupModel.GroupNo))
+		m.Error("更新群信息失败！", zap.Error(err), zap.String("group_no", *groupModel.GroupNo))
 		c.ResponseError(errors.New("更新群信息失败！"))
 		return
 	}
@@ -357,8 +366,8 @@ func (m *Manager) forbidden(c *wkhttp.Context) {
 		return
 	}
 
-	if err := tx.Commit(); err != nil {
-		tx.RollbackUnlessCommitted()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		m.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
 		return
@@ -406,7 +415,7 @@ func (m *Manager) members(c *wkhttp.Context) {
 	var list []*managerMemberModel
 	var count int64
 	if keyword == "" {
-		list, err = m.managerDB.queryGroupMembers(groupNo, uint64(pageSize), uint64(pageIndex))
+		list, err = m.managerDB.queryGroupMembers(groupNo, pageSize, pageIndex)
 		if err != nil {
 			m.Error("查询群成员错误", zap.Error(err))
 			c.ResponseError(errors.New("查询群成员错误"))
@@ -419,7 +428,7 @@ func (m *Manager) members(c *wkhttp.Context) {
 			return
 		}
 	} else {
-		list, err = m.managerDB.queryGroupMembersWithKeyWord(groupNo, keyword, uint64(pageSize), uint64(pageIndex))
+		list, err = m.managerDB.queryGroupMembersWithKeyWord(groupNo, keyword, pageSize, pageIndex)
 		if err != nil {
 			m.Error("查询群成员错误", zap.Error(err))
 			c.ResponseError(errors.New("查询群成员错误"))
@@ -452,7 +461,7 @@ func (m *Manager) blacklist(c *wkhttp.Context) {
 		c.ResponseError(errors.New("群编号不能为空"))
 		return
 	}
-	list, err := m.managerDB.queryGroupMembersWithStatus(groupNo, int(common.GroupMemberStatusBlacklist), uint64(pageSize), uint64(pageIndex))
+	list, err := m.managerDB.queryGroupMembersWithStatus(groupNo, int(common.GroupMemberStatusBlacklist), pageSize, pageIndex)
 	if err != nil {
 		m.Error("查询群成员错误", zap.Error(err))
 		c.ResponseError(errors.New("查询群成员错误"))
@@ -474,11 +483,11 @@ func (m *Manager) from(list []*managerMemberModel) []*managerMemberResp {
 	result := make([]*managerMemberResp, 0)
 	for _, model := range list {
 		result = append(result, &managerMemberResp{
-			Name:      model.Name,
-			Remark:    model.Remark,
-			Role:      model.Role,
+			Name:      *model.Name,
+			Remark:    *model.Remark,
+			Role:      *model.Role,
 			CreatedAt: model.CreatedAt.String(),
-			UID:       model.UID,
+			UID:       *model.UID,
 		})
 	}
 	return result

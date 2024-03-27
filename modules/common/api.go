@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"gorm.io/gorm/logger"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -25,15 +26,19 @@ import (
 type Common struct {
 	ctx *config.Context
 	log.Log
-	db          *db
+	db          *DB
 	appConfigDB *appConfigDB
 }
 
 // New New
 func New(ctx *config.Context) *Common {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &Common{
 		ctx:         ctx,
-		db:          newDB(ctx.DB()),
+		db:          newDB(db),
 		appConfigDB: newAppConfigDB(ctx),
 		Log:         log.NewTLog("common"),
 	}
@@ -68,7 +73,7 @@ func (cn *Common) Route(r *wkhttp.WKHttp) {
 			lastError error
 		)
 
-		err := cn.db.session.Ping()
+		err := cn.db.db.Exec("show databases").Error
 		if err != nil {
 			cn.Error("db ping error", zap.Error(err))
 			lastError = err
@@ -96,8 +101,8 @@ func (cn *Common) Route(r *wkhttp.WKHttp) {
 		panic(err)
 	}
 	// 设置系统私钥
-	cn.ctx.GetConfig().AppRSAPrivateKey = appConfigM.RSAPrivateKey
-	cn.ctx.GetConfig().AppRSAPubKey = appConfigM.RSAPublicKey
+	cn.ctx.GetConfig().AppRSAPrivateKey = *appConfigM.RSAPrivateKey
+	cn.ctx.GetConfig().AppRSAPubKey = *appConfigM.RSAPublicKey
 }
 
 // 获取后台运行引导视频
@@ -137,7 +142,7 @@ func (cn *Common) updater(c *wkhttp.Context) {
 		"url":       model.DownloadURL,
 		"version":   model.AppVersion,
 		"notes":     model.UpdateDesc,
-		"pub_date":  time.Time(model.UpdatedAt).Format("2006-01-02T15:04:05Z"),
+		"pub_date":  time.Time(*model.UpdatedAt).Format("2006-01-02T15:04:05Z"),
 		"signature": model.Signature,
 	})
 }
@@ -198,7 +203,7 @@ func (cn *Common) chatBgList(c *wkhttp.Context) {
 }
 func (cn *Common) insertAppConfigIfNeed() (*appConfigModel, error) {
 	appConfigM, err := cn.appConfigDB.query()
-	if err != nil {
+	if err != nil && !errors.Is(err, logger.ErrRecordNotFound) {
 		return nil, err
 	}
 	if appConfigM != nil {
@@ -237,13 +242,24 @@ func (cn *Common) insertAppConfigIfNeed() (*appConfigModel, error) {
 	if err != nil {
 		return nil, err
 	}
+	rsaPrivateKey := privateKeyBuff.String()
+	rsaPublicKey := publicKeyBuff.String()
+	SuperToken := util.GenerUUID()
+	Version := 1
+	SuperTokenOn := 0
+	SearchByPhone := 1
+	RevokeSecond := 5 * 60
+	NewUserJoinSystemGroup := 0
 	appConfigM = &appConfigModel{
-		RSAPrivateKey: privateKeyBuff.String(),
-		RSAPublicKey:  publicKeyBuff.String(),
-		Version:       1,
-		SuperToken:    util.GenerUUID(),
-		SuperTokenOn:  0,
-		SearchByPhone: 1,
+		RSAPrivateKey:          &rsaPrivateKey,
+		RSAPublicKey:           &rsaPublicKey,
+		Version:                &Version,
+		SuperToken:             &SuperToken,
+		SuperTokenOn:           &SuperTokenOn,
+		RevokeSecond:           &RevokeSecond,
+		WelcomeMessage:         &cn.ctx.GetConfig().WelcomeMessage,
+		NewUserJoinSystemGroup: &NewUserJoinSystemGroup,
+		SearchByPhone:          &SearchByPhone,
 	}
 	err = cn.appConfigDB.insert(appConfigM)
 	return appConfigM, err
@@ -258,9 +274,9 @@ func (cn *Common) appConfig(c *wkhttp.Context) {
 		return
 	}
 	versionI64, _ := strconv.ParseInt(versionStr, 10, 64)
-	if versionI64 != 0 && int(versionI64) >= appConfigM.Version {
+	if versionI64 != 0 && int(versionI64) >= *appConfigM.Version {
 		c.JSON(http.StatusOK, &appConfigResp{
-			Version: appConfigM.Version,
+			Version: *appConfigM.Version,
 		})
 		return
 	}
@@ -273,14 +289,14 @@ func (cn *Common) appConfig(c *wkhttp.Context) {
 	if cn.ctx.GetConfig().ShortNo.EditOff {
 		shortnoEditOff = 1
 	}
-	if appConfigM.RevokeSecond == 0 {
+	if *appConfigM.RevokeSecond == 0 {
 		revokeSecond = -1
 	} else {
-		revokeSecond = appConfigM.RevokeSecond
+		revokeSecond = *appConfigM.RevokeSecond
 	}
 
 	c.JSON(http.StatusOK, &appConfigResp{
-		Version:        appConfigM.Version,
+		Version:        *appConfigM.Version,
 		PhoneSearchOff: phoneSearchOff,
 		ShortnoEditOff: shortnoEditOff,
 		WebURL:         cn.ctx.GetConfig().External.WebLoginURL,
@@ -364,7 +380,7 @@ func (cn *Common) appVersionList(c *wkhttp.Context) {
 		return
 	}
 	pageIndex, pageSize := c.GetPage()
-	list, err := cn.db.queryAppVersionListWithPage(uint64(pageSize), uint64(pageIndex))
+	list, err := cn.db.queryAppVersionListWithPage(pageSize, pageIndex)
 	if err != nil {
 		cn.Error("查询版本列表错误", zap.Error(err))
 		c.ResponseError(errors.New("查询版本列表错误"))

@@ -14,22 +14,19 @@ var sqlFS embed.FS
 var swaggerContent string
 
 func init() {
-
 	register.AddModule(func(ctx interface{}) register.Module {
-
 		return register.Module{
 			Name: "report",
 			SetupAPI: func() register.APIRouter {
 				return New(ctx.(*config.Context))
 			},
-			SQLDir:  register.NewSQLFS(sqlFS),
+			SQLDir:  register.NewSqlFS(sqlFS),
 			Swagger: swaggerContent,
 		}
 	})
 
 	// 注册举报管理模块
 	register.AddModule(func(ctx interface{}) register.Module {
-
 		return register.Module{
 			Name: "report_manager",
 			SetupAPI: func() register.APIRouter {

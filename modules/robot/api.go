@@ -137,9 +137,9 @@ func (rb *Robot) authRobot() wkhttp.HandlerFunc {
 			})
 			return
 		}
-		appM, err := rb.appService.GetApp(robot.AppID)
+		appM, err := rb.appService.GetApp(*robot.AppID)
 		if err != nil {
-			rb.Error("查询app失败！", zap.Error(err), zap.String("appID", robot.AppID))
+			rb.Error("查询app失败！", zap.Error(err), zap.String("appID", *robot.AppID))
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"msg": "查询app失败！",
 			})
@@ -327,12 +327,12 @@ func (rb *Robot) inlineQuery(c *wkhttp.Context) {
 		c.ResponseError(errors.New("机器人不存在！"))
 		return
 	}
-	if strings.TrimSpace(robotM.AppID) == "" {
+	if strings.TrimSpace(*robotM.AppID) == "" {
 		rb.Error("机器人没有app_id", zap.String("username", req.Username))
 		c.ResponseError(errors.New("机器人没有app_id！"))
 		return
 	}
-	robotID := robotM.RobotID
+	robotID := *robotM.RobotID
 	sid := util.GenerUUID()
 	inlineQuery := &InlineQuery{
 		SID:         sid,
@@ -368,7 +368,7 @@ func (rb *Robot) inlineQuery(c *wkhttp.Context) {
 }
 
 func (rb *Robot) addInlineQuery(robotID string, inlineQuery *InlineQuery) {
-	seq := rb.ctx.GenSeq(fmt.Sprintf("%s%s", common.RobotEventSeqKey, robotID))
+	seq, _ := rb.ctx.GenSeq(fmt.Sprintf("%s%s", common.RobotEventSeqKey, robotID))
 	rb.inlineQueryEventsMapLock.Lock()
 	events := rb.inlineQueryEventsMap[robotID]
 	if events == nil {
@@ -551,18 +551,21 @@ func (rb *Robot) insertSystemRobot() {
 		panic(err)
 	}
 	if m == nil {
-		tx, _ := rb.db.session.Begin()
+		tx := rb.db.db.Begin()
 		defer func() {
 			if err := recover(); err != nil {
 				tx.Rollback()
 				panic(err)
 			}
 		}()
+		Status := int(Enable)
+		Token := util.GenerUUID()
+		Version, _ := rb.ctx.GenSeq(common.RobotSeqKey)
 		err = rb.db.insertTx(&robot{
-			RobotID: robotID,
-			Status:  int(Enable),
-			Token:   util.GenerUUID(),
-			Version: rb.ctx.GenSeq(common.RobotSeqKey),
+			RobotID: &robotID,
+			Status:  &Status,
+			Token:   &Token,
+			Version: &Version,
 		}, tx)
 		if err != nil {
 			tx.Rollback()
@@ -572,10 +575,10 @@ func (rb *Robot) insertSystemRobot() {
 		list := make([]*menu, 0)
 		for _, m := range systemRobotMap {
 			list = append(list, &menu{
-				RobotID: robotID,
-				CMD:     m.CMD,
-				Remark:  m.Remark,
-				Type:    m.Type,
+				RobotID: &robotID,
+				CMD:     &m.CMD,
+				Remark:  &m.Remark,
+				Type:    &m.Type,
 			})
 		}
 		for _, menu := range list {
@@ -586,9 +589,8 @@ func (rb *Robot) insertSystemRobot() {
 				panic(err)
 			}
 		}
-		err = tx.Commit()
-		if err != nil {
-			tx.RollbackUnlessCommitted()
+		if err = tx.Commit().Error; err != nil {
+			tx.Rollback()
 			rb.Error("添加系统机器人事物提交失败", zap.Error(err))
 			panic(err)
 		}
@@ -641,8 +643,8 @@ func (rb *Robot) sync(c *wkhttp.Context) {
 	respRobotIDs := make([]string, 0)
 	for _, reqModel := range reqs {
 		for _, robot := range robotList {
-			if ((len(robotIDs) > 0 && reqModel.RobotID == robot.RobotID) || (len(usernames) > 0 && reqModel.Username == robot.Username)) && reqModel.Version < robot.Version {
-				respRobotIDs = append(respRobotIDs, robot.RobotID)
+			if ((len(robotIDs) > 0 && reqModel.RobotID == *robot.RobotID) || (len(usernames) > 0 && reqModel.Username == *robot.Username)) && reqModel.Version < *robot.Version {
+				respRobotIDs = append(respRobotIDs, *robot.RobotID)
 				break
 			}
 		}
@@ -666,25 +668,25 @@ func (rb *Robot) sync(c *wkhttp.Context) {
 		var placeholder string
 		var inlineOn int
 		for _, robot := range robotList {
-			if robotID == robot.RobotID {
-				version = robot.Version
-				status = robot.Status
+			if robotID == *robot.RobotID {
+				version = *robot.Version
+				status = *robot.Status
 				created_at = robot.CreatedAt.String()
 				updated_at = robot.UpdatedAt.String()
-				username = robot.Username
-				placeholder = robot.Placeholder
-				inlineOn = robot.InlineOn
+				username = *robot.Username
+				placeholder = *robot.Placeholder
+				inlineOn = *robot.InlineOn
 				break
 			}
 		}
 		robotMenus := make([]*menuResp, 0)
 		for _, menu := range menus {
-			if menu.RobotID == robotID {
+			if *menu.RobotID == robotID {
 				robotMenus = append(robotMenus, &menuResp{
 					RobotID:   robotID,
-					CMD:       menu.CMD,
-					Remark:    menu.Remark,
-					Type:      menu.Type,
+					CMD:       *menu.CMD,
+					Remark:    *menu.Remark,
+					Type:      *menu.Type,
 					CreatedAt: menu.CreatedAt.String(),
 					UpdatedAt: menu.UpdatedAt.String(),
 				})

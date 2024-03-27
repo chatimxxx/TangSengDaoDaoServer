@@ -29,7 +29,7 @@ func (u *User) addMaillist(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询登录用户信息错误"))
 		return
 	}
-	tx, _ := u.db.session.Begin()
+	tx := u.db.db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -40,24 +40,24 @@ func (u *User) addMaillist(c *wkhttp.Context) {
 	for _, maillist := range req {
 		zone := maillist.Zone
 		if maillist.Zone == "" && !strings.HasPrefix(maillist.Phone, "00") {
-			zone = loginUser.Zone
+			zone = *loginUser.Zone
 		}
+		Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.MailList)
 		err := u.maillistDB.insertTx(&maillistModel{
-			UID:     loginUID,
-			Name:    maillist.Name,
-			Zone:    zone,
-			Phone:   maillist.Phone,
-			Vercode: fmt.Sprintf("%s@%d", util.GenerUUID(), common.MailList),
+			UID:     &loginUID,
+			Name:    &maillist.Name,
+			Zone:    &zone,
+			Phone:   &maillist.Phone,
+			Vercode: &Vercode,
 		}, tx)
 		if err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			u.Error("添加用户通讯录联系人错误")
 			c.ResponseError(errors.New("添加用户通讯录联系人错误"))
 			return
 		}
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		tx.Rollback()
 		u.Error("数据库事物提交失败", zap.Error(err))
 		c.ResponseError(errors.New("数据库事物提交失败"))
@@ -100,7 +100,7 @@ func (u *User) getMailList(c *wkhttp.Context) {
 		var uid = ""
 		for _, user := range users {
 			if user.Zone == m.Zone && user.Phone == m.Phone {
-				uid = user.UID
+				uid = *user.UID
 				break
 			}
 		}
@@ -109,16 +109,16 @@ func (u *User) getMailList(c *wkhttp.Context) {
 		}
 		var isFriend = 0
 		for _, friend := range friends {
-			if uid != "" && friend.ToUID == uid {
+			if uid != "" && *friend.ToUID == uid {
 				isFriend = 1
 				break
 			}
 		}
 		result = append(result, &mailListResp{
-			Vercode:  m.Vercode,
-			Phone:    m.Phone,
-			Name:     m.Name,
-			Zone:     m.Zone,
+			Vercode:  *m.Vercode,
+			Phone:    *m.Phone,
+			Name:     *m.Name,
+			Zone:     *m.Zone,
 			UID:      uid,
 			IsFriend: isFriend,
 		})

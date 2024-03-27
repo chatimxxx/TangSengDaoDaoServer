@@ -1,48 +1,63 @@
 package common
 
 import (
+	"fmt"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	ldb "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
+	"time"
 )
 
 type appConfigDB struct {
-	session *dbr.Session
-	ctx     *config.Context
+	db  *gorm.DB
+	ctx *config.Context
 }
 
 func newAppConfigDB(ctx *config.Context) *appConfigDB {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &appConfigDB{
-		session: ctx.DB(),
-		ctx:     ctx,
+		db:  db,
+		ctx: ctx,
 	}
 }
 
 func (a *appConfigDB) query() (*appConfigModel, error) {
-	var m *appConfigModel
-	_, err := a.session.Select("*").From("app_config").OrderDesc("created_at").Load(&m)
-	return m, err
+	var m appConfigModel
+	err := a.db.Table("app_config").Order("created_at DESC").Find(&m).Error
+	if err != nil {
+		return nil, err
+	}
+	return &m, err
 }
 
 func (a *appConfigDB) insert(m *appConfigModel) error {
-	_, err := a.session.InsertInto("app_config").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+	err := a.db.Table("app_config").Create(m).Error
 	return err
 }
-func (a *appConfigDB) updateWithMap(configMap map[string]interface{}, id int64) error {
-	_, err := a.session.Update("app_config").SetMap(configMap).Where("id=?", id).Exec()
+func (a *appConfigDB) updateWithMap(RevokeSecond int, WelcomeMessage string, NewUserJoinSystemGroup int, SearchByPhone int, id int64) error {
+	m := appConfigModel{
+		RevokeSecond:           &RevokeSecond,
+		WelcomeMessage:         &WelcomeMessage,
+		NewUserJoinSystemGroup: &NewUserJoinSystemGroup,
+		SearchByPhone:          &SearchByPhone,
+	}
+	err := a.db.Table("app_config").Updates(&m).Where("id=?", id).Error
 	return err
 }
 
 type appConfigModel struct {
-	RSAPrivateKey          string
-	RSAPublicKey           string
-	Version                int
-	SuperToken             string
-	SuperTokenOn           int
-	RevokeSecond           int    // 消息可撤回时长
-	WelcomeMessage         string // 登录欢迎语
-	NewUserJoinSystemGroup int    // 新用户是否加入系统群聊
-	SearchByPhone          int    // 是否可通过手机号搜索
-	ldb.BaseModel
+	RSAPrivateKey          *string
+	RSAPublicKey           *string
+	Version                *int
+	SuperToken             *string
+	SuperTokenOn           *int
+	RevokeSecond           *int    // 消息可撤回时长
+	WelcomeMessage         *string // 登录欢迎语
+	NewUserJoinSystemGroup *int    // 新用户是否加入系统群聊
+	SearchByPhone          *int    // 是否可通过手机号搜索
+	Id                     *int64
+	CreatedAt              *time.Time
+	UpdatedAt              *time.Time
 }

@@ -37,7 +37,7 @@ func NewMySQL(addr string, sqlDir string, migration bool) *dbr.Session {
 	return session
 }
 
-func Migration(sqlDir string, session *dbr.Session) error {
+func Migration(sqlDir string, db *gorm.DB) error {
 	migrations := &FileDirMigrationSource{
 		Dir: sqlDir,
 	}

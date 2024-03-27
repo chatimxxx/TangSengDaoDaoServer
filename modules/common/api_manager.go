@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
@@ -14,16 +15,20 @@ import (
 type Manager struct {
 	ctx *config.Context
 	log.Log
-	db          *db
+	db          *DB
 	appconfigDB *appConfigDB
 }
 
 // NewManager NewManager
 func NewManager(ctx *config.Context) *Manager {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &Manager{
 		ctx:         ctx,
 		Log:         log.NewTLog("commonManager"),
-		db:          newDB(ctx.DB()),
+		db:          newDB(db),
 		appconfigDB: newAppConfigDB(ctx),
 	}
 }
@@ -210,12 +215,7 @@ func (m *Manager) updateConfig(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询应用配置失败！"))
 		return
 	}
-	configMap := map[string]interface{}{}
-	configMap["revoke_second"] = req.RevokeSecond
-	configMap["welcome_message"] = req.WelcomeMessage
-	configMap["new_user_join_system_group"] = req.NewUserJoinSystemGroup
-	configMap["search_by_phone"] = req.SearchByPhone
-	err = m.appconfigDB.updateWithMap(configMap, appConfigM.Id)
+	err = m.appconfigDB.updateWithMap(req.RevokeSecond, req.WelcomeMessage, req.NewUserJoinSystemGroup, req.SearchByPhone, *appConfigM.Id)
 	if err != nil {
 		m.Error("修改app配置信息错误", zap.Error(err))
 		c.ResponseError(errors.New("修改app配置信息错误"))
@@ -240,10 +240,10 @@ func (m *Manager) appconfig(c *wkhttp.Context) {
 	var welcomeMessage = ""
 	var searchByPhone = 1
 	if appconfig != nil {
-		revokeSecond = appconfig.RevokeSecond
-		welcomeMessage = appconfig.WelcomeMessage
-		newUserJoinSystemGroup = appconfig.NewUserJoinSystemGroup
-		searchByPhone = appconfig.SearchByPhone
+		revokeSecond = *appconfig.RevokeSecond
+		welcomeMessage = *appconfig.WelcomeMessage
+		newUserJoinSystemGroup = *appconfig.NewUserJoinSystemGroup
+		searchByPhone = *appconfig.SearchByPhone
 	}
 	if revokeSecond == 0 {
 		revokeSecond = 120

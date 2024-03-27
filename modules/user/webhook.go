@@ -37,7 +37,7 @@ func (u *User) handleOnlineStatus(onlineStatuses []config.OnlineStatus) {
 				continue
 			}
 			if mainDeviceFlagM != nil {
-				mainFlag = mainDeviceFlagM.DeviceFlag
+				mainFlag = *mainDeviceFlagM.DeviceFlag
 			} else {
 				allOffline = true
 				mainFlag = onlineStatus.DeviceFlag
@@ -115,7 +115,7 @@ func (u *User) getFriendUidsAndSetCache(uid string) ([]string, error) {
 			memberObjs := make([]interface{}, 0, len(friendModels))
 			for _, friendModel := range friendModels {
 				memberObjs = append(memberObjs, friendModel.ToUID)
-				members = append(members, friendModel.ToUID)
+				members = append(members, *friendModel.ToUID)
 			}
 			err = u.ctx.GetRedisConn().SAdd(friendKey, memberObjs...)
 			if err != nil {
@@ -139,12 +139,12 @@ func (u *User) getMainDeviceFlag() uint8 {
 			mainDeviceFlagM = deviceFlagM
 			continue
 		}
-		if deviceFlagM.Weight > mainDeviceFlagM.Weight {
+		if *deviceFlagM.Weight > *mainDeviceFlagM.Weight {
 			mainDeviceFlagM = deviceFlagM
 		}
 
 	}
-	return mainDeviceFlagM.DeviceFlag
+	return *mainDeviceFlagM.DeviceFlag
 
 }
 

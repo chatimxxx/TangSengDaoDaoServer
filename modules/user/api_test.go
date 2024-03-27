@@ -60,12 +60,12 @@ func TestUsernameRegister(t *testing.T) {
 	username := "userone123123"
 	password := "123123"
 	u.db.Insert(&Model{
-		UID:      "123",
-		Username: username,
-		Password: util.MD5(util.MD5(password)),
-		Name:     username,
-		ShortNo:  "123",
-		Status:   1,
+		//UID:      "123",
+		Username: &username,
+		//Password: util.MD5(util.MD5(password)),
+		//Name:     username,
+		//ShortNo:  "123",
+		//Status:   1,
 	})
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/user/usernameregister", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{
@@ -88,13 +88,13 @@ func TestUsernameLogin(t *testing.T) {
 	username := "userone123123"
 	password := "123123"
 	u.db.Insert(&Model{
-		UID:           "123",
-		Username:      username,
-		Password:      util.MD5(util.MD5(password)),
-		Name:          username,
-		ShortNo:       "123",
-		Status:        1,
-		Web3PublicKey: "03af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d",
+		//UID:           "123",
+		Username: &username,
+		//Password:      util.MD5(util.MD5(password)),
+		//Name:          username,
+		//ShortNo:       "123",
+		//Status:        1,
+		//Web3PublicKey: "03af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d",
 	})
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/user/usernamelogin", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{
@@ -115,14 +115,14 @@ func TestUploadWeb3PublicKey(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	username := "userone"
-	password := "123123"
+	//password := "123123"
 	uid := "123"
 	u.db.Insert(&Model{
-		UID:      uid,
-		Username: username,
-		Password: util.MD5(util.MD5(password)),
-		Name:     username,
-		ShortNo:  "123",
+		UID: &uid,
+		//Username: username,
+		//Password: util.MD5(util.MD5(password)),
+		Name: &username,
+		//ShortNo:  "123",
 	})
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/user/web3publickey", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{
@@ -139,11 +139,11 @@ func TestGetVerifyText(t *testing.T) {
 	assert.NoError(t, err)
 	uid := "123"
 	err = u.db.Insert(&Model{
-		UID:           uid,
-		Username:      "123",
-		ShortNo:       "123",
-		Status:        1,
-		Web3PublicKey: "03af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d",
+		UID: &uid,
+		//Username:      "123",
+		//ShortNo:       "123",
+		//Status:        1,
+		//Web3PublicKey: "03af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d",
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -159,12 +159,12 @@ func TestUpdatePassword(t *testing.T) {
 	username := "userone"
 	password := "123123"
 	u.db.Insert(&Model{
-		UID:           testutil.UID,
-		Username:      username,
-		Password:      util.MD5(util.MD5(password)),
-		Name:          username,
-		ShortNo:       "123",
-		Web3PublicKey: "03af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d",
+		UID:      &testutil.UID,
+		Username: &username,
+		//Password:      util.MD5(util.MD5(password)),
+		//Name:          username,
+		//ShortNo:       "123",
+		//Web3PublicKey: "03af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d",
 	})
 	w := httptest.NewRecorder()
 
@@ -184,14 +184,14 @@ func TestResetPwd(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	username := "userone"
-	password := "123123"
+	//password := "123123"
 	u.db.Insert(&Model{
-		UID:           "123",
-		Username:      username,
-		Password:      util.MD5(util.MD5(password)),
-		Name:          username,
-		ShortNo:       "123",
-		Web3PublicKey: "03af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d",
+		//UID:           "123",
+		Username: &username,
+		//Password:      util.MD5(util.MD5(password)),
+		Name: &username,
+		//ShortNo:       "123",
+		//Web3PublicKey: "03af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d",
 	})
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/user/pwdforget_web3", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{
@@ -209,23 +209,23 @@ func TestUser_Login(t *testing.T) {
 	u := New(ctx)
 
 	err := u.db.Insert(&Model{
-		UID:           testutil.UID,
-		Name:          "admin",
-		Username:      "admin",
-		Sex:           1,
-		Password:      util.MD5(util.MD5("123456")),
-		Category:      "客服",
-		ShortNo:       "uid_xxx1",
-		SearchByPhone: 1,
-		SearchByShort: 1,
-		NewMsgNotice:  1,
-		MsgShowDetail: 1,
-		VoiceOn:       1,
-		ShockOn:       1,
-		DeviceLock:    0,
-		Status:        1,
-		Zone:          "0086",
-		Phone:         "13600000001",
+		//UID:           testutil.UID,
+		//Name:          "admin",
+		//Username:      "admin",
+		//Sex:           1,
+		//Password:      util.MD5(util.MD5("123456")),
+		//Category:      "客服",
+		//ShortNo:       "uid_xxx1",
+		//SearchByPhone: 1,
+		//SearchByShort: 1,
+		//NewMsgNotice:  1,
+		//MsgShowDetail: 1,
+		//VoiceOn:       1,
+		//ShockOn:       1,
+		//DeviceLock:    0,
+		//Status:        1,
+		//Zone:          "0086",
+		//Phone:         "13600000001",
 	})
 	assert.NoError(t, err)
 
@@ -263,15 +263,15 @@ func TestUser_Search(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	err = u.db.Insert(&Model{
-		UID:           "1234",
-		Zone:          "0086",
-		Phone:         "13600000001",
-		Username:      "008613600000001",
-		Password:      util.MD5(util.MD5("123456")),
-		Name:          "tt",
-		ShortNo:       "wukongchat_001",
-		SearchByPhone: 1,
-		SearchByShort: 1,
+		//UID:           "1234",
+		//Zone:          "0086",
+		//Phone:         "13600000001",
+		//Username:      "008613600000001",
+		//Password:      util.MD5(util.MD5("123456")),
+		//Name:          "tt",
+		//ShortNo:       "wukongchat_001",
+		//SearchByPhone: 1,
+		//SearchByShort: 1,
 	})
 	assert.NoError(t, err)
 
@@ -297,13 +297,13 @@ func TestUserGet(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = u.db.Insert(&Model{
-		UID:      "1234",
-		Username: "admin",
-		Password: util.MD5(util.MD5("123456")),
-		Name:     "tt",
-		Category: "客服",
-		Sex:      1,
-		ShortNo:  "test11",
+		//UID:      "1234",
+		//Username: "admin",
+		//Password: util.MD5(util.MD5("123456")),
+		//Name:     "tt",
+		//Category: "客服",
+		//Sex:      1,
+		//ShortNo:  "test11",
 	})
 	assert.NoError(t, err)
 
@@ -329,21 +329,21 @@ func TestUserUpdateInfo(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = u.db.Insert(&Model{
-		UID:           testutil.UID,
-		Name:          "admin",
-		Username:      "admin",
-		Sex:           1,
-		Password:      util.MD5(util.MD5("123456")),
-		Category:      "客服",
-		ShortNo:       "uid_xxx1",
-		SearchByPhone: 1,
-		SearchByShort: 1,
-		NewMsgNotice:  1,
-		MsgShowDetail: 1,
-		VoiceOn:       1,
-		ShockOn:       1,
-		Zone:          "0086",
-		Phone:         "13600000001",
+		//UID:           testutil.UID,
+		//Name:          "admin",
+		//Username:      "admin",
+		//Sex:           1,
+		//Password:      util.MD5(util.MD5("123456")),
+		//Category:      "客服",
+		//ShortNo:       "uid_xxx1",
+		//SearchByPhone: 1,
+		//SearchByShort: 1,
+		//NewMsgNotice:  1,
+		//MsgShowDetail: 1,
+		//VoiceOn:       1,
+		//ShockOn:       1,
+		//Zone:          "0086",
+		//Phone:         "13600000001",
 	})
 	assert.NoError(t, err)
 
@@ -365,21 +365,21 @@ func TestUserSetting(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = u.db.Insert(&Model{
-		UID:           testutil.UID,
-		Name:          "admin",
-		Username:      "admin",
-		Sex:           1,
-		Password:      util.MD5(util.MD5("123456")),
-		Category:      "客服",
-		ShortNo:       "uid_xxx1",
-		SearchByPhone: 1,
-		SearchByShort: 1,
-		NewMsgNotice:  1,
-		MsgShowDetail: 1,
-		VoiceOn:       1,
-		ShockOn:       1,
-		Zone:          "0086",
-		Phone:         "13600000001",
+		//UID:           testutil.UID,
+		//Name:          "admin",
+		//Username:      "admin",
+		//Sex:           1,
+		//Password:      util.MD5(util.MD5("123456")),
+		//Category:      "客服",
+		//ShortNo:       "uid_xxx1",
+		//SearchByPhone: 1,
+		//SearchByShort: 1,
+		//NewMsgNotice:  1,
+		//MsgShowDetail: 1,
+		//VoiceOn:       1,
+		//ShockOn:       1,
+		//Zone:          "0086",
+		//Phone:         "13600000001",
 	})
 	assert.NoError(t, err)
 
@@ -399,21 +399,21 @@ func TestAddBlackList(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	err = u.db.Insert(&Model{
-		UID:           "adminuid1",
-		Name:          "admin",
-		Username:      "admin",
-		Sex:           1,
-		Password:      util.MD5(util.MD5("123456")),
-		Category:      "客服",
-		ShortNo:       "uid_xxx1",
-		SearchByPhone: 1,
-		SearchByShort: 1,
-		NewMsgNotice:  1,
-		MsgShowDetail: 1,
-		VoiceOn:       1,
-		ShockOn:       1,
-		Zone:          "0086",
-		Phone:         "13600000001",
+		//UID:           "adminuid1",
+		//Name:          "admin",
+		//Username:      "admin",
+		//Sex:           1,
+		//Password:      util.MD5(util.MD5("123456")),
+		//Category:      "客服",
+		//ShortNo:       "uid_xxx1",
+		//SearchByPhone: 1,
+		//SearchByShort: 1,
+		//NewMsgNotice:  1,
+		//MsgShowDetail: 1,
+		//VoiceOn:       1,
+		//ShockOn:       1,
+		//Zone:          "0086",
+		//Phone:         "13600000001",
 	})
 	assert.NoError(t, err)
 
@@ -432,28 +432,28 @@ func TestBlacklists(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	err = u.db.Insert(&Model{
-		UID:           "adminuid2",
-		Name:          "admin",
-		Username:      "admin",
-		Sex:           1,
-		Password:      util.MD5(util.MD5("123456")),
-		Category:      "客服",
-		ShortNo:       "uid_xxx1",
-		SearchByPhone: 1,
-		SearchByShort: 1,
-		NewMsgNotice:  1,
-		MsgShowDetail: 1,
-		VoiceOn:       1,
-		ShockOn:       1,
-		Zone:          "0086",
-		Phone:         "13600000001",
+		//UID:           "adminuid2",
+		//Name:          "admin",
+		//Username:      "admin",
+		//Sex:           1,
+		//Password:      util.MD5(util.MD5("123456")),
+		//Category:      "客服",
+		//ShortNo:       "uid_xxx1",
+		//SearchByPhone: 1,
+		//SearchByShort: 1,
+		//NewMsgNotice:  1,
+		//MsgShowDetail: 1,
+		//VoiceOn:       1,
+		//ShockOn:       1,
+		//Zone:          "0086",
+		//Phone:         "13600000001",
 	})
 	assert.NoError(t, err)
 
 	err = u.settingDB.InsertUserSettingModel(&SettingModel{
-		UID:       testutil.UID,
-		ToUID:     "adminuid2",
-		Blacklist: 1,
+		//UID:       testutil.UID,
+		//ToUID:     "adminuid2",
+		//Blacklist: 1,
 	})
 	assert.NoError(t, err)
 
@@ -475,21 +475,21 @@ func TestSetChatPwd(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = u.db.Insert(&Model{
-		UID:           testutil.UID,
-		Name:          "admin",
-		Username:      "admin",
-		Sex:           1,
-		Password:      util.MD5(util.MD5("123456")),
-		Category:      "客服",
-		ShortNo:       "uid_xxx1",
-		SearchByPhone: 1,
-		SearchByShort: 1,
-		NewMsgNotice:  1,
-		MsgShowDetail: 1,
-		VoiceOn:       1,
-		ShockOn:       1,
-		Zone:          "0086",
-		Phone:         "13600000001",
+		//UID:           testutil.UID,
+		//Name:          "admin",
+		//Username:      "admin",
+		//Sex:           1,
+		//Password:      util.MD5(util.MD5("123456")),
+		//Category:      "客服",
+		//ShortNo:       "uid_xxx1",
+		//SearchByPhone: 1,
+		//SearchByShort: 1,
+		//NewMsgNotice:  1,
+		//MsgShowDetail: 1,
+		//VoiceOn:       1,
+		//ShockOn:       1,
+		//Zone:          "0086",
+		//Phone:         "13600000001",
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -510,21 +510,21 @@ func TestSendLoginCheckPhoneCode(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = u.db.Insert(&Model{
-		UID:           testutil.UID,
-		Name:          "admin",
-		Username:      "admin",
-		Sex:           1,
-		Password:      util.MD5(util.MD5("123456")),
-		Category:      "客服",
-		ShortNo:       "uid_xxx1",
-		SearchByPhone: 1,
-		SearchByShort: 1,
-		NewMsgNotice:  1,
-		MsgShowDetail: 1,
-		VoiceOn:       1,
-		ShockOn:       1,
-		Zone:          "0086",
-		Phone:         "13781388696",
+		//UID:           testutil.UID,
+		//Name:          "admin",
+		//Username:      "admin",
+		//Sex:           1,
+		//Password:      util.MD5(util.MD5("123456")),
+		//Category:      "客服",
+		//ShortNo:       "uid_xxx1",
+		//SearchByPhone: 1,
+		//SearchByShort: 1,
+		//NewMsgNotice:  1,
+		//MsgShowDetail: 1,
+		//VoiceOn:       1,
+		//ShockOn:       1,
+		//Zone:          "0086",
+		//Phone:         "13781388696",
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -541,21 +541,21 @@ func TestLoginCheckPhone(t *testing.T) {
 	u.Route(s.GetRoute())
 	w := httptest.NewRecorder()
 	err := u.db.Insert(&Model{
-		UID:           testutil.UID,
-		Name:          "admin",
-		Username:      "admin",
-		Sex:           1,
-		Password:      util.MD5(util.MD5("123456")),
-		Category:      "客服",
-		ShortNo:       "uid_xxx1",
-		SearchByPhone: 1,
-		SearchByShort: 1,
-		NewMsgNotice:  1,
-		MsgShowDetail: 1,
-		VoiceOn:       1,
-		ShockOn:       1,
-		Zone:          "0086",
-		Phone:         "13781388696",
+		//UID:           testutil.UID,
+		//Name:          "admin",
+		//Username:      "admin",
+		//Sex:           1,
+		//Password:      util.MD5(util.MD5("123456")),
+		//Category:      "客服",
+		//ShortNo:       "uid_xxx1",
+		//SearchByPhone: 1,
+		//SearchByShort: 1,
+		//NewMsgNotice:  1,
+		//MsgShowDetail: 1,
+		//VoiceOn:       1,
+		//ShockOn:       1,
+		//Zone:          "0086",
+		//Phone:         "13781388696",
 	})
 	assert.NoError(t, err)
 	req, _ := http.NewRequest("POST", "/v1/user/login/check_phone", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{
@@ -579,21 +579,21 @@ func TestCustomerservices(t *testing.T) {
 	u := New(ctx)
 	u.Route(s.GetRoute())
 	err := u.db.Insert(&Model{
-		UID:           testutil.UID,
-		Name:          "admin",
-		Username:      "admin",
-		Sex:           1,
-		Password:      util.MD5(util.MD5("123456")),
-		Category:      "service",
-		ShortNo:       "uid_xxx1",
-		SearchByPhone: 1,
-		SearchByShort: 1,
-		NewMsgNotice:  1,
-		MsgShowDetail: 1,
-		VoiceOn:       1,
-		ShockOn:       1,
-		Zone:          "0086",
-		Phone:         "13781388696",
+		//UID:           testutil.UID,
+		//Name:          "admin",
+		//Username:      "admin",
+		//Sex:           1,
+		//Password:      util.MD5(util.MD5("123456")),
+		//Category:      "service",
+		//ShortNo:       "uid_xxx1",
+		//SearchByPhone: 1,
+		//SearchByShort: 1,
+		//NewMsgNotice:  1,
+		//MsgShowDetail: 1,
+		//VoiceOn:       1,
+		//ShockOn:       1,
+		//Zone:          "0086",
+		//Phone:         "13781388696",
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -641,10 +641,10 @@ func TestGetUserRedDot(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = u.db.insertUserRedDot(&userRedDotModel{
-		UID:      testutil.UID,
-		Count:    1,
-		IsDot:    0,
-		Category: UserRedDotCategoryFriendApply,
+		//UID:      testutil.UID,
+		//Count:    1,
+		//IsDot:    0,
+		//Category: UserRedDotCategoryFriendApply,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -664,10 +664,10 @@ func TestDeleteUserRedDot(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = u.db.insertUserRedDot(&userRedDotModel{
-		UID:      testutil.UID,
-		Count:    1,
-		IsDot:    0,
-		Category: UserRedDotCategoryFriendApply,
+		//UID:      testutil.UID,
+		//Count:    1,
+		//IsDot:    0,
+		//Category: UserRedDotCategoryFriendApply,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()

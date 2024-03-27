@@ -1,42 +1,43 @@
 package user
 
 import (
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
+	"time"
 )
 
 // LoginLogDB 登录日志DB
 type LoginLogDB struct {
-	session *dbr.Session
+	db *gorm.DB
 }
 
 // NewLoginLogDB NewDB
-func NewLoginLogDB(session *dbr.Session) *LoginLogDB {
+func NewLoginLogDB(db *gorm.DB) *LoginLogDB {
 	return &LoginLogDB{
-		session: session,
+		db: db,
 	}
 }
 
 // insert 添加登录日志
 func (l *LoginLogDB) insert(m *LoginLogModel) error {
-	_, err := l.session.InsertInto("login_log").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+	err := l.db.Table("login_log").Create(m).Error
 	return err
 }
 
 // queryLastLoginIP 查询最后一次登录日志
 func (l *LoginLogDB) queryLastLoginIP(uid string) (*LoginLogModel, error) {
-	var model *LoginLogModel
-	_, err := l.session.Select("*").From("login_log").Where("uid=?", uid).OrderDir("created_at", false).Limit(1).Load(&model)
+	var m LoginLogModel
+	err := l.db.Table("login_log").Where("uid=?", uid).Order("created_at DESC").Limit(1).Find(&m).Error
 	if err != nil {
 		return nil, err
 	}
-	return model, nil
+	return &m, nil
 }
 
 // LoginLogModel 登录日志
 type LoginLogModel struct {
-	LoginIP string //登录IP
-	UID     string
-	db.BaseModel
+	LoginIP   *string //登录IP
+	UID       *string
+	Id        *int64
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
 }

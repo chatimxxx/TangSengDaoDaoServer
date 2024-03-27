@@ -1,55 +1,61 @@
 package user
 
 import (
+	"fmt"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
+	"time"
 )
 
 type onetimePrekeysDB struct {
-	session *dbr.Session
-	ctx     *config.Context
+	db  *gorm.DB
+	ctx *config.Context
 }
 
 func newOnetimePrekeysDB(ctx *config.Context) *onetimePrekeysDB {
+	d, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &onetimePrekeysDB{
-		session: ctx.DB(),
-		ctx:     ctx,
+		db:  d,
+		ctx: ctx,
 	}
 }
 
-func (o *onetimePrekeysDB) insertTx(m *onetimePrekeysModel, tx *dbr.Tx) error {
-	_, err := tx.InsertInto("signal_onetime_prekeys").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+func (o *onetimePrekeysDB) insertTx(m *onetimePrekeysModel, tx *gorm.DB) error {
+	err := tx.Table("signal_onetime_prekeys").Create(m).Error
 	return err
 }
 
 func (o *onetimePrekeysDB) delete(uid string, keyID int) error {
-	_, err := o.session.DeleteFrom("signal_onetime_prekeys").Where("uid=? and key_id=?", uid, keyID).Exec()
+	err := o.db.Table("signal_onetime_prekeys").Where("uid=? and key_id=?", uid, keyID).Delete(nil).Error
 	return err
 }
 
 func (o *onetimePrekeysDB) deleteWithUID(uid string) error {
-	_, err := o.session.DeleteFrom("signal_onetime_prekeys").Where("uid=?", uid).Exec()
+	err := o.db.Table("signal_onetime_prekeys").Where("uid=?", uid).Delete(nil).Error
 	return err
 }
 
 // 查询用户最小的onetimePreKey
 func (o *onetimePrekeysDB) queryMinWithUID(uid string) (*onetimePrekeysModel, error) {
-	var m *onetimePrekeysModel
-	_, err := o.session.Select("*").From("signal_onetime_prekeys").Where("uid=?", uid).OrderAsc("key_id").Limit(1).Load(&m)
-	return m, err
+	var m onetimePrekeysModel
+	err := o.db.Table("signal_onetime_prekeys").Where("uid=?", uid).Order("key_id ASC").Limit(1).Find(&m).Error
+	return &m, err
 }
 
-func (o *onetimePrekeysDB) queryCount(uid string) (int, error) {
-	var cn int
-	err := o.session.Select("count(*)").From("signal_onetime_prekeys").Where("uid=?", uid).LoadOne(&cn)
+func (o *onetimePrekeysDB) queryCount(uid string) (int64, error) {
+	var cn int64
+	err := o.db.Table("signal_onetime_prekeys").Where("uid=?", uid).Count(&cn).Error
 	return cn, err
 }
 
 type onetimePrekeysModel struct {
-	UID    string
-	KeyID  int
-	Pubkey string
-	db.BaseModel
+	UID       *string
+	KeyID     *int
+	Pubkey    *string
+	Id        *int64
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
 }

@@ -42,12 +42,17 @@ func TestLogin(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
+	UID := "xxx"
+	Username := "superAdmin"
+	Name := "超级管理员"
+	Password := util.MD5(util.MD5("admiN123456"))
+	Role := string(wkhttp.SuperAdmin)
 	err = m.userDB.Insert(&Model{
-		UID:      "xxx",
-		Username: "superAdmin",
-		Name:     "超级管理员",
-		Password: util.MD5(util.MD5("admiN123456")),
-		Role:     string(wkhttp.SuperAdmin),
+		UID:      &UID,
+		Username: &Username,
+		Name:     &Name,
+		Password: &Password,
+		Role:     &Role,
 	})
 	assert.NoError(t, err)
 	req, _ := http.NewRequest("POST", "/v1/manager/login", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{
@@ -67,25 +72,36 @@ func TestBlacklist(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
+	UID := "xxx"
+	Username := "111"
+	Name := "111"
+	Password := util.MD5(util.MD5("111"))
+	err = m.userDB.Insert(&Model{
+		UID:      &UID,
+		Username: &Username,
+		Name:     &Name,
+		Password: &Password,
+	})
+	assert.NoError(t, err)
 
+	UID = "sss"
+	Username = "222"
+	Name = "222"
+	Password = util.MD5(util.MD5("222"))
 	err = m.userDB.Insert(&Model{
-		UID:      "xxx",
-		Username: "111",
-		Name:     "111",
-		Password: util.MD5(util.MD5("111")),
+		UID:      &UID,
+		Username: &Username,
+		Name:     &Name,
+		Password: &Password,
 	})
 	assert.NoError(t, err)
-	err = m.userDB.Insert(&Model{
-		UID:      "sss",
-		Username: "222",
-		Name:     "222",
-		Password: util.MD5(util.MD5("222")),
-	})
-	assert.NoError(t, err)
+	UID = "xxx"
+	ToUID := "sss"
+	Blacklist := 1
 	m.userSettingDB.InsertUserSettingModel(&SettingModel{
-		UID:       "xxx",
-		ToUID:     "sss",
-		Blacklist: 1,
+		UID:       &UID,
+		ToUID:     &ToUID,
+		Blacklist: &Blacklist,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -101,12 +117,15 @@ func TestUpdatePwd(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-
+	UID := testutil.UID
+	Username := "111"
+	Name := "111"
+	Password := util.MD5(util.MD5("111"))
 	err = m.userDB.Insert(&Model{
-		UID:      testutil.UID,
-		Username: "111",
-		Name:     "111",
-		Password: util.MD5(util.MD5("111")),
+		UID:      &UID,
+		Username: &Username,
+		Name:     &Name,
+		Password: &Password,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -126,36 +145,36 @@ func TestUserList(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	err = m.userDB.Insert(&Model{
-		UID:      util.GenerUUID(),
-		ShortNo:  util.GenerUUID(),
-		Phone:    "13897655629",
-		Username: "111",
-		Name:     "111",
-		Status:   1,
-		GiteeUID: "gitee_uid_1",
-		Password: util.MD5(util.MD5("111")),
+		//UID:      util.GenerUUID(),
+		//ShortNo:  util.GenerUUID(),
+		//Phone:    "13897655629",
+		//Username: "111",
+		//Name:     "111",
+		//Status:   1,
+		//GiteeUID: "gitee_uid_1",
+		//Password: util.MD5(util.MD5("111")),
 	})
 	assert.NoError(t, err)
 	err = m.userDB.Insert(&Model{
-		UID:       util.GenerUUID(),
-		ShortNo:   util.GenerUUID(),
-		Phone:     "13567889876",
-		Username:  "222",
-		Name:      "222",
-		Status:    1,
-		GithubUID: "github_uid_1",
-		Password:  util.MD5(util.MD5("222")),
+		//UID:       util.GenerUUID(),
+		//ShortNo:   util.GenerUUID(),
+		//Phone:     "13567889876",
+		//Username:  "222",
+		//Name:      "222",
+		//Status:    1,
+		//GithubUID: "github_uid_1",
+		//Password:  util.MD5(util.MD5("222")),
 	})
 	assert.NoError(t, err)
 	err = m.userDB.Insert(&Model{
-		UID:      util.GenerUUID(),
-		ShortNo:  util.GenerUUID(),
-		Phone:    "13567987658",
-		Username: "333",
-		Name:     "333",
-		Status:   1,
-		WXOpenid: "wx_open_id_1",
-		Password: util.MD5(util.MD5("333")),
+		//UID:      util.GenerUUID(),
+		//ShortNo:  util.GenerUUID(),
+		//Phone:    "13567987658",
+		//Username: "333",
+		//Name:     "333",
+		//Status:   1,
+		//WXOpenid: "wx_open_id_1",
+		//Password: util.MD5(util.MD5("333")),
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -173,12 +192,12 @@ func TestUserDisablelist(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = m.userDB.Insert(&Model{
-		UID:      testutil.UID,
-		Phone:    "13897655629",
-		Username: "111",
-		Name:     "111",
-		Status:   0,
-		Password: util.MD5(util.MD5("111")),
+		//UID:      testutil.UID,
+		//Phone:    "13897655629",
+		//Username: "111",
+		//Name:     "111",
+		//Status:   0,
+		//Password: util.MD5(util.MD5("111")),
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -212,19 +231,19 @@ func TestGetAdminUser(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	err = m.userDB.Insert(&Model{
-		UID:      "uid1",
-		Name:     "管理员1",
-		Role:     "admin",
-		Username: "admin",
-		ShortNo:  "123",
+		//UID:      "uid1",
+		//Name:     "管理员1",
+		//Role:     "admin",
+		//Username: "admin",
+		//ShortNo:  "123",
 	})
 	assert.NoError(t, err)
 	err = m.userDB.Insert(&Model{
-		UID:      "uid2",
-		Name:     "管理员2",
-		Role:     "admin",
-		Username: "admin2",
-		ShortNo:  "321",
+		//UID:      "uid2",
+		//Name:     "管理员2",
+		//Role:     "admin",
+		//Username: "admin2",
+		//ShortNo:  "321",
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -243,10 +262,10 @@ func TestDeleteAdminUser(t *testing.T) {
 	assert.NoError(t, err)
 	uid := "uid1"
 	err = m.userDB.Insert(&Model{
-		UID:      uid,
-		Name:     "管理员1",
-		Role:     "admin",
-		Username: "admin",
+		//UID:      uid,
+		//Name:     "管理员1",
+		//Role:     "admin",
+		//Username: "admin",
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()

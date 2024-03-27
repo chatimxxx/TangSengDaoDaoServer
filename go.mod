@@ -10,7 +10,7 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.62.487
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.7+incompatible
 	github.com/apistd/uni-go-sdk v0.0.2
-	github.com/chatimxxx/TangSengDaoDaoServerLib v1.0.4
+	github.com/chatimxxx/TangSengDaoDaoServerLib v1.0.0-gorm
 	github.com/disintegration/imaging v1.6.2
 	github.com/eapache/queue v1.1.0
 	github.com/ethereum/go-ethereum v1.12.2
@@ -41,6 +41,7 @@ require (
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/go-playground/assert.v1 v1.2.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	gorm.io/gorm v1.25.8
 )
 
 require (
@@ -99,6 +100,8 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/uint256 v1.2.3 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -163,6 +166,8 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/driver/mysql v1.5.6 // indirect
+	gorm.io/driver/sqlite v1.5.5 // indirect
 )
 
 //replace github.com/chatimxxx/TangSengDaoDaoServerLib => /home/code/go/src/chat_im/TangSengDaoDaoServerLib

@@ -31,16 +31,16 @@ func (e *Event) registerHandlers() {
 }
 
 func (e *Event) handleEvent(model *Model) {
-	handler := handlerMap[model.Event]
+	handler := handlerMap[*model.Event]
 	if handler == nil {
-		listeners := e.ctx.GetEventListeners(model.Event)
+		listeners := e.ctx.GetEventListeners(*model.Event)
 		if listeners == nil {
-			e.Error("不支持的事件!", zap.String("event", model.Event))
+			e.Error("不支持的事件!", zap.String("event", *model.Event))
 			return
 		}
 		for _, listener := range listeners {
-			listener([]byte(model.Data), func(err error) {
-				e.updateEventStatus(err, model.VersionLock, model.Id)
+			listener([]byte(*model.Data), func(err error) {
+				e.updateEventStatus(err, *model.VersionLock, *model.Id)
 			})
 		}
 		return
@@ -56,51 +56,49 @@ func (e *Event) handleGroupCreateEvent(model *Model) {
 		JobFunc: func(id int64, data interface{}) {
 			var model = data.(*Model)
 			var req *config.MsgGroupCreateReq
-			err := util.ReadJsonByByte([]byte(model.Data), &req)
+			err := util.ReadJsonByByte([]byte(*model.Data), &req)
 			if err != nil {
-				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", model.Data))
+				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", *model.Data))
 				return
 			}
 			err = e.ctx.SendGroupCreate(req)
-			e.updateEventStatus(err, model.VersionLock, model.Id)
+			e.updateEventStatus(err, *model.VersionLock, *model.Id)
 		},
 	}
 }
 
 // 处理群聊无法添加注销账号事件
 func (e *Event) handleGroupUnableAddDestroyAccount(model *Model) {
-
 	e.ctx.EventPool.Work <- &pool.Job{
 		Data: model,
 		JobFunc: func(id int64, data interface{}) {
 			var model = data.(*Model)
 			var req *config.MsgGroupCreateReq
-			err := util.ReadJsonByByte([]byte(model.Data), &req)
+			err := util.ReadJsonByByte([]byte(*model.Data), &req)
 			if err != nil {
-				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", model.Data))
+				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", *model.Data))
 				return
 			}
 			err = e.ctx.SendUnableAddDestoryAccountInGroup(req)
-			e.updateEventStatus(err, model.VersionLock, model.Id)
+			e.updateEventStatus(err, *model.VersionLock, *model.Id)
 		},
 	}
 }
 
 // 处理群更新事件
 func (e *Event) handleGroupUpdateEvent(model *Model) {
-
 	e.ctx.EventPool.Work <- &pool.Job{
 		Data: model,
 		JobFunc: func(id int64, data interface{}) {
 			var model = data.(*Model)
 			var req *config.MsgGroupUpdateReq
-			err := util.ReadJsonByByte([]byte(model.Data), &req)
+			err := util.ReadJsonByByte([]byte(*model.Data), &req)
 			if err != nil {
-				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", model.Data))
+				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", *model.Data))
 				return
 			}
 			err = e.ctx.SendGroupUpdate(req)
-			e.updateEventStatus(err, model.VersionLock, model.Id)
+			e.updateEventStatus(err, *model.VersionLock, *model.Id)
 			err = e.ctx.SendChannelUpdateToGroup(req.GroupNo)
 			if err != nil {
 				e.Error("发送频道更新cmd失败！", zap.Error(err))
@@ -117,32 +115,31 @@ func (e *Event) handleGroupUpdateEvent(model *Model) {
 // 		JobFunc: func(id int64, data interface{}) {
 // 			var model = data.(*Model)
 // 			var req *config.MsgGroupMemberAddReq
-// 			err := util.ReadJsonByByte([]byte(model.Data), &req)
+// 			err := util.ReadJsonByByte([]byte(*model.Data), &req)
 // 			if err != nil {
-// 				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", model.Data))
+// 				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", *model.Data))
 // 				return
 // 			}
 // 			err = e.ctx.SendGroupMemberAdd(req)
-// 			e.updateEventStatus(err, model.VersionLock, model.Id)
+// 			e.updateEventStatus(err, *model.VersionLock, *model.Id)
 // 		},
 // 	}
 // }
 
 // 处理群成员移除事件
 func (e *Event) handleGroupMemberRemoveEvent(model *Model) {
-
 	e.ctx.EventPool.Work <- &pool.Job{
 		Data: model,
 		JobFunc: func(id int64, data interface{}) {
 			var model = data.(*Model)
 			var req *config.MsgGroupMemberRemoveReq
-			err := util.ReadJsonByByte([]byte(model.Data), &req)
+			err := util.ReadJsonByByte([]byte(*model.Data), &req)
 			if err != nil {
-				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", model.Data))
+				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", *model.Data))
 				return
 			}
 			err = e.ctx.SendGroupMemberRemove(req)
-			e.updateEventStatus(err, model.VersionLock, model.Id)
+			e.updateEventStatus(err, *model.VersionLock, *model.Id)
 		},
 	}
 }
@@ -155,9 +152,9 @@ func (e *Event) handleGroupAvatarUpdateEvent(model *Model) {
 		JobFunc: func(id int64, data interface{}) {
 			var model = data.(*Model)
 			var req *config.CMDGroupAvatarUpdateReq
-			err := util.ReadJsonByByte([]byte(model.Data), &req)
+			err := util.ReadJsonByByte([]byte(*model.Data), &req)
 			if err != nil {
-				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", model.Data))
+				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", *model.Data))
 				return
 			}
 			// 组合群头像
@@ -187,7 +184,7 @@ func (e *Event) handleGroupAvatarUpdateEvent(model *Model) {
 				e.Error("发送群头像更新命令失败！", zap.String("groupNo", req.GroupNo), zap.Any("members", req.Members), zap.Error(err))
 				return
 			}
-			e.updateEventStatus(err, model.VersionLock, model.Id)
+			e.updateEventStatus(err, *model.VersionLock, *model.Id)
 		},
 	}
 }
@@ -199,13 +196,13 @@ func (e *Event) handleGroupMemberScanJoin(model *Model) {
 		JobFunc: func(id int64, data interface{}) {
 			var model = data.(*Model)
 			var req config.MsgGroupMemberScanJoin
-			err := util.ReadJsonByByte([]byte(model.Data), &req)
+			err := util.ReadJsonByByte([]byte(*model.Data), &req)
 			if err != nil {
-				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", model.Data))
+				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", *model.Data))
 				return
 			}
 			err = e.ctx.SendGroupMemberScanJoin(req)
-			e.updateEventStatus(err, model.VersionLock, model.Id)
+			e.updateEventStatus(err, *model.VersionLock, *model.Id)
 		},
 	}
 }
@@ -217,13 +214,13 @@ func (e *Event) handleGroupTransferGrouper(model *Model) {
 		JobFunc: func(id int64, data interface{}) {
 			var model = data.(*Model)
 			var req config.MsgGroupTransferGrouper
-			err := util.ReadJsonByByte([]byte(model.Data), &req)
+			err := util.ReadJsonByByte([]byte(*model.Data), &req)
 			if err != nil {
-				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", model.Data))
+				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", *model.Data))
 				return
 			}
 			err = e.ctx.SendGroupTransferGrouper(req)
-			e.updateEventStatus(err, model.VersionLock, model.Id)
+			e.updateEventStatus(err, *model.VersionLock, *model.Id)
 			err = e.ctx.SendGroupMemberUpdate(req.GroupNo)
 			if err != nil {
 				e.Error("发送群成员更新cmd失败！", zap.Error(err))
@@ -239,13 +236,13 @@ func (e *Event) handleGroupMemberInviteRequest(model *Model) {
 		JobFunc: func(id int64, data interface{}) {
 			var model = data.(*Model)
 			var req config.MsgGroupMemberInviteReq
-			err := util.ReadJsonByByte([]byte(model.Data), &req)
+			err := util.ReadJsonByByte([]byte(*model.Data), &req)
 			if err != nil {
-				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", model.Data))
+				e.Error("解析JSON失败！", zap.Error(err), zap.String("data", *model.Data))
 				return
 			}
 			err = e.ctx.SendGroupMemberInviteReq(req)
-			e.updateEventStatus(err, model.VersionLock, model.Id)
+			e.updateEventStatus(err, *model.VersionLock, *model.Id)
 		},
 	}
 }

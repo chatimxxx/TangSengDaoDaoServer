@@ -19,7 +19,7 @@ func init() {
 
 				return wk
 			},
-			SQLDir: register.NewSQLFS(sqlFS),
+			SQLDir: register.NewSqlFS(sqlFS),
 			Start: func() error {
 				return wk.Start()
 			},

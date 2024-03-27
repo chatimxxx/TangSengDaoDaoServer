@@ -33,13 +33,17 @@ type Friend struct {
 
 // NewFriend 创建
 func NewFriend(ctx *config.Context) *Friend {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	f := &Friend{
 		ctx:           ctx,
 		Log:           log.NewTLog("Friend"),
 		userDB:        NewDB(ctx),
 		db:            newFriendDB(ctx),
 		onlineService: NewOnlineService(ctx),
-		settingDB:     NewSettingDB(ctx.DB()),
+		settingDB:     NewSettingDB(db),
 		userService:   NewService(ctx),
 	}
 	f.ctx.AddEventListener(event.FriendSure, f.handleFriendSure)
@@ -81,11 +85,12 @@ func (f *Friend) refuseApply(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询申请记录错误"))
 		return
 	}
-	if apply == nil || apply.UID != loginUID {
+	if apply == nil || *apply.UID != loginUID {
 		c.ResponseError(errors.New("申请记录不存在"))
 		return
 	}
-	apply.Status = 2
+	Status := 2
+	apply.Status = &Status
 	err = f.db.updateApply(apply)
 	if err != nil {
 		f.Error("修改申请记录错误", zap.Error(err))
@@ -119,7 +124,7 @@ func (f *Friend) apply(c *wkhttp.Context) {
 	size := c.Query("page_size")
 	pageIndex, _ := strconv.Atoi(page)
 	pageSize, _ := strconv.Atoi(size)
-	applys, err := f.db.queryApplysWithPage(loginUID, uint64(pageSize), uint64(pageIndex))
+	applys, err := f.db.queryApplysWithPage(loginUID, pageSize, pageIndex)
 	if err != nil {
 		f.Error("查询好友申请列表错误", zap.Error(err))
 		c.ResponseError(errors.New("查询好友申请列表错误"))
@@ -129,7 +134,7 @@ func (f *Friend) apply(c *wkhttp.Context) {
 	if len(applys) > 0 {
 		uids := make([]string, 0)
 		for _, apply := range applys {
-			uids = append(uids, apply.ToUID)
+			uids = append(uids, *apply.ToUID)
 		}
 		users, err := f.userService.GetUsers(uids)
 		if err != nil {
@@ -144,19 +149,19 @@ func (f *Friend) apply(c *wkhttp.Context) {
 		for _, apply := range applys {
 			name := ""
 			for _, user := range users {
-				if user.UID == apply.ToUID {
+				if user.UID == *apply.ToUID {
 					name = user.Name
 					break
 				}
 			}
 			list = append(list, &friendApplyResp{
-				Id:        apply.Id,
-				UID:       apply.UID,
-				ToUID:     apply.ToUID,
+				Id:        *apply.Id,
+				UID:       *apply.UID,
+				ToUID:     *apply.ToUID,
 				ToName:    name,
-				Remark:    apply.Remark,
-				Status:    apply.Status,
-				Token:     apply.Token,
+				Remark:    *apply.Remark,
+				Status:    *apply.Status,
+				Token:     *apply.Token,
 				CreatedAt: apply.CreatedAt.String(),
 			})
 		}
@@ -172,21 +177,24 @@ func (f *Friend) delete(c *wkhttp.Context) {
 		c.ResponseError(errors.New("用户uid不能为空"))
 		return
 	}
-	tx, err := f.ctx.DB().Begin()
-	util.CheckErr(err)
-
-	version := f.ctx.GenSeq(common.FriendSeqKey)
+	db, err := f.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
+	version, _ := f.ctx.GenSeq(common.FriendSeqKey)
 	// err = f.db.updateRelationshipTx(loginUID, uid, 1, 1, "", version, tx) // 不能删除sourceVercode 如果删除了 已有会话发起加好友会提示验证码不为空
 	err = f.db.updateRelationship2Tx(loginUID, uid, 1, 1, version, tx)
 	if err != nil {
-		util.CheckErr(tx.Rollback())
+		tx.Rollback()
 		f.Error("删除好友错误", zap.Error(err))
 		c.ResponseError(errors.New("删除好友错误"))
 		return
 	}
 	err = f.db.updateAloneTx(uid, loginUID, 1, tx)
 	if err != nil {
-		util.CheckErr(tx.Rollback())
+		tx.Rollback()
 		f.Error("修改好友单项关系错误", zap.Error(err))
 		c.ResponseError(errors.New("修改好友单项关系错误"))
 		return
@@ -213,16 +221,26 @@ func (f *Friend) delete(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询用户好友设置错误"))
 		return
 	}
+
+	ChatPwdOn := 0
+	Top := 0
+	Mute := 0
+	Receipt := 1
+	Screenshot := 1
+	RevokeRemind := 0
+	Remark := ""
+	Flame := 0
+	FlameSecond := 0
 	if userSetting != nil {
-		userSetting.ChatPwdOn = 0
-		userSetting.Top = 0
-		userSetting.Mute = 0
-		userSetting.Receipt = 1
-		userSetting.Screenshot = 1
-		userSetting.RevokeRemind = 0
-		userSetting.Remark = ""
-		userSetting.Flame = 0
-		userSetting.FlameSecond = 0
+		userSetting.ChatPwdOn = &ChatPwdOn
+		userSetting.Top = &Top
+		userSetting.Mute = &Mute
+		userSetting.Receipt = &Receipt
+		userSetting.Screenshot = &Screenshot
+		userSetting.RevokeRemind = &RevokeRemind
+		userSetting.Remark = &Remark
+		userSetting.Flame = &Flame
+		userSetting.FlameSecond = &FlameSecond
 		err := f.settingDB.updateUserSettingModelWithToUIDTx(userSetting, loginUID, uid, tx)
 		if err != nil {
 			tx.Rollback()
@@ -231,8 +249,8 @@ func (f *Friend) delete(c *wkhttp.Context) {
 			return
 		}
 	}
-	if err := tx.Commit(); err != nil {
-		tx.RollbackUnlessCommitted()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		f.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
 		return
@@ -304,7 +322,7 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询用户信息失败！"))
 		return
 	}
-	if toUser == nil || toUser.IsDestroy == 1 {
+	if toUser == nil || *toUser.IsDestroy == 1 {
 		f.Error("接收好友请求的用户不存在！", zap.String("to_uid", req.ToUID))
 		c.ResponseError(errors.New("接收好友请求的用户不存在！"))
 		return
@@ -321,12 +339,12 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 			c.ResponseError(errors.New("好友信息不存在"))
 			return
 		}
-		if friend.SourceVercode == "" {
+		if *friend.SourceVercode == "" {
 			f.Error("验证码不能为空", zap.String("to_uid", req.ToUID))
 			c.ResponseError(errors.New("验证码不能为空"))
 			return
 		}
-		req.Vercode = friend.SourceVercode
+		req.Vercode = *friend.SourceVercode
 	}
 
 	//验证code是否有效
@@ -338,7 +356,7 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 	// 设置token
 	token := util.GenerUUID()
 
-	err = f.ctx.Cache().SetAndExpire(f.ctx.GetConfig().Cache.FriendApplyTokenCachePrefix+token+toUser.UID, util.ToJson(map[string]interface{}{
+	err = f.ctx.Cache().SetAndExpire(f.ctx.GetConfig().Cache.FriendApplyTokenCachePrefix+token+*toUser.UID, util.ToJson(map[string]interface{}{
 		"from_uid": fromUID,
 		"vercode":  req.Vercode,
 		"remark":   req.Remark,
@@ -362,7 +380,12 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询用户通讯录红点信息错误"))
 		return
 	}
-	tx, _ := f.ctx.DB().Begin()
+	db, err := f.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -370,13 +393,14 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 		}
 	}()
 	isAddCount := false
+	Status := 0
 	if apply == nil {
 		err = f.db.insertApplyTx(&FriendApplyModel{
-			Status: 0,
-			UID:    req.ToUID,
-			ToUID:  fromUID,
-			Remark: req.Remark,
-			Token:  token,
+			Status: &Status,
+			UID:    &req.ToUID,
+			ToUID:  &fromUID,
+			Remark: &req.Remark,
+			Token:  &token,
 		}, tx)
 		if err != nil {
 			tx.Rollback()
@@ -385,9 +409,9 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 			return
 		}
 	} else {
-		if apply.Status != 0 {
+		if *apply.Status != 0 {
 			isAddCount = true
-			apply.Status = 0
+			apply.Status = &Status
 			err = f.db.updateApplyTx(apply, tx)
 			if err != nil {
 				tx.Rollback()
@@ -400,11 +424,14 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 	}
 	// 新增红点
 	if userRedDot == nil {
+		Count := 1
+		IsDot := 0
+		Category := UserRedDotCategoryFriendApply
 		err = f.userDB.insertUserRedDotTx(&userRedDotModel{
-			UID:      req.ToUID,
-			Count:    1,
-			IsDot:    0,
-			Category: UserRedDotCategoryFriendApply,
+			UID:      &req.ToUID,
+			Count:    &Count,
+			IsDot:    &IsDot,
+			Category: &Category,
 		}, tx)
 		if err != nil {
 			tx.Rollback()
@@ -413,8 +440,8 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 			return
 		}
 	} else {
-		if isAddCount || userRedDot.Count == 0 {
-			userRedDot.Count++
+		if isAddCount || *userRedDot.Count == 0 {
+			*userRedDot.Count++
 			err = f.userDB.updateUserRedDotTx(userRedDot, tx)
 			if err != nil {
 				tx.Rollback()
@@ -425,7 +452,7 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 		}
 
 	}
-	if err = tx.Commit(); err != nil {
+	if err = tx.Commit().Error; err != nil {
 		tx.Rollback()
 		f.Error("提交事物错误", zap.Error(err))
 		c.ResponseError(errors.New("提交事物错误"))
@@ -434,7 +461,7 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 	// 发送消息
 	err = f.ctx.SendCMD(config.MsgCMDReq{
 		CMD:         common.CMDFriendRequest,
-		ChannelID:   toUser.UID,
+		ChannelID:   *toUser.UID,
 		ChannelType: common.ChannelTypePerson.Uint8(),
 		Param: map[string]interface{}{
 			"apply_uid":  fromUID,
@@ -486,14 +513,14 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询用户信息失败！"))
 		return
 	}
-	if loginUser == nil || loginUser.IsDestroy == 1 {
+	if loginUser == nil || *loginUser.IsDestroy == 1 {
 		f.Error("当前用户不存在或已注销！", zap.String("uid", loginUID))
 		c.ResponseError(errors.New("当前用户不存在或已注销！"))
 		return
 	}
 
 	applyUID := valueMap["from_uid"].(string)
-	vercode := valueMap["vercode"].(string)
+	SourceVercode := valueMap["vercode"].(string)
 	remark := ""
 	if valueMap["remark"] != nil {
 		remark = valueMap["remark"].(string)
@@ -505,7 +532,7 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询申请人用户信息失败！"))
 		return
 	}
-	if applyUser == nil || applyUser.IsDestroy == 1 {
+	if applyUser == nil || *applyUser.IsDestroy == 1 {
 		f.Error("申请人不存在或已注销！", zap.String("uid", applyUID))
 		c.ResponseError(errors.New("申请人不存在"))
 		return
@@ -515,7 +542,7 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 			remark = fmt.Sprintf("我是%s", applyUser.Name)
 		}
 	}
-	if strings.TrimSpace(applyUID) == "" || strings.TrimSpace(vercode) == "" {
+	if strings.TrimSpace(applyUID) == "" || strings.TrimSpace(SourceVercode) == "" {
 		c.ResponseError(errors.New("好友申请无效或已过期！"))
 		return
 	}
@@ -525,8 +552,8 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 		channelService = channelServiceObj.(chservice.IService)
 	}
 	if channelService != nil {
-		if applyUser.MsgExpireSecond > 0 {
-			err = channelService.CreateOrUpdateMsgAutoDelete(common.GetFakeChannelIDWith(applyUID, loginUID), common.ChannelTypePerson.Uint8(), applyUser.MsgExpireSecond)
+		if *applyUser.MsgExpireSecond > 0 {
+			err = channelService.CreateOrUpdateMsgAutoDelete(common.GetFakeChannelIDWith(applyUID, loginUID), common.ChannelTypePerson.Uint8(), *applyUser.MsgExpireSecond)
 			if err != nil {
 				f.Warn("设置消息自动删除失败", zap.Error(err))
 			}
@@ -540,41 +567,47 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 		return
 	}
 	// 添加好友到数据库
-	tx, _ := f.ctx.DB().Begin()
+	db, err := f.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
 			panic(err)
 		}
 	}()
-	version := f.ctx.GenSeq(common.FriendSeqKey)
+	version, _ := f.ctx.GenSeq(common.FriendSeqKey)
 	if applyFriendModel == nil {
 		// 验证code
-		err = source.CheckSource(vercode)
+		err = source.CheckSource(SourceVercode)
 		if err != nil {
 			c.ResponseError(err)
 			return
 		}
-
-		util.CheckErr(err)
+		Initiator := 0
+		IsAlone := 0
+		Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.Friend)
 		err = f.db.InsertTx(&FriendModel{
-			UID:           loginUID,
-			ToUID:         applyUID,
-			Version:       version,
-			Initiator:     0,
-			IsAlone:       0,
-			Vercode:       fmt.Sprintf("%s@%d", util.GenerUUID(), common.Friend),
-			SourceVercode: vercode,
+			UID:           &loginUID,
+			ToUID:         &applyUID,
+			Version:       &version,
+			Initiator:     &Initiator,
+			IsAlone:       &IsAlone,
+			Vercode:       &Vercode,
+			SourceVercode: &SourceVercode,
 		}, tx)
 		if err != nil {
-			util.CheckErr(tx.Rollback())
+			tx.Rollback()
 			c.ResponseError(errors.New("添加好友失败！"))
 			return
 		}
 	} else {
-		err = f.db.updateRelationshipTx(loginUID, applyUID, 0, 0, vercode, version, tx)
+		err = f.db.updateRelationshipTx(loginUID, applyUID, 0, 0, SourceVercode, version, tx)
 		if err != nil {
-			util.CheckErr(tx.Rollback())
+			tx.Rollback()
 			c.ResponseError(errors.New("修改好友关系失败"))
 			return
 		}
@@ -583,30 +616,33 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 	loginFriendModel, err := f.db.queryWithUID(applyUID, loginUID)
 	//loginIsFriend, err := f.db.IsFriend(applyUID, loginUID)
 	if err != nil {
-		util.CheckErr(tx.Rollback())
+		tx.Rollback()
 		f.Error("查询被添加者是否是好友失败！", zap.Error(err), zap.String("uid", loginUID), zap.String("toUid", applyUID))
 		c.ResponseError(errors.New("查询被添加者是否是好友失败！"))
 		return
 	}
 	if loginFriendModel == nil {
+		Initiator := 1
+		IsAlone := 0
+		Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.Friend)
 		err = f.db.InsertTx(&FriendModel{
-			UID:           applyUID,
-			ToUID:         loginUID,
-			Version:       version,
-			Initiator:     1,
-			IsAlone:       0,
-			Vercode:       fmt.Sprintf("%s@%d", util.GenerUUID(), common.Friend),
-			SourceVercode: vercode,
+			UID:           &applyUID,
+			ToUID:         &loginUID,
+			Version:       &version,
+			Initiator:     &Initiator,
+			IsAlone:       &IsAlone,
+			Vercode:       &Vercode,
+			SourceVercode: &SourceVercode,
 		}, tx)
 		if err != nil {
-			util.CheckErr(tx.Rollback())
+			tx.Rollback()
 			c.ResponseError(errors.New("添加好友失败！"))
 			return
 		}
 	} else {
-		err = f.db.updateRelationshipTx(applyUID, loginUID, 0, 0, vercode, version, tx)
+		err = f.db.updateRelationshipTx(applyUID, loginUID, 0, 0, SourceVercode, version, tx)
 		if err != nil {
-			util.CheckErr(tx.Rollback())
+			tx.Rollback()
 			c.ResponseError(errors.New("修改好友关系失败"))
 			return
 		}
@@ -635,7 +671,8 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 		return
 	}
 	if apply != nil {
-		apply.Status = 1
+		Status := 1
+		apply.Status = &Status
 		err = f.db.updateApplyTx(apply, tx)
 		if err != nil {
 			f.Error("修改好友申请记录错误", zap.Error(err))
@@ -644,7 +681,7 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 			return
 		}
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		f.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
 		return
@@ -718,7 +755,7 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 // 同步好友
 func (f *Friend) friendSync(c *wkhttp.Context) {
 	uid := c.MustGet("uid").(string)
-	limit, _ := strconv.ParseUint(c.Query("limit"), 10, 64)
+	limit, _ := strconv.Atoi(c.Query("limit"))
 	if limit <= 0 {
 		limit = 1000
 	}
@@ -742,7 +779,7 @@ func (f *Friend) friendSync(c *wkhttp.Context) {
 	friendUIDs := make([]string, 0, len(friends))
 	if len(friends) > 0 {
 		for _, f := range friends {
-			friendUIDs = append(friendUIDs, f.ToUID)
+			friendUIDs = append(friendUIDs, *f.ToUID)
 		}
 	}
 	userDetails, err := f.userService.GetUserDetails(friendUIDs, c.GetLoginUID())
@@ -761,10 +798,10 @@ func (f *Friend) friendSync(c *wkhttp.Context) {
 	if len(friends) > 0 {
 		for _, f := range friends {
 			resp := &friendResp{}
-			resp.IsDeleted = f.IsDeleted
-			resp.Version = f.Version
-			resp.Vercode = f.Vercode
-			userDetail := userDetailMap[f.ToUID]
+			resp.IsDeleted = *f.IsDeleted
+			resp.Version = *f.Version
+			resp.Vercode = *f.Vercode
+			userDetail := userDetailMap[*f.ToUID]
 			if userDetail != nil {
 				resp.UserDetailResp = *userDetail
 			}
@@ -788,7 +825,7 @@ func (f *Friend) friendSearch(c *wkhttp.Context) {
 		for _, f := range friends {
 			resp := &friendResp{}
 			blacklist := 1
-			if f.Blacklist == 1 {
+			if *f.Blacklist == 1 {
 				blacklist = 2
 			}
 			resp.From(f, blacklist, 0)
@@ -819,9 +856,9 @@ func (f *Friend) remark(c *wkhttp.Context) {
 	}
 	if settingM == nil {
 		settingM = newDefaultSettingModel()
-		settingM.UID = loginUID
-		settingM.ToUID = req.UID
-		settingM.Remark = req.Remark
+		settingM.UID = &loginUID
+		settingM.ToUID = &req.UID
+		settingM.Remark = &req.Remark
 		err = f.settingDB.InsertUserSettingModel(settingM)
 		if err != nil {
 			f.Error("添加用户设置失败！", zap.Error(err))
@@ -829,7 +866,7 @@ func (f *Friend) remark(c *wkhttp.Context) {
 			return
 		}
 	} else {
-		settingM.Remark = req.Remark
+		settingM.Remark = &req.Remark
 		err = f.settingDB.UpdateUserSettingModel(settingM)
 		if err != nil {
 			f.Error("修改用户备注错误", zap.Error(err))
@@ -919,24 +956,24 @@ type friendApplyResp struct {
 }
 
 func (f *friendResp) From(m *DetailModel, blacklist int, beBlacklist int) {
-	f.UID = m.ToUID
-	f.Name = m.ToName
-	f.Mute = m.Mute
-	f.Top = m.Top
-	f.ShortNo = m.ShortNo
-	f.Code = m.Vercode
-	f.Vercode = m.Vercode
-	f.Remark = m.Remark
-	f.ChatPwdOn = m.ChatPwdOn
+	f.UID = *m.ToUID
+	f.Name = *m.ToName
+	f.Mute = *m.Mute
+	f.Top = *m.Top
+	f.ShortNo = *m.ShortNo
+	f.Code = *m.Vercode
+	f.Vercode = *m.Vercode
+	f.Remark = *m.Remark
+	f.ChatPwdOn = *m.ChatPwdOn
 	f.Status = blacklist
-	f.Receipt = m.Receipt
+	f.Receipt = *m.Receipt
 	f.Follow = 1
-	f.Version = m.Version
-	f.IsDeleted = m.IsDeleted
-	f.Category = m.ToCategory
-	f.Robot = m.Robot
+	f.Version = *m.Version
+	f.IsDeleted = *m.IsDeleted
+	f.Category = *m.ToCategory
+	f.Robot = *m.Robot
 	f.CreatedAt = m.CreatedAt.String()
 	f.UpdatedAt = m.UpdatedAt.String()
-	f.BeDeleted = m.IsAlone
+	f.BeDeleted = *m.IsAlone
 	f.BeBlacklist = beBlacklist
 }

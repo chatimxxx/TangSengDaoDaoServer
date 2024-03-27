@@ -1,44 +1,44 @@
 package app
 
 import (
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
+	"time"
 )
 
 // DB DB
 type DB struct {
-	session *dbr.Session
+	db *gorm.DB
 }
 
-func newDB(session *dbr.Session) *DB {
+func newDB(db *gorm.DB) *DB {
 	return &DB{
-		session: session,
+		db: db,
 	}
 }
 
 func (d *DB) queryWithAppID(appID string) (*model, error) {
 	var m *model
-	_, err := d.session.Select("*").From("app").Where("app_id=?", appID).Load(&m)
+	err := d.db.Table("app").Where("app_id=?", appID).First(&m).Error
 	return m, err
 }
 
 func (d *DB) existWithAppID(appID string) (bool, error) {
-	var count int
-	_, err := d.session.Select("count(*)").From("app").Where("app_id=?", appID).Load(&count)
+	var count int64
+	err := d.db.Table("app").Where("app_id=?", appID).Count(&count).Error
 	return count > 0, err
 }
 
 func (d *DB) insert(m *model) error {
-	_, err := d.session.InsertInto("app").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
-	return err
+	return d.db.Table("app").Create(m).Error
 }
 
 type model struct {
-	AppID   string
-	AppKey  string
-	AppName string
-	AppLogo string
-	Status  int
-	db.BaseModel
+	AppID     *string
+	AppKey    *string
+	AppName   *string
+	AppLogo   *string
+	Status    *int
+	Id        *int64
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
 }

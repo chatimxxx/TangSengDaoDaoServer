@@ -201,7 +201,7 @@ func (w *Workplace) reorderApp(c *wkhttp.Context) {
 		c.ResponseError(common.ErrData)
 		return
 	}
-	tx, _ := w.ctx.DB().Begin()
+	tx := w.ctx.DB().Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -220,8 +220,7 @@ func (w *Workplace) reorderApp(c *wkhttp.Context) {
 		}
 		tempSortNum--
 	}
-	err := tx.Commit()
-	if err != nil {
+	if err := tx.Commit().Error; err != nil {
 		w.Error("数据库事物提交失败", zap.Error(err))
 		c.ResponseError(errors.New("数据库事物提交失败"))
 		tx.Rollback()

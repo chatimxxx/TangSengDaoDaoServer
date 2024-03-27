@@ -1,35 +1,35 @@
 package elastic
 
 import (
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
 )
 
 // DB DB
 type DB struct {
-	session *dbr.Session
+	db *gorm.DB
 }
 
 // NewDB NewDB
-func NewDB(session *dbr.Session) *DB {
+func NewDB(db *gorm.DB) *DB {
 	return &DB{
-		session: session,
+		db: db,
 	}
 }
 
 // Insert Insert
 func (d *DB) Insert(model *IndexerErrorModel) error {
-	_, err := d.session.InsertInto("indexer_error").Columns(util.AttrToUnderscore(model)...).Record(model).Exec()
+	err := d.db.Table("indexer_error").Create(model).Error
 	return err
 }
 
 // IndexerErrorModel IndexerErrorModel
 type IndexerErrorModel struct {
-	Index      string
-	Action     string
-	DocumentID string
-	Body       string
-	Error      string
-	db.BaseModel
+	Index      *string
+	Action     *string
+	DocumentID *string
+	Body       *string
+	Error      *string
+	Id         *int64
+	CreatedAt  *time.Time
+	UpdatedAt  *time.Time
 }

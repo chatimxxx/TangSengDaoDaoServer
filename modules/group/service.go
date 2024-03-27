@@ -2,6 +2,7 @@ package group
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
@@ -73,10 +74,14 @@ type Service struct {
 
 // NewService NewService
 func NewService(ctx *config.Context) IService {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &Service{
 		ctx:       ctx,
 		db:        NewDB(ctx),
-		managerDB: newManagerDB(ctx.DB()),
+		managerDB: newManagerDB(db),
 		Log:       log.NewTLog("groupService"),
 		settingDB: newSettingDB(ctx),
 	}
@@ -98,8 +103,8 @@ func (s *Service) GetCreatedCountWithDate(date string) (int64, error) {
 // AddGroup 添加一个群
 func (s *Service) AddGroup(model *AddGroupReq) error {
 	err := s.db.Insert(&Model{
-		GroupNo: model.GroupNo,
-		Name:    model.Name,
+		GroupNo: &model.GroupNo,
+		Name:    &model.Name,
 	})
 	return err
 }
@@ -131,7 +136,7 @@ func (s *Service) GetGroupWithDateSpace(startDate, endDate string) (map[string]i
 	result := make(map[string]int64)
 	if len(list) > 0 {
 		for _, model := range list {
-			key := util.Toyyyy_MM_dd(time.Time(model.CreatedAt))
+			key := util.Toyyyy_MM_dd(time.Time(*model.CreatedAt))
 			if _, ok := result[key]; ok {
 				//存在某个
 				result[key]++
@@ -202,8 +207,8 @@ func (s *Service) GetGroupDetail(groupNo string, uid string) (*GroupResp, error)
 	groupResp.OnlineCount = onlineCount
 	groupResp.Quit = quit
 	if memberOfMe != nil {
-		groupResp.Role = memberOfMe.Role
-		groupResp.ForbiddenExpirTime = memberOfMe.ForbiddenExpirTime
+		groupResp.Role = *memberOfMe.Role
+		groupResp.ForbiddenExpirTime = *memberOfMe.ForbiddenExpirTime
 	}
 	return groupResp, nil
 }
@@ -241,8 +246,8 @@ func (s *Service) GetUserSupers(uid string) ([]*InfoResp, error) {
 
 func (s *Service) AddMember(model *AddMemberReq) error {
 	err := s.db.InsertMember(&MemberModel{
-		GroupNo: model.GroupNo,
-		UID:     model.MemberUID,
+		GroupNo: &model.GroupNo,
+		UID:     &model.MemberUID,
 	})
 	return err
 }
@@ -363,19 +368,19 @@ type InfoResp struct {
 
 func toInfoResp(m *Model) *InfoResp {
 	return &InfoResp{
-		GroupNo:             m.GroupNo,
-		GroupType:           GroupType(m.GroupType),
-		Name:                m.Name,
-		Notice:              m.Notice,
-		Creator:             m.Creator,
-		Status:              m.Status,
-		Forbidden:           m.Forbidden,
-		Invite:              m.Invite,
-		ForbiddenAddFriend:  m.ForbiddenAddFriend,
-		AllowViewHistoryMsg: m.AllowViewHistoryMsg,
+		GroupNo:             *m.GroupNo,
+		GroupType:           GroupType(*m.GroupType),
+		Name:                *m.Name,
+		Notice:              *m.Notice,
+		Creator:             *m.Creator,
+		Status:              *m.Status,
+		Forbidden:           *m.Forbidden,
+		Invite:              *m.Invite,
+		ForbiddenAddFriend:  *m.ForbiddenAddFriend,
+		AllowViewHistoryMsg: *m.AllowViewHistoryMsg,
 		CreatedAt:           m.CreatedAt.String(),
 		UpdatedAt:           m.UpdatedAt.String(),
-		Version:             m.Version,
+		Version:             *m.Version,
 	}
 }
 
@@ -391,13 +396,13 @@ type MemberResp struct {
 
 func newMemberResp(m *MemberDetailModel) *MemberResp {
 	return &MemberResp{
-		GroupNo: m.GroupNo,
-		UID:     m.UID,
-		Name:    m.Name,
-		Remark:  m.Remark,
-		Role:    m.Role,
-		Version: m.Version,
-		Vercode: m.Vercode,
+		GroupNo: *m.GroupNo,
+		UID:     *m.UID,
+		Name:    *m.Name,
+		Remark:  *m.Remark,
+		Role:    *m.Role,
+		Version: *m.Version,
+		Vercode: *m.Vercode,
 	}
 }
 
@@ -420,19 +425,19 @@ type SettingResp struct {
 
 func toSettingResp(m *Setting) *SettingResp {
 	return &SettingResp{
-		GroupNo:         m.GroupNo,
-		Mute:            m.Mute,
-		Top:             m.Top,
-		ShowNick:        m.ShowNick,
-		Save:            m.Save,
-		ChatPwdOn:       m.ChatPwdOn,
-		Screenshot:      m.Screenshot,
-		RevokeRemind:    m.RevokeRemind,
-		JoinGroupRemind: m.JoinGroupRemind,
-		Receipt:         m.Receipt,
-		Remark:          m.Remark,
-		Version:         m.Version,
-		UID:             m.UID,
+		GroupNo:         *m.GroupNo,
+		Mute:            *m.Mute,
+		Top:             *m.Top,
+		ShowNick:        *m.ShowNick,
+		Save:            *m.Save,
+		ChatPwdOn:       *m.ChatPwdOn,
+		Screenshot:      *m.Screenshot,
+		RevokeRemind:    *m.RevokeRemind,
+		JoinGroupRemind: *m.JoinGroupRemind,
+		Receipt:         *m.Receipt,
+		Remark:          *m.Remark,
+		Version:         *m.Version,
+		UID:             *m.UID,
 	}
 }
 
@@ -471,29 +476,29 @@ type GroupResp struct {
 
 func (g *GroupResp) from(model *DetailModel) *GroupResp {
 	return &GroupResp{
-		GroupNo:             model.GroupNo,
-		GroupType:           GroupType(model.GroupType),
-		Category:            model.Category,
-		Name:                model.Name,
-		Notice:              model.Notice,
-		Mute:                model.Mute,
-		Top:                 model.Top,
-		ShowNick:            model.ShowNick,
-		Save:                model.Save,
-		Remark:              model.Remark,
-		Version:             model.Version,
-		Forbidden:           model.Forbidden,
-		Invite:              model.Invite,
-		ChatPwdOn:           model.ChatPwdOn,
-		Screenshot:          model.Screenshot,
-		RevokeRemind:        model.RevokeRemind,
-		JoinGroupRemind:     model.JoinGroupRemind,
-		ForbiddenAddFriend:  model.ForbiddenAddFriend,
-		Receipt:             model.Receipt,
-		Flame:               model.Flame,
-		FlameSecond:         model.FlameSecond,
-		Status:              model.Status,
-		AllowViewHistoryMsg: model.AllowViewHistoryMsg,
+		GroupNo:             *model.GroupNo,
+		GroupType:           GroupType(*model.GroupType),
+		Category:            *model.Category,
+		Name:                *model.Name,
+		Notice:              *model.Notice,
+		Mute:                *model.Mute,
+		Top:                 *model.Top,
+		ShowNick:            *model.ShowNick,
+		Save:                *model.Save,
+		Remark:              *model.Remark,
+		Version:             *model.Version,
+		Forbidden:           *model.Forbidden,
+		Invite:              *model.Invite,
+		ChatPwdOn:           *model.ChatPwdOn,
+		Screenshot:          *model.Screenshot,
+		RevokeRemind:        *model.RevokeRemind,
+		JoinGroupRemind:     *model.JoinGroupRemind,
+		ForbiddenAddFriend:  *model.ForbiddenAddFriend,
+		Receipt:             *model.Receipt,
+		Flame:               *model.Flame,
+		FlameSecond:         *model.FlameSecond,
+		Status:              *model.Status,
+		AllowViewHistoryMsg: *model.AllowViewHistoryMsg,
 		CreatedAt:           model.CreatedAt.String(),
 		UpdatedAt:           model.UpdatedAt.String(),
 	}

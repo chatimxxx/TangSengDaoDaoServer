@@ -26,14 +26,19 @@ func (m *Message) reminderDone(c *wkhttp.Context) {
 		return
 	}
 	loginUID := c.GetLoginUID()
-	tx, _ := m.ctx.DB().Begin()
+	db, err := m.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			panic(err)
 		}
 	}()
-	err := m.remindersDB.insertDonesTx(ids, loginUID, tx)
+	err = m.remindersDB.insertDonesTx(ids, loginUID, tx)
 	if err != nil {
 		tx.Rollback()
 		m.Error("添加done失败！", zap.Error(err))
@@ -41,7 +46,7 @@ func (m *Message) reminderDone(c *wkhttp.Context) {
 		return
 	}
 	for _, id := range ids {
-		version := m.ctx.GenSeq(common.RemindersKey)
+		version, _ := m.ctx.GenSeq(common.RemindersKey)
 		err = m.remindersDB.updateVersionTx(version, id, tx)
 		if err != nil {
 			tx.Rollback()
@@ -50,8 +55,8 @@ func (m *Message) reminderDone(c *wkhttp.Context) {
 			return
 		}
 	}
-	if err := tx.Commit(); err != nil {
-		tx.RollbackUnlessCommitted()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		m.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
 		return
@@ -74,7 +79,7 @@ func (m *Message) reminderDone(c *wkhttp.Context) {
 func (m *Message) reminderSync(c *wkhttp.Context) {
 	var req struct {
 		Version    int64    `json:"version"`
-		Limit      uint64   `json:"limit"`
+		Limit      int      `json:"limit"`
 		ChannelIDs []string `json:"channel_ids"`
 	}
 	if err := c.BindJSON(&req); err != nil {
@@ -97,7 +102,7 @@ func (m *Message) reminderSync(c *wkhttp.Context) {
 	}
 	reminderResps := make([]*reminderResp, 0, len(reminders))
 	for _, reminder := range reminders {
-		if time.Time(reminder.CreatedAt).Unix() < userDetail.CreatedAt {
+		if time.Time(*reminder.CreatedAt).Unix() < userDetail.CreatedAt {
 			reminder.Done = 1
 		}
 		reminderResps = append(reminderResps, newReminderResp(reminder))
@@ -130,34 +135,38 @@ func (m *Message) getReminders(messages []*config.MessageResp) []*remindersModel
 		}
 		if m.hasMention(payloadMap) {
 			all, uids := m.getMention(payloadMap)
+			MessageID := fmt.Sprintf("%d", message.MessageID)
+			ReminderType := ReminderTypeMentionMe
+			IsLocate := 1
+			version, _ := m.ctx.GenSeq(common.RemindersKey)
+			Text := "[有人@我]"
 			if all {
-				version := m.ctx.GenSeq(common.RemindersKey)
 				reminders = append(reminders, &remindersModel{
-					ChannelID:    message.ChannelID,
-					ChannelType:  message.ChannelType,
-					ClientMsgNo:  message.ClientMsgNo,
-					Publisher:    message.FromUID,
-					MessageID:    fmt.Sprintf("%d", message.MessageID),
-					MessageSeq:   message.MessageSeq,
-					ReminderType: ReminderTypeMentionMe,
-					IsLocate:     1,
-					Version:      version,
-					Text:         "[有人@我]",
+					ChannelID:    &message.ChannelID,
+					ChannelType:  &message.ChannelType,
+					ClientMsgNo:  &message.ClientMsgNo,
+					Publisher:    &message.FromUID,
+					MessageID:    &MessageID,
+					MessageSeq:   &message.MessageSeq,
+					ReminderType: &ReminderType,
+					IsLocate:     &IsLocate,
+					Version:      &version,
+					Text:         &Text,
 				})
 			} else if len(uids) > 0 {
 				for _, uid := range uids {
-					version := m.ctx.GenSeq(common.RemindersKey)
+					version, _ := m.ctx.GenSeq(common.RemindersKey)
 					reminders = append(reminders, &remindersModel{
-						ChannelID:    message.ChannelID,
-						ChannelType:  message.ChannelType,
-						Publisher:    message.FromUID,
-						MessageID:    fmt.Sprintf("%d", message.MessageID),
-						MessageSeq:   message.MessageSeq,
-						ReminderType: ReminderTypeMentionMe,
-						UID:          uid,
-						IsLocate:     1,
-						Version:      version,
-						Text:         "[有人@我]",
+						ChannelID:    &message.ChannelID,
+						ChannelType:  &message.ChannelType,
+						Publisher:    &message.FromUID,
+						MessageID:    &MessageID,
+						MessageSeq:   &message.MessageSeq,
+						ReminderType: &ReminderType,
+						UID:          &uid,
+						IsLocate:     &IsLocate,
+						Version:      &version,
+						Text:         &Text,
 					})
 				}
 			}
@@ -166,19 +175,24 @@ func (m *Message) getReminders(messages []*config.MessageResp) []*remindersModel
 		contentType := m.contentType(payloadMap)
 		if contentType == common.GroupMemberInvite.Int() {
 			if payloadMap["visibles"] != nil {
+				MessageID := fmt.Sprintf("%d", message.MessageID)
+				ReminderType := ReminderTypeApplyJoinGroup
 				visibleObjs := payloadMap["visibles"].([]interface{})
 				for _, visibleObj := range visibleObjs {
-					version := m.ctx.GenSeq(common.RemindersKey)
+					UID := visibleObj.(string)
+					IsLocate := 1
+					version, _ := m.ctx.GenSeq(common.RemindersKey)
+					Text := "[进群申请]"
 					reminders = append(reminders, &remindersModel{
-						ChannelID:    message.ChannelID,
-						ChannelType:  message.ChannelType,
-						MessageID:    fmt.Sprintf("%d", message.MessageID),
-						MessageSeq:   message.MessageSeq,
-						ReminderType: ReminderTypeApplyJoinGroup,
-						UID:          visibleObj.(string),
-						IsLocate:     1,
-						Version:      version,
-						Text:         "[进群申请]",
+						ChannelID:    &message.ChannelID,
+						ChannelType:  &message.ChannelType,
+						MessageID:    &MessageID,
+						MessageSeq:   &message.MessageSeq,
+						ReminderType: &ReminderType,
+						UID:          &UID,
+						IsLocate:     &IsLocate,
+						Version:      &version,
+						Text:         &Text,
 					})
 				}
 			}
@@ -196,13 +210,13 @@ func (m *Message) handleReminders(reminders []*remindersModel) {
 		channels := make([]*config.ChannelReq, 0)
 		uids := make([]string, 0)
 		for _, reminder := range reminders {
-			if reminder.UID == "" {
+			if *reminder.UID == "" {
 				channels = append(channels, &config.ChannelReq{
-					ChannelID:   reminder.ChannelID,
-					ChannelType: reminder.ChannelType,
+					ChannelID:   *reminder.ChannelID,
+					ChannelType: *reminder.ChannelType,
 				})
 			} else {
-				uids = append(uids, reminder.UID)
+				uids = append(uids, *reminder.UID)
 			}
 		}
 		if len(channels) > 0 {
@@ -280,23 +294,23 @@ type reminderResp struct {
 func newReminderResp(m *remindersDetailModel) *reminderResp {
 
 	var dataMap map[string]interface{}
-	if m.Data != "" {
-		dataMap, _ = util.JsonToMap(m.Data)
+	if *m.Data != "" {
+		dataMap, _ = util.JsonToMap(*m.Data)
 	}
 
 	return &reminderResp{
-		ID:           m.Id,
-		ChannelID:    m.ChannelID,
-		ChannelType:  m.ChannelType,
-		MessageSeq:   m.MessageSeq,
-		MessageID:    m.MessageID,
-		ReminderType: ReminderType(m.ReminderType),
-		Publisher:    m.Publisher,
-		UID:          m.UID,
-		Text:         m.Text,
+		ID:           *m.Id,
+		ChannelID:    *m.ChannelID,
+		ChannelType:  *m.ChannelType,
+		MessageSeq:   *m.MessageSeq,
+		MessageID:    *m.MessageID,
+		ReminderType: ReminderType(*m.ReminderType),
+		Publisher:    *m.Publisher,
+		UID:          *m.UID,
+		Text:         *m.Text,
 		Data:         dataMap,
-		IsLocate:     m.IsLocate,
-		Version:      m.Version,
+		IsLocate:     *m.IsLocate,
+		Version:      *m.Version,
 		Done:         m.Done,
 	}
 }

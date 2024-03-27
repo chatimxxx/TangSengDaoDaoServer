@@ -38,16 +38,16 @@ func (u *User) deviceList(c *wkhttp.Context) {
 			if index == 0 {
 				selft = 1
 			}
-			deviceName := device.DeviceName
+			deviceName := *device.DeviceName
 			if selft == 1 {
 				deviceName = fmt.Sprintf("%s（本机）", device.DeviceName)
 			}
 			deviceResps = append(deviceResps, deviceResp{
-				DeviceID:    device.DeviceID,
+				DeviceID:    *device.DeviceID,
 				DeviceName:  deviceName,
-				DeviceModel: device.DeviceModel,
+				DeviceModel: *device.DeviceModel,
 				Self:        selft,
-				LastLogin:   util.ToyyyyMMddHHmm(time.Unix(device.LastLogin, 0)),
+				LastLogin:   util.ToyyyyMMddHHmm(time.Unix(*device.LastLogin, 0)),
 			})
 		}
 	}

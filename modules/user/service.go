@@ -66,7 +66,7 @@ type IService interface {
 	GetUserSettings(uids []string, loginUID string) ([]*SettingResp, error)
 
 	// GetOnetimePrekeyCount 获取用户一次性signal key的数量(决定是否可以开启加密通讯)
-	GetOnetimePrekeyCount(uid string) (int, error)
+	GetOnetimePrekeyCount(uid string) (int64, error)
 
 	// 获取设备在线状态
 	GetDeviceOnline(uid string, deviceFlag config.DeviceFlag) (*config.OnlinestatusResp, error)
@@ -92,11 +92,15 @@ type Service struct {
 
 // NewService NewService
 func NewService(ctx *config.Context) IService {
+	d, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &Service{
 		ctx:              ctx,
 		db:               NewDB(ctx),
 		friendDB:         newFriendDB(ctx),
-		settingDB:        NewSettingDB(ctx.DB()),
+		settingDB:        NewSettingDB(d),
 		onetimePrekeysDB: newOnetimePrekeysDB(ctx),
 		onlineDB:         newOnlineDB(ctx),
 		Log:              log.NewTLog("userService"),
@@ -114,10 +118,10 @@ func (s *Service) GetAllUsers() ([]*Resp, error) {
 	list := make([]*Resp, 0)
 	for _, user := range models {
 		list = append(list, &Resp{
-			UID:   user.UID,
-			Name:  user.Name,
-			Zone:  user.Zone,
-			Phone: user.Phone,
+			UID:   *user.UID,
+			Name:  *user.Name,
+			Zone:  *user.Zone,
+			Phone: *user.Phone,
 		})
 	}
 	return list, nil
@@ -140,9 +144,9 @@ func (s *Service) GetUserDetail(uid string, loginUID string) (*UserDetailResp, e
 	var lastOffline int
 	var deviceFlag config.DeviceFlag
 	if onlineM != nil {
-		online = onlineM.Online
-		lastOffline = onlineM.LastOffline
-		deviceFlag = config.DeviceFlag(onlineM.DeviceFlag)
+		online = *onlineM.Online
+		lastOffline = *onlineM.LastOffline
+		deviceFlag = config.DeviceFlag(*onlineM.DeviceFlag)
 	}
 	//查询用户设置
 	blacklist := 1
@@ -155,22 +159,25 @@ func (s *Service) GetUserDetail(uid string, loginUID string) (*UserDetailResp, e
 	var toUserSetting *SettingModel
 	if len(userSettings) > 0 {
 		for _, userSett := range userSettings {
-			if userSett.UID == loginUID {
+			if *userSett.UID == loginUID {
 				userSetting = userSett
-			} else if userSett.UID == uid {
+			} else if *userSett.UID == uid {
 				toUserSetting = userSett
 			}
 		}
 	}
 
-	if userSetting != nil && userSetting.Blacklist == 1 {
+	if userSetting != nil && *userSetting.Blacklist == 1 {
 		blacklist = 2
 	}
 	// 默认打开撤回通知/截屏通知
 	if userSetting == nil {
-		model.RevokeRemind = 1
-		model.Screenshot = 1
-		model.Receipt = 1
+		RevokeRemind := 1
+		Screenshot := 1
+		Receipt := 1
+		model.RevokeRemind = &RevokeRemind
+		model.Screenshot = &Screenshot
+		model.Receipt = &Receipt
 	}
 
 	friends, err := s.friendDB.queryTwoWithUID(loginUID, uid)
@@ -183,9 +190,9 @@ func (s *Service) GetUserDetail(uid string, loginUID string) (*UserDetailResp, e
 	var toFriend *FriendModel
 	if len(friends) > 0 {
 		for _, f := range friends {
-			if f.UID == loginUID {
+			if *f.UID == loginUID {
 				friend = f
-			} else if f.UID == uid {
+			} else if *f.UID == uid {
 				toFriend = f
 			}
 		}
@@ -197,28 +204,27 @@ func (s *Service) GetUserDetail(uid string, loginUID string) (*UserDetailResp, e
 	var beDeleted int
 	var beBlacklist int
 	var vercode string
-	if friend != nil && friend.IsDeleted == 0 {
+	if friend != nil && *friend.IsDeleted == 0 {
 		follow = 1
 		//查询加好友来源
-		sourceFrom = source.GetSoruce(friend.SourceVercode)
-		if friend.Initiator == 0 && sourceFrom != "" {
+		sourceFrom = source.GetSoruce(*friend.SourceVercode)
+		if *friend.Initiator == 0 && sourceFrom != "" {
 			sourceFrom = fmt.Sprintf("对方%s", sourceFrom)
 		}
-
 		if toFriend != nil {
-			beDeleted = toFriend.IsDeleted
+			beDeleted = *toFriend.IsDeleted
 
 		} else {
 			beDeleted = 1
 		}
-		vercode = friend.Vercode
+		vercode = *friend.Vercode
 	}
 	if userSetting != nil {
-		remark = userSetting.Remark
+		remark = *userSetting.Remark
 	}
 
 	if toUserSetting != nil {
-		beBlacklist = toUserSetting.Blacklist
+		beBlacklist = *toUserSetting.Blacklist
 	}
 	return NewUserDetailResp(model, remark, loginUID, sourceFrom, online, lastOffline, deviceFlag, follow, blacklist, beDeleted, beBlacklist, userSetting, vercode), nil
 }
@@ -241,7 +247,7 @@ func (s *Service) GetUserDetails(uids []string, loginUID string) ([]*UserDetailR
 	onlineStatusResultMap := map[string]*onlineStatusWeightModel{}
 	if len(onlineStatusResults) > 0 {
 		for _, onlineStatusResult := range onlineStatusResults {
-			onlineStatusResultMap[onlineStatusResult.UID] = onlineStatusResult
+			onlineStatusResultMap[*onlineStatusResult.UID] = onlineStatusResult
 		}
 	}
 	// 查询loginUID用户对uids的设置
@@ -252,7 +258,7 @@ func (s *Service) GetUserDetails(uids []string, loginUID string) ([]*UserDetailR
 	settingMap := map[string]*SettingModel{}
 	if len(settings) > 0 {
 		for _, setting := range settings {
-			settingMap[setting.ToUID] = setting
+			settingMap[*setting.ToUID] = setting
 		}
 	}
 
@@ -264,7 +270,7 @@ func (s *Service) GetUserDetails(uids []string, loginUID string) ([]*UserDetailR
 	toSettingMap := map[string]*SettingModel{}
 	if len(toSettings) > 0 {
 		for _, toSetting := range toSettings {
-			toSettingMap[toSetting.UID] = toSetting
+			toSettingMap[*toSetting.UID] = toSetting
 		}
 	}
 	// 查询loginUID与uids的好友
@@ -275,13 +281,13 @@ func (s *Service) GetUserDetails(uids []string, loginUID string) ([]*UserDetailR
 	friendMap := map[string]*FriendModel{}
 	if len(friends) > 0 {
 		for _, friend := range friends {
-			friendMap[friend.ToUID] = friend
+			friendMap[*friend.ToUID] = friend
 		}
 	}
 	// 好友来源
 	friendVSourceVercodes := make([]string, 0, len(friends))
 	for _, friend := range friends {
-		friendVSourceVercodes = append(friendVSourceVercodes, friend.SourceVercode)
+		friendVSourceVercodes = append(friendVSourceVercodes, *friend.SourceVercode)
 	}
 	friendVercodeSourceMap := map[string]string{}
 	if len(friendVSourceVercodes) > 0 {
@@ -302,48 +308,47 @@ func (s *Service) GetUserDetails(uids []string, loginUID string) ([]*UserDetailR
 	toFriendMap := map[string]*FriendModel{}
 	if len(friends) > 0 {
 		for _, toFriend := range toFriends {
-			toFriendMap[toFriend.UID] = toFriend
+			toFriendMap[*toFriend.UID] = toFriend
 		}
 	}
 
 	userDetailResps := make([]*UserDetailResp, 0)
 
 	for _, userDetail := range userDetails {
-		uid := userDetail.UID
+		uid := *userDetail.UID
 		online := 0
 		lastOffline := 0
 		var deviceFlag config.DeviceFlag
 		onlineStatus := onlineStatusResultMap[uid]
 		if onlineStatus != nil {
-			online = onlineStatus.Online
-			lastOffline = onlineStatus.LastOffline
-			deviceFlag = config.DeviceFlag(onlineStatus.DeviceFlag)
+			online = *onlineStatus.Online
+			lastOffline = *onlineStatus.LastOffline
+			deviceFlag = config.DeviceFlag(*onlineStatus.DeviceFlag)
 		}
 		follow := 0
 		nameRemark := ""
 		sourceFrom := ""
 		vercode := ""
 		friend := friendMap[uid]
-		if friend != nil && friend.IsDeleted == 0 {
+		if friend != nil && *friend.IsDeleted == 0 {
 			follow = 1
-			sourceFrom = friendVercodeSourceMap[friend.SourceVercode]
-			vercode = friend.Vercode
+			sourceFrom = friendVercodeSourceMap[*friend.SourceVercode]
+			vercode = *friend.Vercode
 		}
 
 		status := 1
 		setting := settingMap[uid] // loginUID用户对对方的设置
 		if setting != nil {
-			if setting.Blacklist == 1 {
+			if *setting.Blacklist == 1 {
 				status = 2 // 拉黑
 			}
-			nameRemark = setting.Remark
-
+			nameRemark = *setting.Remark
 		}
 
 		beBlacklist := 0
 		toSetting := toSettingMap[uid] // 对方对loginUID用户的设置
 		if toSetting != nil {
-			if toSetting.Blacklist == 1 {
+			if *toSetting.Blacklist == 1 {
 				beBlacklist = 1
 			}
 		}
@@ -351,7 +356,7 @@ func (s *Service) GetUserDetails(uids []string, loginUID string) ([]*UserDetailR
 		beDeleted := 0
 		toFriend := toFriendMap[uid]
 		if toFriend != nil {
-			beDeleted = toFriend.IsDeleted
+			beDeleted = *toFriend.IsDeleted
 		} else {
 			beDeleted = 1
 		}
@@ -393,17 +398,19 @@ func (s *Service) AddUser(user *AddUserReq) error {
 	if strings.TrimSpace(username) == "" {
 		username = fmt.Sprintf("%s%s", user.Zone, user.Phone)
 	}
+	Status := 1
 	userM := &Model{
-		Name:     user.Name,
-		UID:      uid,
-		Zone:     user.Zone,
-		Phone:    user.Phone,
-		Username: username,
-		Email:    user.Email,
-		Status:   1,
+		Name:     &user.Name,
+		UID:      &uid,
+		Zone:     &user.Zone,
+		Phone:    &user.Phone,
+		Username: &username,
+		Email:    &user.Email,
+		Status:   &Status,
 	}
 	if user.Password != "" {
-		userM.Password = util.MD5(util.MD5(user.Password))
+		Password := util.MD5(util.MD5(user.Password))
+		userM.Password = &Password
 	}
 
 	err := s.db.Insert(userM)
@@ -417,8 +424,8 @@ func (s *Service) AddUser(user *AddUserReq) error {
 // AddFriend 添加一个好友
 func (s *Service) AddFriend(uid string, friend *FriendReq) error {
 	err := s.friendDB.Insert(&FriendModel{
-		UID:   friend.UID,
-		ToUID: friend.ToUID,
+		UID:   &friend.UID,
+		ToUID: &friend.ToUID,
 	})
 	if err != nil {
 		s.Error("添加好友失败", zap.Error(err))
@@ -437,8 +444,8 @@ func (s *Service) GetFriendsWithToUIDs(uid string, toUIDs []string) ([]*FriendRe
 	list := make([]*FriendResp, 0)
 	for _, friend := range friends {
 		list = append(list, &FriendResp{
-			Name: friend.ToName,
-			UID:  friend.ToUID,
+			Name: *friend.ToName,
+			UID:  *friend.ToUID,
 		})
 	}
 	return list, nil
@@ -454,9 +461,9 @@ func (s *Service) GetFriends(uid string) ([]*FriendResp, error) {
 	list := make([]*FriendResp, 0)
 	for _, friend := range friends {
 		list = append(list, &FriendResp{
-			Name:    friend.ToName,
-			UID:     friend.ToUID,
-			IsAlone: friend.IsAlone,
+			Name:    *friend.ToName,
+			UID:     *friend.ToUID,
+			IsAlone: *friend.IsAlone,
 		})
 	}
 	return list, nil
@@ -471,7 +478,7 @@ func (s *Service) GetUser(uid string) (*Resp, error) {
 	if userM == nil {
 		return nil, errors.New("用户不存在！")
 	}
-	if userM.Status != StatusEnable.Int() {
+	if *userM.Status != StatusEnable.Int() {
 		return nil, errors.New("用户不可用！")
 	}
 
@@ -487,7 +494,7 @@ func (s *Service) GetUserWithUsername(username string) (*Resp, error) {
 	if userM == nil {
 		return nil, nil
 	}
-	if userM.Status != StatusEnable.Int() {
+	if *userM.Status != StatusEnable.Int() {
 		return nil, errors.New("用户不可用！")
 	}
 
@@ -597,7 +604,7 @@ func (s *Service) GetRegisterCountWithDateSpace(startDate, endDate string) (map[
 	result := make(map[string]int64, 0)
 	if len(list) > 0 {
 		for _, model := range list {
-			key := util.Toyyyy_MM_dd(time.Time(model.CreatedAt))
+			key := util.Toyyyy_MM_dd(time.Time(*model.CreatedAt))
 			if _, ok := result[key]; ok {
 				//存在某个
 				result[key]++
@@ -620,7 +627,7 @@ func (s *Service) IsFriend(uid string, toUID string) (bool, error) {
 		return false, errors.New("查询好友关系错误")
 	}
 	isFriend := true
-	if model == nil || model.UID == "" || model.IsDeleted == 1 {
+	if model == nil || *model.UID == "" || *model.IsDeleted == 1 {
 		isFriend = false
 	}
 	return isFriend, nil
@@ -652,7 +659,7 @@ func (s *Service) UpdateLoginPassword(req UpdateLoginPasswordReq) error {
 	if userM == nil {
 		return errors.New("用户不存在！")
 	}
-	if util.MD5(util.MD5(req.Password)) != userM.Password {
+	if util.MD5(util.MD5(req.Password)) != *userM.Password {
 		return errors.New("原密码不正确！")
 	}
 
@@ -681,7 +688,7 @@ func (s *Service) GetUserSettings(uids []string, loginUID string) ([]*SettingRes
 	return settingResps, nil
 }
 
-func (s *Service) GetOnetimePrekeyCount(uid string) (int, error) {
+func (s *Service) GetOnetimePrekeyCount(uid string) (int64, error) {
 	cn, err := s.onetimePrekeysDB.queryCount(uid)
 	return cn, err
 }
@@ -696,10 +703,10 @@ func (s *Service) GetDeviceOnline(uid string, deviceFlag config.DeviceFlag) (*co
 	}
 
 	return &config.OnlinestatusResp{
-		UID:         onlineM.UID,
-		DeviceFlag:  onlineM.DeviceFlag,
-		LastOffline: onlineM.LastOffline,
-		Online:      onlineM.Online,
+		UID:         *onlineM.UID,
+		DeviceFlag:  *onlineM.DeviceFlag,
+		LastOffline: *onlineM.LastOffline,
+		Online:      *onlineM.Online,
 	}, nil
 }
 
@@ -737,17 +744,17 @@ type Resp struct {
 
 func newResp(m *Model) *Resp {
 	return &Resp{
-		UID:             m.UID,
-		Name:            m.Name,
-		Zone:            m.Zone,
-		Phone:           m.Phone,
-		Email:           m.Email,
-		IsUploadAvatar:  m.IsUploadAvatar,
-		NewMsgNotice:    m.NewMsgNotice,
-		MsgShowDetail:   m.MsgShowDetail,
-		MsgExpireSecond: m.MsgExpireSecond,
-		IsDestroy:       m.IsDestroy,
-		CreatedAt:       time.Time(m.CreatedAt).Unix(),
+		UID:             *m.UID,
+		Name:            *m.Name,
+		Zone:            *m.Zone,
+		Phone:           *m.Phone,
+		Email:           *m.Email,
+		IsUploadAvatar:  *m.IsUploadAvatar,
+		NewMsgNotice:    *m.NewMsgNotice,
+		MsgShowDetail:   *m.MsgShowDetail,
+		MsgExpireSecond: *m.MsgExpireSecond,
+		IsDestroy:       *m.IsDestroy,
+		CreatedAt:       time.Time(*m.CreatedAt).Unix(),
 	}
 }
 
@@ -808,17 +815,16 @@ type OnLineUserResp struct {
 }
 
 func toSettingResp(m *SettingModel) *SettingResp {
-
 	return &SettingResp{
-		UID:          m.ToUID,
-		Mute:         m.Mute,
-		Top:          m.Top,
-		ChatPwdOn:    m.ChatPwdOn,
-		Screenshot:   m.Screenshot,
-		RevokeRemind: m.RevokeRemind,
-		Blacklist:    m.Blacklist,
-		Receipt:      m.Receipt,
-		Version:      m.Version,
+		UID:          *m.ToUID,
+		Mute:         *m.Mute,
+		Top:          *m.Top,
+		ChatPwdOn:    *m.ChatPwdOn,
+		Screenshot:   *m.Screenshot,
+		RevokeRemind: *m.RevokeRemind,
+		Blacklist:    *m.Blacklist,
+		Receipt:      *m.Receipt,
+		Version:      *m.Version,
 	}
 }
 
@@ -857,56 +863,55 @@ type UserDetailResp struct {
 }
 
 func NewUserDetailResp(m *Detail, remark, loginUID string, sourceFrom string, onLine int, lastOffline int, deviceFlag config.DeviceFlag, follow int, status int, beDeleted int, beBlacklist int, setting *SettingModel, vercode string) *UserDetailResp {
-	self := loginUID == m.UID
+	self := loginUID == *m.UID
 
 	email := ""
 	phone := ""
 	zone := ""
 	username := ""
 	if self {
-		email = m.Email
-		phone = m.Phone
-		zone = m.Zone
+		email = *m.Email
+		phone = *m.Phone
+		zone = *m.Zone
 	}
-	if m.Robot == 1 {
-		username = m.Username
+	if *m.Robot == 1 {
+		username = *m.Username
 	}
 	var flame int
 	var flameSecond int
 	if setting != nil {
-		flame = setting.Flame
-		flameSecond = setting.FlameSecond
-
+		flame = *setting.Flame
+		flameSecond = *setting.FlameSecond
 	}
 
 	return &UserDetailResp{
-		UID:            m.UID,
-		Name:           m.Name,
+		UID:            *m.UID,
+		Name:           *m.Name,
 		Email:          email,
 		Zone:           zone,
 		Phone:          phone,
-		Mute:           m.Mute,
-		Top:            m.Top,
-		Sex:            m.Sex,
-		ChatPwdOn:      m.ChatPwdOn,
-		Category:       m.Category,
-		ShortNo:        m.ShortNo,
-		Screenshot:     m.Screenshot,
-		RevokeRemind:   m.RevokeRemind,
-		Receipt:        m.Receipt,
+		Mute:           *m.Mute,
+		Top:            *m.Top,
+		Sex:            *m.Sex,
+		ChatPwdOn:      *m.ChatPwdOn,
+		Category:       *m.Category,
+		ShortNo:        *m.ShortNo,
+		Screenshot:     *m.Screenshot,
+		RevokeRemind:   *m.RevokeRemind,
+		Receipt:        *m.Receipt,
 		Online:         onLine,
 		LastOffline:    lastOffline,
 		DeviceFlag:     deviceFlag,
 		Follow:         follow,
 		SourceDesc:     sourceFrom,
 		Remark:         remark,
-		IsUploadAvatar: m.IsUploadAvatar,
+		IsUploadAvatar: *m.IsUploadAvatar,
 		Status:         status,
-		Robot:          m.Robot,
+		Robot:          *m.Robot,
 		Username:       username,
 		BeDeleted:      beDeleted,
 		BeBlacklist:    beBlacklist,
-		IsDestroy:      m.IsDestroy,
+		IsDestroy:      *m.IsDestroy,
 		Flame:          flame,
 		FlameSecond:    flameSecond,
 		Vercode:        vercode,

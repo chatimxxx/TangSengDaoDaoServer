@@ -41,26 +41,24 @@ func (m *Message) handleGroupMemberAddEvent(data []byte, commit config.EventComm
 		return
 	}
 	list := make([]*channelOffsetModel, 0)
+	ChannelType := common.ChannelTypeGroup.Uint8()
 	for _, member := range req.Members {
 		list = append(list, &channelOffsetModel{
-			UID:         member.UID,
-			ChannelID:   req.GroupNo,
-			ChannelType: common.ChannelTypeGroup.Uint8(),
-			MessageSeq:  maxSeq,
+			UID:         &member.UID,
+			ChannelID:   &req.GroupNo,
+			ChannelType: &ChannelType,
+			MessageSeq:  &maxSeq,
 		})
 	}
-	tx, err := m.ctx.DB().Begin()
-	util.CheckErr(err)
-	defer func() {
-		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
-			panic(err)
-		}
-	}()
-
+	db, err := m.ctx.DB()
+	if err != nil {
+		m.Error("开始事务失败", zap.Error(err))
+		return
+	}
+	tx := db.Begin()
+	maxSeq = 0
 	for _, model := range list {
-
-		err = m.channelOffsetDB.delete(model.UID, model.ChannelID, model.ChannelType, tx)
+		err = m.channelOffsetDB.delete(*model.UID, *model.ChannelID, *model.ChannelType, tx)
 		if err != nil {
 			m.Error("删除消息偏移量错误", zap.Error(err))
 			commit(err)
@@ -68,7 +66,7 @@ func (m *Message) handleGroupMemberAddEvent(data []byte, commit config.EventComm
 			return
 		}
 		if groupInfo.AllowViewHistoryMsg == int(common.GroupAllowViewHistoryMsgEnabled) {
-			model.MessageSeq = 0
+			model.MessageSeq = &maxSeq
 		}
 		err = m.channelOffsetDB.insertOrUpdateTx(model, tx)
 		if err != nil {
@@ -78,10 +76,9 @@ func (m *Message) handleGroupMemberAddEvent(data []byte, commit config.EventComm
 			return
 		}
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		m.Error("事物提交错误", zap.Error(err))
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		commit(err)
 		return
 	}

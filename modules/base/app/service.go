@@ -25,9 +25,13 @@ type Service struct {
 
 // NewService NewService
 func NewService(ctx *config.Context) IService {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &Service{
 		ctx: ctx,
-		db:  newDB(ctx.DB()),
+		db:  newDB(db),
 	}
 }
 
@@ -41,11 +45,11 @@ func (s *Service) GetApp(appID string) (*Resp, error) {
 		return nil, fmt.Errorf("app[%s]不存在！", appID)
 	}
 	return &Resp{
-		AppID:   appM.AppID,
-		AppName: appM.AppName,
-		AppLogo: appM.AppLogo,
-		AppKey:  appM.AppKey,
-		Status:  Status(appM.Status),
+		AppID:   *appM.AppID,
+		AppName: *appM.AppName,
+		AppLogo: *appM.AppLogo,
+		AppKey:  *appM.AppKey,
+		Status:  Status(*appM.Status),
 	}, nil
 }
 
@@ -64,17 +68,18 @@ func (s *Service) CreateApp(r Req) (*Resp, error) {
 	if appM == nil {
 		appKey = util.GenerUUID()
 		appID = r.AppID
+		status := StatusEnable.Int()
 		err = s.db.insert(&model{
-			AppID:  r.AppID,
-			Status: StatusEnable.Int(),
-			AppKey: appKey,
+			AppID:  &r.AppID,
+			Status: &status,
+			AppKey: &appKey,
 		})
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		appID = appM.AppID
-		appKey = appM.AppKey
+		appID = *appM.AppID
+		appKey = *appM.AppKey
 	}
 
 	return &Resp{

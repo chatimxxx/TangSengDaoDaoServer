@@ -2,47 +2,53 @@ package message
 
 import (
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
+	"time"
 )
 
 type memberCloneDB struct {
-	ctx     *config.Context
-	session *dbr.Session
+	ctx *config.Context
+	db  *gorm.DB
 }
 
 func newMemberCloneDB(ctx *config.Context) *memberCloneDB {
+	db, err := ctx.DB()
+	if err != nil {
+		panic("服务初始化失败")
+		return nil
+	}
 	return &memberCloneDB{
-		ctx:     ctx,
-		session: ctx.DB(),
+		ctx: ctx,
+		db:  db,
 	}
 }
 
-func (m *memberCloneDB) insertTx(model *memberCloneModel, tx *dbr.Tx) error {
-	_, err := tx.InsertInto("member_clone").Columns(util.AttrToUnderscore(model)...).Record(model).Exec()
+func (m *memberCloneDB) insertTx(model *memberCloneModel, tx *gorm.DB) error {
+	err := tx.Table("member_clone").Create(model).Error
 	return err
 }
 
 func (m *memberCloneDB) queryWithCloneNo(cloneNo string) ([]*memberCloneModel, error) {
-	var models []*memberCloneModel
-	_, err := m.session.Select("*").From("member_clone").Where("clone_no=?", cloneNo).Load(&models)
-	return models, err
+	var ms []*memberCloneModel
+	err := m.db.Table("member_clone").Where("clone_no=?", cloneNo).Find(&ms).Error
+	return ms, err
 }
 
 // 查询未读列表
-func (m *memberCloneDB) queryUnreadWithMessageIDAndPage(cloneNo string, fromUID string, messageID int64, pIndex, pSize uint64) ([]*memberUnreadModel, error) {
-	var models []*memberUnreadModel
-	_, err := m.session.Select("*").From("member_clone").Where("clone_no=? and uid<>? and uid not in (select member_readed.uid  from member_readed where message_id=?)", cloneNo, fromUID, messageID).Limit(pSize).Offset((pIndex - 1) * pSize).Load(&models)
-	return models, err
+func (m *memberCloneDB) queryUnreadWithMessageIDAndPage(cloneNo string, fromUID string, messageID int64, pIndex, pSize int) ([]*memberUnreadModel, error) {
+	var ms []*memberUnreadModel
+	err := m.db.Table("member_clone").Where("clone_no=? and uid<>? and uid not in (select member_readed.uid  from member_readed where message_id=?)", cloneNo, fromUID, messageID).Limit(pSize).Offset((pIndex - 1) * pSize).Find(&ms).Error
+	return ms, err
 }
 
 type memberCloneModel struct {
-	CloneNo     string
-	ChannelID   string
-	ChannelType uint8
-	UID         string
-	db.BaseModel
+	CloneNo     *string
+	ChannelID   *string
+	ChannelType *uint8
+	UID         *string
+	Id          *int64
+	CreatedAt   *time.Time
+	UpdatedAt   *time.Time
 }
 
 type memberUnreadModel struct {

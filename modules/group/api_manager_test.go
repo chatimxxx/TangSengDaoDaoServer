@@ -18,10 +18,13 @@ func TestGroupList(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
+	GroupNo := "xxxx"
+	Name := "gxxx"
+	Creator := "1111"
 	err = m.db.Insert(&Model{
-		GroupNo: "xxxx",
-		Name:    "gxxx",
-		Creator: "1111",
+		GroupNo: &GroupNo,
+		Name:    &Name,
+		Creator: &Creator,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -39,10 +42,13 @@ func TestGroupCount(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
+	GroupNo := "xxxx"
+	Name := "gxxx"
+	Creator := "1111"
 	err = m.db.Insert(&Model{
-		GroupNo: "111",
-		Name:    "sss",
-		Creator: "xxx",
+		GroupNo: &GroupNo,
+		Name:    &Name,
+		Creator: &Creator,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -58,16 +64,22 @@ func TestDisableList(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
+	GroupNo := "xxxx"
+	Name := "gxxx"
+	Creator := "1111"
+	groupStatusDisabled := GroupStatusDisabled
 	err = m.db.Insert(&Model{
-		GroupNo: "111",
-		Name:    "sss",
-		Creator: "xxx",
-		Status:  GroupStatusDisabled,
+		GroupNo: &GroupNo,
+		Name:    &Name,
+		Creator: &Creator,
+		Status:  &groupStatusDisabled,
 	})
 	assert.NoError(t, err)
+	UID := "xxx"
+	Name = "001"
 	err = m.userDB.Insert(&user.Model{
-		UID:  "xxx",
-		Name: "001",
+		UID:  &UID,
+		Name: &Name,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -84,20 +96,27 @@ func TestBlackList(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
+	GroupNo := "111"
+	Name := "sss"
+	Creator := "xxx"
 	err = m.db.Insert(&Model{
-		GroupNo: "111",
-		Name:    "sss",
-		Creator: "xxx",
+		GroupNo: &GroupNo,
+		Name:    &Name,
+		Creator: &Creator,
 	})
 	assert.NoError(t, err)
+	UID := "xxx"
+	Name = "001"
 	err = m.userDB.Insert(&user.Model{
-		UID:  "xxx",
-		Name: "001",
+		UID:  &UID,
+		Name: &Name,
 	})
 	assert.NoError(t, err)
+	UID = "xxx"
+	GroupNo = "111"
 	err = m.db.InsertMember(&MemberModel{
-		UID:     "xxx",
-		GroupNo: "111",
+		UID:     &UID,
+		GroupNo: &GroupNo,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()

@@ -20,7 +20,7 @@ func (g *Group) GetGroupMemberByVercode(vercode string) (*source.GroupMember, er
 	if model == nil {
 		return nil, nil
 	}
-	return &source.GroupMember{UID: model.UID, GroupNo: model.GroupNo, Vercode: model.Vercode}, nil
+	return &source.GroupMember{UID: *model.UID, GroupNo: *model.GroupNo, Vercode: *model.Vercode}, nil
 }
 
 func (g *Group) GetGroupMemberByVercodes(vercodes []string) ([]*source.GroupMember, error) {
@@ -38,10 +38,10 @@ func (g *Group) GetGroupMemberByVercodes(vercodes []string) ([]*source.GroupMemb
 	members := make([]*source.GroupMember, 0, len(models))
 	for _, model := range models {
 		members = append(members, &source.GroupMember{
-			UID:     model.UID,
-			GroupNo: model.GroupNo,
-			Vercode: model.Vercode,
-			Name:    model.GroupName,
+			UID:     *model.UID,
+			GroupNo: *model.GroupNo,
+			Vercode: *model.Vercode,
+			Name:    *model.GroupName,
 		})
 	}
 	return members, nil
@@ -62,7 +62,7 @@ func (g *Group) GetGroupMemberByUID(uid string, groupNo string) (*source.GroupMe
 	if model == nil {
 		return nil, nil
 	}
-	return &source.GroupMember{UID: model.UID, GroupNo: model.GroupNo, Vercode: model.Vercode, Role: model.Role}, nil
+	return &source.GroupMember{UID: *model.UID, GroupNo: *model.GroupNo, Vercode: *model.Vercode, Role: *model.Role}, nil
 
 }
 
@@ -80,8 +80,8 @@ func (g *Group) GetGroupByGroupNo(groupNo string) (*source.GroupModel, error) {
 		return nil, errors.New("群不存在")
 	}
 	return &source.GroupModel{
-		Name:               model.Name,
-		GroupNo:            model.GroupNo,
-		ForbiddenAddFriend: model.ForbiddenAddFriend,
+		Name:               *model.Name,
+		GroupNo:            *model.GroupNo,
+		ForbiddenAddFriend: *model.ForbiddenAddFriend,
 	}, nil
 }

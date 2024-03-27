@@ -13,7 +13,6 @@ import (
 
 // 退出pc登录
 func (u *User) pcQuit(c *wkhttp.Context) {
-
 	err := u.ctx.QuitUserDevice(c.GetLoginUID(), int(config.Web)) // 退出web
 	if err != nil {
 		u.Error("退出web设备失败", zap.Error(err))
@@ -81,7 +80,7 @@ func (u *User) onlineList(c *wkhttp.Context) {
 	}
 	uids := make([]string, 0, len(friends))
 	for _, friend := range friends {
-		uids = append(uids, friend.ToUID)
+		uids = append(uids, *friend.ToUID)
 	}
 	resps, err := u.onlineService.GetUserLastOnlineStatus(uids)
 	if err != nil {
@@ -117,7 +116,7 @@ func (u *User) onlineList(c *wkhttp.Context) {
 		}
 		pcResp = &pcOnlineResp{
 			Online:     1,
-			MuteOfApp:  myM.MuteOfApp,
+			MuteOfApp:  *myM.MuteOfApp,
 			DeviceFlag: deviceFlag.Uint8(),
 		}
 	}
@@ -129,24 +128,22 @@ func (u *User) onlineList(c *wkhttp.Context) {
 }
 
 func (u *User) onlineStatusCheck() {
-
 	u.Debug("开始检查在线状态...")
-
-	onlines, err := u.onlineDB.queryOnlinesMoreThan(time.Minute, 1000)
+	onLines, err := u.onlineDB.queryOnlinesMoreThan(time.Minute, 1000)
 	if err != nil {
 		u.Error("【在线状态检查】查询在线用户数失败！", zap.Error(err))
 		return
 	}
-	if len(onlines) == 0 {
+	if len(onLines) == 0 {
 		return
 	}
-	u.Debug("检查到需要矫正的在线数量", zap.Int("onlines", len(onlines)))
+	u.Debug("检查到需要矫正的在线数量", zap.Int("onLines", len(onLines)))
 
-	onlineUIDs := make([]string, 0, len(onlines))
-	for _, online := range onlines {
-		onlineUIDs = append(onlineUIDs, online.UID)
+	onlineUIDs := make([]string, 0, len(onLines))
+	for _, online := range onLines {
+		onlineUIDs = append(onlineUIDs, *online.UID)
 	}
-	makeOfflines := make([]*onlineStatusModel, 0, len(onlines)) // 需要离线的id
+	makeOfflines := make([]*onlineStatusModel, 0, len(onLines)) // 需要离线的id
 	onlineStatusResps, err := u.ctx.IMSOnlineStatus(onlineUIDs)
 	if err != nil {
 		u.Error("【在线状态检查】获取在线状态失败！", zap.Error(err))
@@ -154,11 +151,11 @@ func (u *User) onlineStatusCheck() {
 	}
 	u.Debug("检查到需要矫正的在线数量-->", zap.Int("onlineStatusResps", len(onlineStatusResps)))
 
-	if len(onlines) > 0 {
-		for _, online := range onlines {
+	if len(onLines) > 0 {
+		for _, online := range onLines {
 			var exist bool
 			for _, onlineStatusResp := range onlineStatusResps {
-				if online.UID == onlineStatusResp.UID && onlineStatusResp.DeviceFlag == online.DeviceFlag {
+				if *online.UID == onlineStatusResp.UID && onlineStatusResp.DeviceFlag == *online.DeviceFlag {
 					exist = true
 					break
 				}
@@ -170,21 +167,30 @@ func (u *User) onlineStatusCheck() {
 	}
 	if len(makeOfflines) > 0 {
 		u.Debug("改变在线状态！", zap.Int("offlineCount", len(makeOfflines)))
-		tx, _ := u.ctx.DB().Begin()
+		db, err := u.ctx.DB()
+		if err != nil {
+			u.Error("开始事务失败")
+			return
+		}
+		tx := db.Begin()
 		defer func() {
 			if err := recover(); err != nil {
-				tx.RollbackUnlessCommitted()
+				tx.Rollback()
 				panic(err)
 			}
 		}()
 		for _, onlineStatusResp := range makeOfflines {
+			LastOffline := int(time.Now().Unix())
+			LastOnline := int(time.Now().Unix())
+			Online := 0
+			Version := time.Now().UnixNano() / 1000
 			err := u.onlineDB.insertOrUpdateUserOnlineTx(&onlineStatusModel{
 				UID:         onlineStatusResp.UID,
 				DeviceFlag:  onlineStatusResp.DeviceFlag,
-				LastOffline: int(time.Now().Unix()),
-				LastOnline:  int(time.Now().Unix()),
-				Online:      0,
-				Version:     time.Now().UnixNano() / 1000,
+				LastOffline: &LastOffline,
+				LastOnline:  &LastOnline,
+				Online:      &Online,
+				Version:     &Version,
 			}, tx)
 			if err != nil {
 				tx.Rollback()
@@ -192,13 +198,12 @@ func (u *User) onlineStatusCheck() {
 				return
 			}
 		}
-		if err := tx.Commit(); err != nil {
+		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
 			u.Error("【在线状态检查】提交在线状态数据库的事务失败！！", zap.Error(err))
 			return
 		}
 	}
-
 }
 
 type onlineFriendAndDeviceResp struct {

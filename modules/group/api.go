@@ -3,6 +3,7 @@ package group
 import (
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -24,7 +25,6 @@ import (
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkevent"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
 	"github.com/gin-gonic/gin"
-	"github.com/gocraft/dbr/v2"
 	"go.uber.org/zap"
 )
 
@@ -42,7 +42,6 @@ type Group struct {
 
 // New New
 func New(ctx *config.Context) *Group {
-
 	g := &Group{
 		ctx:           ctx,
 		Log:           log.NewTLog("Group"),
@@ -112,8 +111,8 @@ func (g *Group) Route(r *wkhttp.WKHttp) {
 func (g *Group) membersGet(c *wkhttp.Context) {
 	keyword := c.Query("keyword")
 	groupNo := c.Param("group_no")
-	limit, _ := strconv.ParseUint(c.Query("limit"), 10, 64)
-	page, _ := strconv.ParseUint(c.Query("page"), 10, 64)
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	page, _ := strconv.Atoi(c.Query("page"))
 	if page <= 0 {
 		page = 1
 	}
@@ -279,17 +278,17 @@ func (g *Group) syncMembers(c *wkhttp.Context) {
 		c.ResponseError(errors.New("群不存在不能同步成员！"))
 		return
 	}
-	if group.GroupType == int(GroupTypeSuper) {
+	if *group.GroupType == int(GroupTypeSuper) {
 		g.Error("超大群不支持同步群成员！", zap.String("groupNo", groupNo))
 		c.ResponseError(errors.New("超大群不支持同步群成员！"))
 		return
 	}
 
-	limit, _ := strconv.ParseUint(c.Query("limit"), 10, 64)
+	limit, _ := strconv.Atoi(c.Query("limit"))
 	if limit <= 0 {
 		limit = 100
 	}
-	version, _ := strconv.ParseInt(c.Query("version"), 10, 64)
+	version, _ := strconv.Atoi(c.Query("version"))
 	memberModels, err := g.db.SyncMembers(groupNo, version, limit)
 	if err != nil {
 		g.Error("同步成员信息失败！", zap.Error(err), zap.String("groupNo", groupNo))
@@ -404,7 +403,7 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 	}
 	memberNames := make([]string, 0, len(memberUserModels))
 	for _, memberUserModel := range memberUserModels {
-		memberNames = append(memberNames, memberUserModel.Name)
+		memberNames = append(memberNames, *memberUserModel.Name)
 	}
 	groupName := req.Name
 	if groupName == "" {
@@ -418,42 +417,46 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 
 	groupNo := util.GenerUUID()
 
-	version := g.ctx.GenSeq(common.GroupSeqKey)
+	version, _ := g.ctx.GenSeq(common.GroupSeqKey)
 	channelServiceObj := register.GetService(ChannelServiceName)
 	var channelService chservice.IService
 	if channelServiceObj != nil {
 		channelService = channelServiceObj.(chservice.IService)
 	}
 	if channelService != nil {
-		if creatorUser != nil && creatorUser.MsgExpireSecond > 0 {
-			err = channelService.CreateOrUpdateMsgAutoDelete(groupNo, common.ChannelTypeGroup.Uint8(), creatorUser.MsgExpireSecond)
+		if creatorUser != nil && *creatorUser.MsgExpireSecond > 0 {
+			err = channelService.CreateOrUpdateMsgAutoDelete(groupNo, common.ChannelTypeGroup.Uint8(), *creatorUser.MsgExpireSecond)
 			if err != nil {
 				g.Warn("更新消息自动删除失败！", zap.Error(err))
 			}
 		}
 	}
-
-	tx, err := g.ctx.DB().Begin()
-	util.CheckErr(err)
+	db, err := g.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			panic(err)
 		}
 	}()
-
+	groupStatusNormal := GroupStatusNormal
+	allowViewHistoryMsg := int(common.GroupAllowViewHistoryMsgEnabled)
 	err = g.db.InsertTx(&Model{
-		GroupNo:             groupNo,
-		Name:                groupName,
-		Creator:             creator,
-		Status:              GroupStatusNormal,
-		Version:             version,
-		AllowViewHistoryMsg: int(common.GroupAllowViewHistoryMsgEnabled),
+		GroupNo:             &groupNo,
+		Name:                &groupName,
+		Creator:             &creator,
+		Status:              &groupStatusNormal,
+		Version:             &version,
+		AllowViewHistoryMsg: &allowViewHistoryMsg,
 	}, tx)
 	if err != nil {
 		g.Error("添加群失败！", zap.Error(err))
 		c.ResponseError(errors.New("添加群失败！"))
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		return
 	}
 	realMemberUids := make([]string, 0) // 真实成员uid集合
@@ -461,39 +464,41 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 	// 注销用户
 	destroyUserBaseVos := make([]*config.UserBaseVo, 0)
 	for _, memberUser := range memberUserModels {
-		if memberUser.IsDestroy == 1 {
+		if *memberUser.IsDestroy == 1 {
 			destroyUserBaseVos = append(destroyUserBaseVos, &config.UserBaseVo{
-				UID:  memberUser.UID,
-				Name: memberUser.Name,
+				UID:  *memberUser.UID,
+				Name: *memberUser.Name,
 			})
 			continue
 		}
-		memberVersion := g.ctx.GenSeq(common.GroupMemberSeqKey)
-		realMemberUids = append(realMemberUids, memberUser.UID)
+		memberVersion, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
+		realMemberUids = append(realMemberUids, *memberUser.UID)
 		var role = MemberRoleCommon
-		if memberUser.UID == creator {
+		if *memberUser.UID == creator {
 			role = MemberRoleCreator
 		}
+		Status := int(common.GroupMemberStatusNormal)
+		Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember)
 		err = g.db.InsertMemberTx(&MemberModel{
-			GroupNo:   groupNo,
+			GroupNo:   &groupNo,
 			UID:       memberUser.UID,
-			Role:      role,
-			Version:   memberVersion,
-			InviteUID: creator,
+			Role:      &role,
+			Version:   &memberVersion,
+			InviteUID: &creator,
 			Robot:     memberUser.Robot,
-			Status:    int(common.GroupMemberStatusNormal),
-			Vercode:   fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember),
+			Status:    &Status,
+			Vercode:   &Vercode,
 		}, tx)
 		if err != nil {
-			tx.RollbackUnlessCommitted()
-			g.Error("添加成员失败！", zap.Error(err), zap.String("memberUid", memberUser.UID))
+			tx.Rollback()
+			g.Error("添加成员失败！", zap.Error(err), zap.String("memberUid", *memberUser.UID))
 			c.ResponseError(errors.New("添加成员失败！"))
 			return
 		}
-		userBaseVos = append(userBaseVos, &config.UserBaseVo{UID: memberUser.UID, Name: memberUser.Name})
+		userBaseVos = append(userBaseVos, &config.UserBaseVo{UID: *memberUser.UID, Name: *memberUser.Name})
 	}
 	if len(realMemberUids) <= 0 {
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		g.Error("群成员不能为空！")
 		c.ResponseError(errors.New("群成员不能为空！"))
 		return
@@ -511,7 +516,7 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 		},
 	}, tx)
 	if err != nil {
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		g.Error("开启事件失败！", zap.Error(err))
 		c.ResponseError(errors.New("开启事件失败！"))
 		return
@@ -531,7 +536,7 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 			},
 		}, tx)
 		if err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			g.Error("开启无法添加到群聊事件失败！", zap.Error(err))
 			c.ResponseError(errors.New("开启无法添加到群聊事件失败！"))
 			return
@@ -546,7 +551,7 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 		},
 	}, tx)
 	if err != nil {
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		g.Error("开启群成员头像更新事件失败！", zap.Error(err))
 		c.ResponseError(errors.New("开启群成员头像更新事件失败！"))
 		return
@@ -559,14 +564,14 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 		Subscribers: realMemberUids,
 	})
 	if err != nil {
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		g.Error("创建IM频道失败！", zap.Error(err))
 		c.ResponseError(errors.New("创建IM频道失败！"))
 		return
 	}
 
-	if err := tx.Commit(); err != nil {
-		tx.RollbackUnlessCommitted()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		g.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
 		return
@@ -583,11 +588,14 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 		return
 	}
 	groupResp := &GroupResp{}
+	Receipt := 1
+	RevokeRemind := 1
+	Screenshot := 1
 	c.Response(groupResp.from(&DetailModel{
 		Model:        *groupModel,
-		Receipt:      1,
-		RevokeRemind: 1,
-		Screenshot:   1,
+		Receipt:      &Receipt,
+		RevokeRemind: &RevokeRemind,
+		Screenshot:   &Screenshot,
 	}))
 }
 
@@ -631,8 +639,8 @@ func (g *Group) groupUpdate(c *wkhttp.Context) {
 		return
 	}
 
-	version := g.ctx.GenSeq(common.GroupSeqKey)
-	group.Version = version
+	version, _ := g.ctx.GenSeq(common.GroupSeqKey)
+	group.Version = &version
 
 	// TODO: 这里的写法只支持更新一个属性，如果是多个属性后面需要修改。
 	var attrKey string
@@ -640,21 +648,24 @@ func (g *Group) groupUpdate(c *wkhttp.Context) {
 		attrKey = key
 		switch key {
 		case common.GroupAttrKeyName:
-			group.Name = value
+			group.Name = &value
 		case common.GroupAttrKeyNotice:
-			group.Notice = value
+			group.Notice = &value
 		case common.GroupAttrKeyInvite:
-			invite, _ := strconv.ParseInt(value, 10, 64)
-			group.Invite = int(invite)
+			invite, _ := strconv.Atoi(value)
+			group.Invite = &invite
 		}
 	}
-	tx, err := g.ctx.DB().Begin()
-	util.CheckErr(err)
-
+	db, err := g.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
 	err = g.db.UpdateTx(group, tx)
 	if err != nil {
 		tx.Rollback()
-		g.Error("更新群信息失败！", zap.Error(err), zap.String("group_no", group.GroupNo), zap.Any("groupMap", groupMap))
+		g.Error("更新群信息失败！", zap.Error(err), zap.String("group_no", *group.GroupNo), zap.Any("groupMap", groupMap))
 		c.ResponseError(errors.New("更新群信息失败！"))
 		return
 	}
@@ -676,8 +687,8 @@ func (g *Group) groupUpdate(c *wkhttp.Context) {
 		c.ResponseError(errors.New("开启事件失败！"))
 		return
 	}
-	if err := tx.Commit(); err != nil {
-		tx.RollbackUnlessCommitted()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		g.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
 		return
@@ -718,7 +729,7 @@ func (g *Group) memberAdd(c *wkhttp.Context) {
 	/**
 	判断群是否开启了邀请模式 如果开启了 再判断邀请的人是否是群主或管理员 如果不是则不允许直接添加群成员
 	**/
-	if group.Invite == 1 {
+	if *group.Invite == 1 {
 		creatorOrManager, err := g.db.QueryIsGroupManagerOrCreator(groupNo, operator)
 		if err != nil {
 			g.Error("查询是否是创建者和管理者失败！", zap.Error(err))
@@ -745,10 +756,10 @@ func (g *Group) memberAdd(c *wkhttp.Context) {
 	}
 
 	// 普通群自动升级
-	if memberCount >= int64(g.ctx.GetConfig().GroupUpgradeWhenMemberCount) && group.GroupType == int(GroupTypeCommon) {
+	if memberCount >= int64(g.ctx.GetConfig().GroupUpgradeWhenMemberCount) && *group.GroupType == int(GroupTypeCommon) {
 
 		var ban = 0
-		if group.Status == GroupStatusDisabled {
+		if *group.Status == GroupStatusDisabled {
 			ban = 1
 		}
 		err = g.ctx.IMCreateOrUpdateChannel(&config.ChannelCreateReq{
@@ -780,7 +791,7 @@ func (g *Group) memberAdd(c *wkhttp.Context) {
 
 }
 
-func (g *Group) addMembersTx(members []string, groupNo string, operator, operatorName string, tx *dbr.Tx) (func(), error) {
+func (g *Group) addMembersTx(members []string, groupNo string, operator, operatorName string, tx *gorm.DB) (func(), error) {
 
 	/**
 	判断操作者是否在群内，如果不在群内是不允许邀请好友的
@@ -808,13 +819,13 @@ func (g *Group) addMembersTx(members []string, groupNo string, operator, operato
 	unableAddMemberVos := make([]*config.UserBaseVo, 0)
 	if len(userList) > 0 {
 		for _, user := range userList {
-			if user.IsDestroy == 1 {
+			if *user.IsDestroy == 1 {
 				unableAddMemberVos = append(unableAddMemberVos, &config.UserBaseVo{
-					UID:  user.UID,
-					Name: user.Name,
+					UID:  *user.UID,
+					Name: *user.Name,
 				})
 			} else {
-				newMembers = append(newMembers, user.UID)
+				newMembers = append(newMembers, *user.UID)
 			}
 		}
 	}
@@ -839,14 +850,14 @@ func (g *Group) addMembersTx(members []string, groupNo string, operator, operato
 	for _, memberUID := range newMembers {
 		exist := false
 		for _, existMember := range existMembers {
-			if memberUID == existMember.UID {
+			if memberUID == *existMember.UID {
 				exist = true
 				break
 			}
 		}
 		if len(blacklist) > 0 {
 			for _, blacklistMember := range blacklist {
-				if memberUID == blacklistMember.UID {
+				if memberUID == *blacklistMember.UID {
 					exist = true
 					break
 				}
@@ -875,24 +886,25 @@ func (g *Group) addMembersTx(members []string, groupNo string, operator, operato
 	**/
 	userBaseVos := make([]*config.UserBaseVo, 0, len(realMembers))
 	for _, realMember := range realMemberModels {
-		version := g.ctx.GenSeq(common.GroupMemberSeqKey)
-
+		version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
 		userBaseVos = append(userBaseVos, &config.UserBaseVo{
-			UID:  realMember.UID,
-			Name: realMember.Name,
+			UID:  *realMember.UID,
+			Name: *realMember.Name,
 		})
-		existDelete, err := g.db.ExistMemberDelete(realMember.UID, groupNo)
+		existDelete, err := g.db.ExistMemberDelete(*realMember.UID, groupNo)
 		if err != nil {
 			g.Error("查询是否存在删除成员失败！", zap.Error(err))
 			return nil, errors.New("查询是否存在删除成员失败！")
 		}
+		Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember)
+		Status := int(common.GroupMemberStatusNormal)
 		newMember := &MemberModel{
-			GroupNo:   groupNo,
-			InviteUID: operator,
+			GroupNo:   &groupNo,
+			InviteUID: &operator,
 			UID:       realMember.UID,
-			Vercode:   fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember),
-			Version:   version,
-			Status:    int(common.GroupMemberStatusNormal),
+			Vercode:   &Vercode,
+			Version:   &version,
+			Status:    &Status,
 			Robot:     realMember.Robot,
 		}
 		if existDelete {
@@ -956,7 +968,7 @@ func (g *Group) addMembersTx(members []string, groupNo string, operator, operato
 		}
 		ninceMembers := make([]string, 0, 9)
 		for _, oldMember := range oldMembers {
-			ninceMembers = append(ninceMembers, oldMember.UID)
+			ninceMembers = append(ninceMembers, *oldMember.UID)
 		}
 		if len(ninceMembers)+len(userBaseVos) >= 9 {
 			for len(ninceMembers) < 9 {
@@ -1007,7 +1019,12 @@ func (g *Group) addMembersTx(members []string, groupNo string, operator, operato
 }
 
 func (g *Group) addMembers(members []string, groupNo string, operator, operatorName string) error {
-	tx, _ := g.ctx.DB().Begin()
+	db, err := g.ctx.DB()
+	if err != nil {
+		g.Error("开始事务失败")
+		return errors.New("开始事务失败")
+	}
+	tx := db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -1016,10 +1033,10 @@ func (g *Group) addMembers(members []string, groupNo string, operator, operatorN
 	}()
 	commitCallback, err := g.addMembersTx(members, groupNo, operator, operatorName, tx)
 	if err != nil {
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		return err
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		g.Error("提交事务失败！", zap.Error(err))
 		return errors.New("提交事务失败！")
@@ -1073,8 +1090,7 @@ func (g *Group) managerAdd(c *wkhttp.Context) {
 		return
 	}
 
-	version := g.ctx.GenSeq(common.GroupMemberSeqKey)
-
+	version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
 	err = g.db.UpdateMembersToManager(groupNo, memberUIDs, version)
 	if err != nil {
 		g.Error("更新成员为管理员失败！", zap.Any("memberUIDs", memberUIDs), zap.Error(err))
@@ -1082,8 +1098,8 @@ func (g *Group) managerAdd(c *wkhttp.Context) {
 		return
 	}
 
-	if groupModel.Forbidden == 1 { // 如果是禁言状态，则重置管理员白名单
-		err = g.setIMWhitelistForGroupManager(groupModel.GroupNo)
+	if *groupModel.Forbidden == 1 { // 如果是禁言状态，则重置管理员白名单
+		err = g.setIMWhitelistForGroupManager(*groupModel.GroupNo)
 		if err != nil {
 			c.ResponseError(errors.New("设置白名单失败！"))
 			g.Error("设置白名单失败！", zap.Error(err))
@@ -1150,8 +1166,7 @@ func (g *Group) managerRemove(c *wkhttp.Context) {
 		return
 	}
 
-	version := g.ctx.GenSeq(common.GroupMemberSeqKey)
-
+	version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
 	err = g.db.UpdateManagersToMember(groupNo, memberUIDs, version)
 	if err != nil {
 		g.Error("更新成员为管理员失败！", zap.Any("memberUIDs", memberUIDs), zap.Error(err))
@@ -1159,8 +1174,8 @@ func (g *Group) managerRemove(c *wkhttp.Context) {
 		return
 	}
 
-	if groupModel.Forbidden == 1 { // 如果是禁言状态，则重置管理员白名单
-		err = g.setIMWhitelistForGroupManager(groupModel.GroupNo)
+	if *groupModel.Forbidden == 1 { // 如果是禁言状态，则重置管理员白名单
+		err = g.setIMWhitelistForGroupManager(*groupModel.GroupNo)
 		if err != nil {
 			c.ResponseError(errors.New("设置白名单失败！"))
 			g.Error("设置白名单失败！", zap.Error(err))
@@ -1210,8 +1225,8 @@ func (g *Group) groupForbidden(c *wkhttp.Context) {
 		c.ResponseError(errors.New("群不存在！"))
 		return
 	}
-	forbidden, _ := strconv.ParseInt(on, 10, 64)
-	groupModel.Forbidden = int(forbidden)
+	forbidden, _ := strconv.Atoi(on)
+	groupModel.Forbidden = &forbidden
 
 	whitelistUIDs := make([]string, 0)
 	if forbidden == 1 {
@@ -1230,14 +1245,16 @@ func (g *Group) groupForbidden(c *wkhttp.Context) {
 		c.ResponseError(errors.New(err.Error()))
 		return
 	}
-
-	tx, err := g.ctx.DB().Begin()
-	util.CheckErr(err)
-
+	db, err := g.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
 	err = g.db.UpdateTx(groupModel, tx)
 	if err != nil {
 		tx.Rollback()
-		g.Error("更新群信息失败！", zap.Error(err), zap.String("group_no", groupModel.GroupNo))
+		g.Error("更新群信息失败！", zap.Error(err), zap.String("group_no", *groupModel.GroupNo))
 		c.ResponseError(errors.New("更新群信息失败！"))
 		return
 	}
@@ -1261,8 +1278,8 @@ func (g *Group) groupForbidden(c *wkhttp.Context) {
 		c.ResponseError(errors.New("开启群更新事件失败！"))
 		return
 	}
-	if err := tx.Commit(); err != nil {
-		tx.RollbackUnlessCommitted()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		g.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
 		return
@@ -1414,22 +1431,24 @@ func (g *Group) groupScanJoin(c *wkhttp.Context) {
 		return
 	}
 
-	version := g.ctx.GenSeq(common.GroupMemberSeqKey)
-
+	version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
+	memberRoleCommon := MemberRoleCommon
+	Status := int(common.GroupMemberStatusNormal)
+	Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember)
 	memberModel := &MemberModel{
-		GroupNo:   groupNo,
-		UID:       scaner,
-		Role:      MemberRoleCommon,
-		Version:   version,
-		Status:    int(common.GroupMemberStatusNormal),
-		InviteUID: generator,
-		Vercode:   fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember),
+		GroupNo:   &groupNo,
+		UID:       &scaner,
+		Role:      &memberRoleCommon,
+		Version:   &version,
+		Status:    &Status,
+		InviteUID: &generator,
+		Vercode:   &Vercode,
 	}
 
-	tx, _ := g.db.session.Begin()
+	tx := g.db.db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			panic(err)
 		}
 	}()
@@ -1438,10 +1457,10 @@ func (g *Group) groupScanJoin(c *wkhttp.Context) {
 		Type:  wkevent.Message,
 		Data: config.MsgGroupMemberScanJoin{
 			GroupNo:       groupNo,
-			Generator:     generatorInfo.UID,
-			GeneratorName: generatorInfo.Name,
-			Scaner:        scanerInfo.UID,
-			ScanerName:    scanerInfo.Name,
+			Generator:     *generatorInfo.UID,
+			GeneratorName: *generatorInfo.Name,
+			Scaner:        *scanerInfo.UID,
+			ScanerName:    *scanerInfo.Name,
 		},
 	}, tx)
 	if err != nil {
@@ -1467,9 +1486,9 @@ func (g *Group) groupScanJoin(c *wkhttp.Context) {
 		}
 		members := make([]string, 0, len(oldMembers)+1)
 		for _, oldMember := range oldMembers {
-			members = append(members, oldMember.UID)
+			members = append(members, *oldMember.UID)
 		}
-		members = append(members, scanerInfo.UID)
+		members = append(members, *scanerInfo.UID)
 
 		groupAvatarEventID, err = g.ctx.EventBegin(&wkevent.Data{
 			Event: event.GroupAvatarUpdate,
@@ -1512,13 +1531,13 @@ func (g *Group) groupScanJoin(c *wkhttp.Context) {
 		Subscribers: []string{scaner},
 	})
 	if err != nil {
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		g.Error("调用IM的订阅接口失败！", zap.Error(err))
 		c.ResponseError(errors.New("调用IM的订阅接口失败！"))
 		return
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		g.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
@@ -1548,7 +1567,7 @@ func (g *Group) transferGrouper(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询转让用户失败！"))
 		return
 	}
-	if toUser == nil || toUser.IsDestroy == 1 {
+	if toUser == nil || *toUser.IsDestroy == 1 {
 		c.ResponseError(errors.New("转让用户不存在或已注销！"))
 		return
 	}
@@ -1602,14 +1621,14 @@ func (g *Group) transferGrouper(c *wkhttp.Context) {
 		return
 	}
 
-	version := g.ctx.GenSeq(common.GroupMemberSeqKey)
+	version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
 	/**
 	修改群主为普通成员，修改转让用户为群主
 	**/
-	tx, _ := g.db.session.Begin()
+	tx := g.db.db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			panic(err)
 		}
 	}()
@@ -1621,7 +1640,7 @@ func (g *Group) transferGrouper(c *wkhttp.Context) {
 			OldGrouper:     loginUID,
 			OldGrouperName: loginName,
 			NewGrouper:     toUID,
-			NewGrouperName: toUser.Name,
+			NewGrouperName: *toUser.Name,
 		},
 	}, tx)
 	if err != nil {
@@ -1652,7 +1671,7 @@ func (g *Group) transferGrouper(c *wkhttp.Context) {
 		c.ResponseError(errors.New("修改成员禁言时长失败！"))
 		return
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		g.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
@@ -1660,8 +1679,8 @@ func (g *Group) transferGrouper(c *wkhttp.Context) {
 	}
 	g.ctx.EventCommit(eventID)
 
-	if groupModel.Forbidden == 1 { // 如果是禁言状态，则重置管理员白名单
-		err = g.setIMWhitelistForGroupManager(groupModel.GroupNo)
+	if *groupModel.Forbidden == 1 { // 如果是禁言状态，则重置管理员白名单
+		err = g.setIMWhitelistForGroupManager(*groupModel.GroupNo)
 		if err != nil {
 			tx.Rollback()
 			c.ResponseError(errors.New("设置白名单失败！"))
@@ -1669,7 +1688,7 @@ func (g *Group) transferGrouper(c *wkhttp.Context) {
 			return
 		}
 	}
-	if forbiddenExpirTime > 0 {
+	if *forbiddenExpirTime > 0 {
 		toUIDs := make([]string, 0)
 		toUIDs = append(toUIDs, toUID)
 		err = g.ctx.IMBlacklistRemove(config.ChannelBlacklistReq{
@@ -1688,7 +1707,6 @@ func (g *Group) transferGrouper(c *wkhttp.Context) {
 	}
 
 	c.ResponseOK()
-
 }
 
 // 修改群里群成员信息
@@ -1726,10 +1744,15 @@ func (g *Group) memberUpdate(c *wkhttp.Context) {
 	for key, value := range memberUpdateMap {
 		switch key {
 		case "remark":
-			memberModel.Remark = value.(string)
+			remark, ok := value.(string)
+			if ok {
+				continue
+			}
+			memberModel.Remark = &remark
 		}
 	}
-	memberModel.Version = g.ctx.GenSeq(common.GroupMemberSeqKey)
+	version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
+	memberModel.Version = &version
 	err = g.db.UpdateMember(memberModel)
 	if err != nil {
 		g.Error("更新群成员信息失败！", zap.Error(err))
@@ -1794,7 +1817,7 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 			c.ResponseError(errors.New("操作者不再此群"))
 			return
 		}
-		if loginMember.Role != int(common.GroupMemberRoleCreater) && loginMember.Role != int(common.GroupMemberRoleManager) {
+		if *loginMember.Role != int(common.GroupMemberRoleCreater) && *loginMember.Role != int(common.GroupMemberRoleManager) {
 			c.ResponseError(errors.New("普通成员无法删除群成员"))
 			return
 		}
@@ -1818,12 +1841,12 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 	}
 	// 验证权限
 	for _, member := range deleteMembers {
-		if loginMember.Role == int(common.GroupMemberRoleManager) {
-			if member.Role == int(common.GroupMemberRoleManager) {
+		if *loginMember.Role == int(common.GroupMemberRoleManager) {
+			if *member.Role == int(common.GroupMemberRoleManager) {
 				c.ResponseError(errors.New("管理员不能删除管理员"))
 				return
 			}
-			if member.Role == int(common.GroupMemberRoleCreater) {
+			if *member.Role == int(common.GroupMemberRoleCreater) {
 				c.ResponseError(errors.New("管理员不能删除群主"))
 				return
 			}
@@ -1845,8 +1868,8 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 	userBaseVos := make([]*config.UserBaseVo, 0, len(realDeleteMemberModels))
 	for _, realMember := range realDeleteMemberModels {
 		userBaseVos = append(userBaseVos, &config.UserBaseVo{
-			UID:  realMember.UID,
-			Name: realMember.Name,
+			UID:  *realMember.UID,
+			Name: *realMember.Name,
 		})
 	}
 	nowMemberCount := int(memberCount) - len(userBaseVos) // 当前成员数量
@@ -1872,21 +1895,20 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 		needGenGroupAvatar = false
 	}
 
-	tx, err := g.db.session.Begin()
-	util.CheckErr(err)
+	tx := g.db.db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			panic(err)
 		}
 	}()
 
 	for _, realMember := range realDeleteMemberModels {
 
-		version := g.ctx.GenSeq(common.GroupMemberSeqKey)
-		err = g.db.DeleteMemberTx(groupNo, realMember.UID, version, tx)
+		version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
+		err = g.db.DeleteMemberTx(groupNo, *realMember.UID, version, tx)
 		if err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			g.Error("删除群成员失败！", zap.Error(err))
 			c.ResponseError(errors.New("删除群成员失败！"))
 			return
@@ -1906,7 +1928,7 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 		Data:  groupMemberRemoveReq,
 	}, tx)
 	if err != nil {
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		g.Error("开启事件失败！", zap.Error(err))
 		c.ResponseError(errors.New("开启事件失败！"))
 		return
@@ -1924,7 +1946,7 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 		}
 		if len(nownineMembers) > 0 {
 			for _, nowninceMember := range nownineMembers {
-				nineMemberUIDs = append(nineMemberUIDs, nowninceMember.UID)
+				nineMemberUIDs = append(nineMemberUIDs, *nowninceMember.UID)
 			}
 		}
 		if len(nineMemberUIDs) > 0 {
@@ -1944,8 +1966,8 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 			}
 		}
 	}
-	if err := tx.Commit(); err != nil {
-		tx.RollbackUnlessCommitted()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		g.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
 		return
@@ -1963,7 +1985,7 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 		Subscribers: req.Members,
 	})
 	if err != nil {
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		g.Error("调用IM的移除订阅者接口失败！", zap.Error(err))
 		c.ResponseError(errors.New("调用IM的移除订阅者接口失败！"))
 		return
@@ -2002,15 +2024,15 @@ func (g *Group) groupSettingUpdate(c *wkhttp.Context) {
 			return nil, false, err
 		}
 		insert := false // 是否是插入操作
-		version := g.ctx.GenSeq(common.GroupSettingSeqKey)
+		version, _ := g.ctx.GenSeq(common.GroupSettingSeqKey)
 		if setting == nil { // 不存在设置信息
 			insert = true
 			setting = newDefaultSetting()
-			setting.GroupNo = groupNo
-			setting.UID = loginUID
-			setting.Version = version
+			setting.GroupNo = &groupNo
+			setting.UID = &loginUID
+			setting.Version = &version
 		} else {
-			setting.Version = version
+			setting.Version = &version
 		}
 		return setting, insert, nil
 	}
@@ -2109,7 +2131,7 @@ func (g *Group) groupExit(c *wkhttp.Context) {
 	如果退出的人是群主，则选择第二个入群的人作为群主。
 	**/
 	var newGrouper *MemberModel // 新群主
-	if loginMember.Role == MemberRoleCreator {
+	if *loginMember.Role == MemberRoleCreator {
 		// 查询第二老成员
 		newGrouper, err = g.db.QuerySecondOldestMember(groupNo)
 		if err != nil {
@@ -2121,15 +2143,9 @@ func (g *Group) groupExit(c *wkhttp.Context) {
 	/**
 	如果退出的人是普通成员，则直接删除就行
 	**/
-	version := g.ctx.GenSeq(common.GroupMemberSeqKey)
+	version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
 
-	tx, err := g.db.session.Begin()
-	if err != nil {
-		tx.Rollback()
-		g.Error("开启数据库事务失败！", zap.Error(err))
-		c.ResponseError(errors.New("开启数据库事务失败！"))
-		return
-	}
+	tx := g.db.db.Begin()
 	eventID, err := g.ctx.EventBegin(&wkevent.Data{
 		Event: event.ConversationDelete,
 		Type:  wkevent.CMD,
@@ -2146,7 +2162,7 @@ func (g *Group) groupExit(c *wkhttp.Context) {
 		return
 	}
 	if newGrouper != nil {
-		err = g.db.UpdateMemberRoleTx(groupNo, newGrouper.UID, MemberRoleCreator, version, tx)
+		err = g.db.UpdateMemberRoleTx(groupNo, *newGrouper.UID, MemberRoleCreator, version, tx)
 		if err != nil {
 			tx.Rollback()
 			g.Error("更换新的群主失败！", zap.Error(err))
@@ -2168,9 +2184,10 @@ func (g *Group) groupExit(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询用户群设置错误"))
 		return
 	}
-	if groupSetting != nil && groupSetting.Save == 1 {
+	if groupSetting != nil && *groupSetting.Save == 1 {
 		// 清除保存设置
-		groupSetting.Save = 0
+		save := 0
+		groupSetting.Save = &save
 		err = g.settingDB.UpdateSettingWithTx(groupSetting, tx)
 		if err != nil {
 			tx.Rollback()
@@ -2179,8 +2196,8 @@ func (g *Group) groupExit(c *wkhttp.Context) {
 			return
 		}
 	}
-	if err := tx.Commit(); err != nil {
-		tx.RollbackUnlessCommitted()
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
 		g.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
 		return
@@ -2200,7 +2217,7 @@ func (g *Group) groupExit(c *wkhttp.Context) {
 		c.ResponseError(errors.New("发送群更新命令失败！"))
 		return
 	}
-	var showName = loginMember.Remark
+	var showName = *loginMember.Remark
 	if showName == "" {
 		showName = c.GetLoginName()
 	}
@@ -2267,7 +2284,7 @@ func (g *Group) blacklist(c *wkhttp.Context) {
 		status = int(common.GroupMemberStatusNormal)
 	}
 
-	version := g.ctx.GenSeq(common.GroupMemberSeqKey)
+	version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
 	err = g.db.updateMembersStatus(version, groupNo, status, req.Uids)
 	if err != nil {
 		g.Error("添加或移除群成员黑名单错误", zap.Error(err))
@@ -2294,8 +2311,8 @@ func (g *Group) blacklist(c *wkhttp.Context) {
 		}
 		removeUIDs := make([]string, 0)
 		for _, member := range members {
-			if member.ForbiddenExpirTime == 0 {
-				removeUIDs = append(removeUIDs, member.UID)
+			if *member.ForbiddenExpirTime == 0 {
+				removeUIDs = append(removeUIDs, *member.UID)
 			}
 		}
 		if len(removeUIDs) > 0 {
@@ -2397,7 +2414,7 @@ func (g *Group) forbiddenWithGroupMember(c *wkhttp.Context) {
 		c.ResponseError(errors.New("操作群不存在"))
 		return
 	}
-	loginGroupMember, err := g.db.QueryMemberWithUID(loginUID, group.GroupNo)
+	loginGroupMember, err := g.db.QueryMemberWithUID(loginUID, *group.GroupNo)
 	if err != nil {
 		g.Error("查询登录用户群内信息错误", zap.Error(err))
 		c.ResponseError(errors.New("查询登录用户群内信息错误"))
@@ -2407,7 +2424,7 @@ func (g *Group) forbiddenWithGroupMember(c *wkhttp.Context) {
 		c.ResponseError(errors.New("登录用户不在本群内无法操作"))
 		return
 	}
-	member, err := g.db.QueryMemberWithUID(req.MemberUID, group.GroupNo)
+	member, err := g.db.QueryMemberWithUID(req.MemberUID, *group.GroupNo)
 	if err != nil {
 		g.Error("查询成员信息错误", zap.Error(err))
 		c.ResponseError(errors.New("查询成员信息错误"))
@@ -2417,14 +2434,16 @@ func (g *Group) forbiddenWithGroupMember(c *wkhttp.Context) {
 		c.ResponseError(errors.New("该成员不在群内"))
 		return
 	}
-	if loginGroupMember.Role == MemberRoleCommon || member.Role == MemberRoleCreator || loginGroupMember.Role == member.Role {
+	if *loginGroupMember.Role == MemberRoleCommon || *member.Role == MemberRoleCreator || loginGroupMember.Role == member.Role {
 		c.ResponseError(errors.New("操作用户权限不够"))
 		return
 	}
-	member.Version = g.ctx.GenSeq(common.GroupMemberSeqKey)
+	version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
+	member.Version = &version
+	ForbiddenExpirTime := int64(0)
 	if req.Action == 0 {
 		// 解禁
-		member.ForbiddenExpirTime = 0
+		member.ForbiddenExpirTime = &ForbiddenExpirTime
 		err := g.db.UpdateMember(member)
 		if err != nil {
 			g.Error("解除用户禁言错误", zap.Error(err))
@@ -2453,7 +2472,7 @@ func (g *Group) forbiddenWithGroupMember(c *wkhttp.Context) {
 			c.ResponseError(errors.New("禁言成员时长参数错误"))
 			return
 		}
-		member.ForbiddenExpirTime = expirationTime
+		member.ForbiddenExpirTime = &expirationTime
 		err = g.db.UpdateMember(member)
 		if err != nil {
 			g.Error("禁言用户错误", zap.Error(err))
@@ -2487,7 +2506,7 @@ func (g *Group) forbiddenWithGroupMember(c *wkhttp.Context) {
 }
 
 func (g *Group) CheckForbiddenLoop() {
-	var limit int64 = 100
+	var limit = 100
 	var errSleep = time.Second * 1
 	var noDataSleep = time.Second * 15
 	for {
@@ -2501,25 +2520,27 @@ func (g *Group) CheckForbiddenLoop() {
 			time.Sleep(noDataSleep)
 			continue
 		}
+		vsersion, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
+		ForbiddenExpirTime := int64(0)
 		for _, model := range models {
-			model.Version = g.ctx.GenSeq(common.GroupMemberSeqKey)
-			model.ForbiddenExpirTime = 0
+			model.Version = &vsersion
+			model.ForbiddenExpirTime = &ForbiddenExpirTime
 			err = g.db.UpdateMember(model)
 			if err != nil {
 				g.Warn("更新禁言成员新消息错误", zap.Error(err))
 				continue
 			}
 			uids := make([]string, 0)
-			uids = append(uids, model.UID)
-			if model.Status != int(common.GroupMemberStatusBlacklist) {
-				err = g.setGroupBlacklist(model.GroupNo, uids, false)
+			uids = append(uids, *model.UID)
+			if *model.Status != int(common.GroupMemberStatusBlacklist) {
+				err = g.setGroupBlacklist(*model.GroupNo, uids, false)
 				if err != nil {
 					g.Warn("更新禁言成员新消息错误", zap.Error(err))
 					continue
 				}
 			}
 			err = g.ctx.SendCMD(config.MsgCMDReq{
-				ChannelID:   model.GroupNo,
+				ChannelID:   *model.GroupNo,
 				ChannelType: common.ChannelTypeGroup.Uint8(),
 				CMD:         common.CMDGroupMemberUpdate,
 				Param: map[string]interface{}{
@@ -2573,11 +2594,11 @@ type groupDetailResp struct {
 
 func (g groupDetailResp) from(model *Model, memberCount int64) groupDetailResp {
 	return groupDetailResp{
-		GroupNo:     model.GroupNo,
-		Name:        model.Name,
-		Notice:      model.Notice,
-		Version:     model.Version,
-		Forbidden:   model.Forbidden,
+		GroupNo:     *model.GroupNo,
+		Name:        *model.Name,
+		Notice:      *model.Notice,
+		Version:     *model.Version,
+		Forbidden:   *model.Forbidden,
 		MemberCount: memberCount,
 		CreatedAt:   model.CreatedAt.String(),
 		UpdatedAt:   model.UpdatedAt.String(),
@@ -2605,19 +2626,19 @@ type memberDetailResp struct {
 
 func (r memberDetailResp) from(model *MemberDetailModel) memberDetailResp {
 	return memberDetailResp{
-		ID:                 uint64(model.Id),
-		UID:                model.UID,
-		GroupNo:            model.GroupNo,
-		Name:               model.Name,
-		Remark:             model.Remark,
-		Role:               model.Role,
-		Version:            model.Version,
-		IsDeleted:          model.IsDeleted,
-		Status:             model.Status,
-		Vercode:            model.Vercode,
-		InviteUID:          model.InviteUID,
-		Robot:              model.Robot,
-		ForbiddenExpirTime: model.ForbiddenExpirTime,
+		ID:                 uint64(*model.Id),
+		UID:                *model.UID,
+		GroupNo:            *model.GroupNo,
+		Name:               *model.Name,
+		Remark:             *model.Remark,
+		Role:               *model.Role,
+		Version:            *model.Version,
+		IsDeleted:          *model.IsDeleted,
+		Status:             *model.Status,
+		Vercode:            *model.Vercode,
+		InviteUID:          *model.InviteUID,
+		Robot:              *model.Robot,
+		ForbiddenExpirTime: *model.ForbiddenExpirTime,
 		CreatedAt:          model.CreatedAt.String(),
 		UpdatedAt:          model.UpdatedAt.String(),
 	}

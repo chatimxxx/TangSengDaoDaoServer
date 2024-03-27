@@ -23,7 +23,6 @@ type OpenAPI struct {
 }
 
 func New(ctx *config.Context) *OpenAPI {
-
 	return &OpenAPI{
 		ctx:                      ctx,
 		appService:               app.NewService(ctx),

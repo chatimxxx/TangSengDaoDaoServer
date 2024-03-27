@@ -47,6 +47,11 @@ type Conversation struct {
 
 // New New
 func NewConversation(ctx *config.Context) *Conversation {
+	db, err := ctx.DB()
+	if err != nil {
+		panic("服务初始化失败")
+		return nil
+	}
 	return &Conversation{
 		ctx:                            ctx,
 		Log:                            log.NewTLog("Coversation"),
@@ -56,7 +61,7 @@ func NewConversation(ctx *config.Context) *Conversation {
 		messageUserExtraDB:             newMessageUserExtraDB(ctx),
 		messageReactionDB:              newMessageReactionDB(ctx),
 		channelOffsetDB:                newChannelOffsetDB(ctx),
-		deviceOffsetDB:                 newDeviceOffsetDB(ctx.DB()),
+		deviceOffsetDB:                 newDeviceOffsetDB(db),
 		userLastOffsetDB:               newUserLastOffsetDB(ctx),
 		conversationExtraDB:            newConversationExtraDB(ctx),
 		userService:                    user.NewService(ctx),
@@ -166,17 +171,17 @@ func (co *Conversation) conversationExtraUpdate(c *wkhttp.Context) {
 
 	channelTypeI64, _ := strconv.ParseInt(channelTypeStr, 10, 64)
 
-	version := co.ctx.GenSeq(common.SyncConversationExtraKey)
-
+	version, _ := co.ctx.GenSeq(common.SyncConversationExtraKey)
+	ChannelType := uint8(channelTypeI64)
 	err := co.conversationExtraDB.insertOrUpdate(&conversationExtraModel{
-		UID:            loginUID,
-		ChannelID:      channelID,
-		ChannelType:    uint8(channelTypeI64),
-		BrowseTo:       req.BrowseTo,
-		KeepMessageSeq: req.KeepMessageSeq,
-		KeepOffsetY:    req.KeepOffsetY,
-		Draft:          req.Draft,
-		Version:        version,
+		UID:            &loginUID,
+		ChannelID:      &channelID,
+		ChannelType:    &ChannelType,
+		BrowseTo:       &req.BrowseTo,
+		KeepMessageSeq: &req.KeepMessageSeq,
+		KeepOffsetY:    &req.KeepOffsetY,
+		Draft:          &req.Draft,
+		Version:        &version,
 	})
 	if err != nil {
 		co.Error("添加或更新最近会话扩展失败！", zap.Error(err))
@@ -293,7 +298,7 @@ func (co *Conversation) syncUserConversation(c *wkhttp.Context) {
 					for _, userLastOffsetM := range userLastOffsetModels {
 						deviceOffsetList = append(deviceOffsetList, &deviceOffsetModel{
 							UID:         userLastOffsetM.UID,
-							DeviceUUID:  req.DeviceUUID,
+							DeviceUUID:  &req.DeviceUUID,
 							ChannelID:   userLastOffsetM.ChannelID,
 							ChannelType: userLastOffsetM.ChannelType,
 							MessageSeq:  userLastOffsetM.MessageSeq,
@@ -577,19 +582,20 @@ func (co *Conversation) syncUserConversationAck(c *wkhttp.Context) {
 			channelID, channelType, messageSeq := co.channelMessageSeqSplit(channelMessageSeqStr)
 
 			var has bool
+			seq := int64(messageSeq)
 			for _, userLastOffsetM := range userLastOffsetModels {
-				if channelID == userLastOffsetM.ChannelID && channelType == userLastOffsetM.ChannelType && messageSeq > uint32(userLastOffsetM.MessageSeq) {
-					userLastOffsetM.MessageSeq = int64(messageSeq)
+				if channelID == *userLastOffsetM.ChannelID && channelType == *userLastOffsetM.ChannelType && messageSeq > uint32(*userLastOffsetM.MessageSeq) {
+					userLastOffsetM.MessageSeq = &seq
 					has = true
 					break
 				}
 			}
 			if !has {
 				userLastOffsetModels = append(userLastOffsetModels, &userLastOffsetModel{
-					UID:         loginUID,
-					ChannelID:   channelID,
-					ChannelType: channelType,
-					MessageSeq:  int64(messageSeq),
+					UID:         &loginUID,
+					ChannelID:   &channelID,
+					ChannelType: &channelType,
+					MessageSeq:  &seq,
 				})
 			}
 		}
@@ -618,13 +624,12 @@ func (co *Conversation) syncUserConversationAck(c *wkhttp.Context) {
 }
 
 func (co *Conversation) insertDeviceOffsets(deviceOffsetModels []*deviceOffsetModel) error {
-	tx, _ := co.ctx.DB().Begin()
-	defer func() {
-		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
-			panic(err)
-		}
-	}()
+	db, err := co.ctx.DB()
+	if err != nil {
+		co.Error("开始事务失败！", zap.Error(err))
+		return err
+	}
+	tx := db.Begin()
 	for _, deviceOffsetM := range deviceOffsetModels {
 		err := co.deviceOffsetDB.insertOrUpdateTx(tx, deviceOffsetM)
 		if err != nil {
@@ -632,7 +637,7 @@ func (co *Conversation) insertDeviceOffsets(deviceOffsetModels []*deviceOffsetMo
 			return err
 		}
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		co.Error("提交事务失败！", zap.Error(err))
 		return err
@@ -640,13 +645,12 @@ func (co *Conversation) insertDeviceOffsets(deviceOffsetModels []*deviceOffsetMo
 	return nil
 }
 func (co *Conversation) insertUserLastOffsets(userLastOffsetModels []*userLastOffsetModel) error {
-	tx, _ := co.ctx.DB().Begin()
-	defer func() {
-		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
-			panic(err)
-		}
-	}()
+	db, err := co.ctx.DB()
+	if err != nil {
+		co.Error("开始事务失败！", zap.Error(err))
+		return err
+	}
+	tx := db.Begin()
 	for _, userLastOffsetM := range userLastOffsetModels {
 		err := co.userLastOffsetDB.insertOrUpdateTx(tx, userLastOffsetM)
 		if err != nil {
@@ -654,7 +658,7 @@ func (co *Conversation) insertUserLastOffsets(userLastOffsetModels []*userLastOf
 			return err
 		}
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		co.Error("提交事务失败！", zap.Error(err))
 		return err
@@ -740,7 +744,7 @@ func (co *Conversation) getConversations(c *wkhttp.Context) {
 
 		if len(userDetails) > 0 {
 			for _, userDetail := range userDetails {
-				userResp := userResp{}.from(userDetail, co.ctx.GetConfig().GetAvatarPath(userDetail.UID))
+				userResp := userResp{}.from(userDetail, co.ctx.GetConfig().GetAvatarPath(*userDetail.UID))
 				// if userDetail.UID == loginUID {
 				// 	userResp.Name = s.ctx.GetConfig().FileHelperName
 				// 	userResp.Avatar = s.ctx.GetConfig().FileHelperAvatar
@@ -874,13 +878,13 @@ type conversationExtraResp struct {
 func newConversationExtraResp(m *conversationExtraModel) *conversationExtraResp {
 
 	return &conversationExtraResp{
-		ChannelID:      m.ChannelID,
-		ChannelType:    m.ChannelType,
-		BrowseTo:       m.BrowseTo,
-		KeepMessageSeq: m.KeepMessageSeq,
-		KeepOffsetY:    m.KeepOffsetY,
-		Draft:          m.Draft,
-		Version:        m.Version,
+		ChannelID:      *m.ChannelID,
+		ChannelType:    *m.ChannelType,
+		BrowseTo:       *m.BrowseTo,
+		KeepMessageSeq: *m.KeepMessageSeq,
+		KeepOffsetY:    *m.KeepOffsetY,
+		Draft:          *m.Draft,
+		Version:        *m.Version,
 	}
 }
 
@@ -898,15 +902,15 @@ type groupResp struct {
 
 func (g groupResp) from(group *group.DetailModel) groupResp {
 	return groupResp{
-		GroupNo:   group.GroupNo,
-		Name:      group.Name,
-		Notice:    group.Notice,
-		Mute:      group.Mute,
-		Top:       group.Top,
-		ShowNick:  group.ShowNick,
-		Save:      group.Save,
-		Forbidden: group.Forbidden,
-		Invite:    group.Invite,
+		GroupNo:   *group.GroupNo,
+		Name:      *group.Name,
+		Notice:    *group.Notice,
+		Mute:      *group.Mute,
+		Top:       *group.Top,
+		ShowNick:  *group.ShowNick,
+		Save:      *group.Save,
+		Forbidden: *group.Forbidden,
+		Invite:    *group.Invite,
 	}
 }
 
@@ -922,11 +926,11 @@ type userResp struct {
 
 func (u userResp) from(user *user.Detail, avatarPath string) userResp {
 	return userResp{
-		ID:     user.Id,
-		UID:    user.UID,
-		Name:   user.Name,
-		Mute:   user.Mute,
-		Top:    user.Top,
+		ID:     *user.Id,
+		UID:    *user.UID,
+		Name:   *user.Name,
+		Mute:   *user.Mute,
+		Top:    *user.Top,
 		Avatar: avatarPath,
 	}
 }
@@ -1020,7 +1024,7 @@ func newSyncUserConversationResp(resp *config.SyncUserConversationResp, extra *c
 		messageUserExtraMap := map[string]*messageUserExtraModel{}
 		if len(messageUserExtraModels) > 0 {
 			for _, messageUserEditM := range messageUserExtraModels {
-				messageUserExtraMap[messageUserEditM.MessageID] = messageUserEditM
+				messageUserExtraMap[*messageUserEditM.MessageID] = messageUserEditM
 			}
 		}
 
@@ -1032,7 +1036,7 @@ func newSyncUserConversationResp(resp *config.SyncUserConversationResp, extra *c
 		messageExtraMap := map[string]*messageExtraDetailModel{}
 		if len(messageExtras) > 0 {
 			for _, messageExtra := range messageExtras {
-				messageExtraMap[messageExtra.MessageID] = messageExtra
+				messageExtraMap[*messageExtra.MessageID] = messageExtra
 			}
 		}
 		// 消息回应
@@ -1043,19 +1047,19 @@ func newSyncUserConversationResp(resp *config.SyncUserConversationResp, extra *c
 		messageReactionMap := map[string][]*reactionModel{}
 		if len(messageReaction) > 0 {
 			for _, reaction := range messageReaction {
-				msgReactionList := messageReactionMap[reaction.MessageID]
+				msgReactionList := messageReactionMap[*reaction.MessageID]
 				if msgReactionList == nil {
 					msgReactionList = make([]*reactionModel, 0)
 				}
 				msgReactionList = append(msgReactionList, reaction)
-				messageReactionMap[reaction.MessageID] = msgReactionList
+				messageReactionMap[*reaction.MessageID] = msgReactionList
 			}
 		}
 		for _, message := range resp.Recents {
-			if channelOffsetM != nil && message.MessageSeq <= channelOffsetM.MessageSeq {
+			if channelOffsetM != nil && message.MessageSeq <= *channelOffsetM.MessageSeq {
 				continue
 			}
-			if deviceOffsetM != nil && message.MessageSeq <= uint32(deviceOffsetM.MessageSeq) {
+			if deviceOffsetM != nil && message.MessageSeq <= uint32(*deviceOffsetM.MessageSeq) {
 				continue
 			}
 			messageIDStr := strconv.FormatInt(message.MessageID, 10)

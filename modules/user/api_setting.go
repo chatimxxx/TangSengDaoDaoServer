@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
@@ -18,7 +19,11 @@ type Setting struct {
 
 // NewSetting 创建
 func NewSetting(ctx *config.Context) *Setting {
-	return &Setting{ctx: ctx, Log: log.NewTLog("UserSetting"), db: NewSettingDB(ctx.DB())}
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
+	return &Setting{ctx: ctx, Log: log.NewTLog("UserSetting"), db: NewSettingDB(db)}
 }
 
 // 用户设置
@@ -41,33 +46,42 @@ func (u *Setting) userSettingUpdate(c *wkhttp.Context) {
 	if model == nil {
 		insert = true // 是否是插入操作
 		model = newDefaultSettingModel()
-		model.UID = loginUID
-		model.ToUID = toUID
+		model.UID = &loginUID
+		model.ToUID = &toUID
 	}
 	for key, value := range settingMap {
 		switch key {
 		case "mute":
-			model.Mute = int(value.(float64))
+			mute := int(value.(float64))
+			model.Mute = &mute
 		case "top":
-			model.Top = int(value.(float64))
+			top := int(value.(float64))
+			model.Top = &top
 		case "chat_pwd_on":
-			model.ChatPwdOn = int(value.(float64))
+			chatPwdOn := int(value.(float64))
+			model.ChatPwdOn = &chatPwdOn
 		case "screenshot":
-			model.Screenshot = int(value.(float64))
+			screenshot := int(value.(float64))
+			model.Screenshot = &screenshot
 		case "revoke_remind":
-			model.RevokeRemind = int(value.(float64))
+			revokeRemind := int(value.(float64))
+			model.RevokeRemind = &revokeRemind
 		case "receipt":
-			model.Receipt = int(value.(float64))
+			receipt := int(value.(float64))
+			model.Receipt = &receipt
 		case "flame":
-			model.Flame = int(value.(float64))
+			flame := int(value.(float64))
+			model.Flame = &flame
 		case "flame_second":
-			model.FlameSecond = int(value.(float64))
+			flameSecond := int(value.(float64))
+			model.FlameSecond = &flameSecond
 		case "remark":
-			model.Remark = value.(string)
+			remark := value.(string)
+			model.Remark = &remark
 		}
 	}
-	version := u.ctx.GenSeq(common.UserSettingSeqKey)
-	model.Version = version
+	version, _ := u.ctx.GenSeq(common.UserSettingSeqKey)
+	model.Version = &version
 	if insert {
 		err = u.db.InsertUserSettingModel(model)
 		if err != nil {

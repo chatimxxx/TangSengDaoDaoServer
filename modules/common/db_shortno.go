@@ -1,20 +1,25 @@
 package common
 
 import (
+	"fmt"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	dbs "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
 )
 
 type shortnoDB struct {
 	ctx *config.Context
-	db  *dbr.Session
+	db  *gorm.DB
 }
 
 func newShortnoDB(ctx *config.Context) *shortnoDB {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &shortnoDB{
 		ctx: ctx,
-		db:  ctx.DB(),
+		db:  db,
 	}
 }
 
@@ -22,21 +27,21 @@ func (s *shortnoDB) inserts(shortnos []string) error {
 	if len(shortnos) == 0 {
 		return nil
 	}
-	tx, _ := s.db.Begin()
+	tx := s.db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			panic(err)
 		}
 	}()
 	for _, st := range shortnos {
-		_, err := tx.InsertBySql("insert into shortno(shortno) values(?)", st).Exec()
+		err := tx.Exec("insert into shortno(shortno) values(?)", st).Error
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -46,27 +51,27 @@ func (s *shortnoDB) inserts(shortnos []string) error {
 
 func (s *shortnoDB) queryVail() (*shortnoModel, error) {
 	var m *shortnoModel
-	_, err := s.db.Select("*").From("shortno").Where("used=0 and hold=0 and locked=0").Limit(1).Load(&m)
+	err := s.db.Table("shortno").Where("used=0 and hold=0 and locked=0").Limit(1).Find(&m).Error
 	return m, err
 }
 
 func (s *shortnoDB) updateLock(shortno string, lock int) error {
-	_, err := s.db.Update("shortno").Set("locked", lock).Where("shortno=?", shortno).Exec()
+	err := s.db.Table("shortno").Update("locked", lock).Where("shortno=?", shortno).Error
 	return err
 }
 
 func (s *shortnoDB) updateUsed(shortno string, used int, business string) error {
-	_, err := s.db.Update("shortno").Set("used", used).Set("business", business).Where("shortno=?", shortno).Exec()
+	err := s.db.Table("shortno").Update("used", used).Update("business", business).Where("shortno=?", shortno).Error
 	return err
 }
 func (s *shortnoDB) updateHold(shortno string, hold int) error {
-	_, err := s.db.Update("shortno").Set("hold", hold).Where("shortno=?", shortno).Exec()
+	err := s.db.Table("shortno").Update("hold", hold).Where("shortno=?", shortno).Error
 	return err
 }
 
 func (s *shortnoDB) queryVailCount() (int64, error) {
 	var cn int64
-	_, err := s.db.Select("count(*)").From("shortno").Where("used=0 and hold=0 and locked=0").Load(&cn)
+	err := s.db.Table("shortno").Where("used=0 and hold=0 and locked=0").Count(&cn).Error
 	return cn, err
 }
 

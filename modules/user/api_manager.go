@@ -2,20 +2,19 @@ package user
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/base/event"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkevent"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"gorm.io/gorm/logger"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // Manager 用户管理
@@ -32,6 +31,10 @@ type Manager struct {
 
 // NewManager NewManager
 func NewManager(ctx *config.Context) *Manager {
+	db, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	m := &Manager{
 		ctx:           ctx,
 		Log:           log.NewTLog("userManager"),
@@ -39,7 +42,7 @@ func NewManager(ctx *config.Context) *Manager {
 		deviceDB:      newDeviceDB(ctx),
 		friendDB:      newFriendDB(ctx),
 		userDB:        NewDB(ctx),
-		userSettingDB: NewSettingDB(ctx.DB()),
+		userSettingDB: NewSettingDB(db),
 		onlineService: NewOnlineService(ctx),
 	}
 	m.createManagerAccount()
@@ -88,11 +91,11 @@ func (m *Manager) online(c *wkhttp.Context) {
 	if len(list) > 0 {
 		for _, user := range list {
 			result = append(result, &userOnlineResp{
-				Online:      user.Online,
-				DeviceFlag:  user.DeviceFlag,
-				LastOnline:  user.LastOffline,
-				LastOffline: user.LastOffline,
-				UID:         user.UID,
+				Online:      *user.Online,
+				DeviceFlag:  *user.DeviceFlag,
+				LastOnline:  *user.LastOffline,
+				LastOffline: *user.LastOffline,
+				UID:         *user.UID,
 			})
 		}
 	}
@@ -170,15 +173,15 @@ func (m *Manager) deleteAdminUsers(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询管理员用户错误"))
 		return
 	}
-	if user == nil || len(user.UID) == 0 {
+	if user == nil || len(*user.UID) == 0 {
 		c.ResponseError(errors.New("该用户不存在"))
 		return
 	}
-	if user.Role == "" {
+	if *user.Role == "" {
 		c.ResponseError(errors.New("该用户不是管理员账号不能删除"))
 		return
 	}
-	if user.Role == string(wkhttp.SuperAdmin) {
+	if *user.Role == string(wkhttp.SuperAdmin) {
 		c.ResponseError(errors.New("超级管理员账号不能删除"))
 		return
 	}
@@ -222,9 +225,9 @@ func (m *Manager) getAdminUsers(c *wkhttp.Context) {
 	if len(users) > 0 {
 		for _, user := range users {
 			list = append(list, &adminUserResp{
-				UID:          user.UID,
-				Name:         user.Name,
-				Username:     user.Username,
+				UID:          *user.UID,
+				Name:         *user.Name,
+				Username:     *user.Username,
 				RegisterTime: user.CreatedAt.String(),
 			})
 		}
@@ -267,30 +270,47 @@ func (m *Manager) addAdminUser(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询用户是否存在错误"))
 		return
 	}
-	if user != nil && len(user.UID) > 0 {
+	if user != nil && len(*user.UID) > 0 {
 		c.ResponseError(errors.New("该用户名已存在"))
 		return
 	}
+	UID := util.GenerUUID()
+	Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.User)
+	QRVercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.QRCode)
+	Phone := ""
+	Zone := ""
+	Role := string(wkhttp.Admin)
+	Password := util.MD5(util.MD5(req.Password))
+	ShortNo := util.Ten2Hex(time.Now().UnixNano())
+	IsUploadAvatar := 0
+	NewMsgNotice := 0
+	MsgShowDetail := 0
+	SearchByPhone := 0
+	SearchByShort := 0
+	VoiceOn := 0
+	ShockOn := 0
+	Sex := 1
+	Status := int(common.UserAvailable)
 	userModel := &Model{}
-	userModel.UID = util.GenerUUID()
-	userModel.Name = req.Name
-	userModel.Vercode = fmt.Sprintf("%s@%d", util.GenerUUID(), common.User)
-	userModel.QRVercode = fmt.Sprintf("%s@%d", util.GenerUUID(), common.QRCode)
-	userModel.Phone = ""
-	userModel.Username = req.LoginName
-	userModel.Zone = ""
-	userModel.Role = string(wkhttp.Admin)
-	userModel.Password = util.MD5(util.MD5(req.Password))
-	userModel.ShortNo = util.Ten2Hex(time.Now().UnixNano())
-	userModel.IsUploadAvatar = 0
-	userModel.NewMsgNotice = 0
-	userModel.MsgShowDetail = 0
-	userModel.SearchByPhone = 0
-	userModel.SearchByShort = 0
-	userModel.VoiceOn = 0
-	userModel.ShockOn = 0
-	userModel.Sex = 1
-	userModel.Status = int(common.UserAvailable)
+	userModel.UID = &UID
+	userModel.Name = &req.Name
+	userModel.Vercode = &Vercode
+	userModel.QRVercode = &QRVercode
+	userModel.Phone = &Phone
+	userModel.Username = &req.LoginName
+	userModel.Zone = &Zone
+	userModel.Role = &Role
+	userModel.Password = &Password
+	userModel.ShortNo = &ShortNo
+	userModel.IsUploadAvatar = &IsUploadAvatar
+	userModel.NewMsgNotice = &NewMsgNotice
+	userModel.MsgShowDetail = &MsgShowDetail
+	userModel.SearchByPhone = &SearchByPhone
+	userModel.SearchByShort = &SearchByShort
+	userModel.VoiceOn = &VoiceOn
+	userModel.ShockOn = &ShockOn
+	userModel.Sex = &Sex
+	userModel.Status = &Status
 	err = m.userDB.Insert(userModel)
 	if err != nil {
 		m.Error("添加管理员错误", zap.String("username", req.Name))
@@ -328,33 +348,45 @@ func (m *Manager) addUser(c *wkhttp.Context) {
 	}
 	uid := util.GenerUUID()
 
-	tx, _ := m.db.session.Begin()
+	tx := m.db.db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
 			panic(err)
 		}
 	}()
-
+	Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.User)
+	QRVercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.QRCode)
+	Username := fmt.Sprintf("%s%s", req.Zone, req.Phone)
+	Password := util.MD5(util.MD5(req.Password))
+	ShortNo := util.Ten2Hex(time.Now().UnixNano())
+	IsUploadAvatar := 0
+	NewMsgNotice := 1
+	MsgShowDetail := 1
+	SearchByPhone := 1
+	SearchByShort := 1
+	VoiceOn := 1
+	ShockOn := 1
+	Status := int(common.UserAvailable)
 	userModel := &Model{}
-	userModel.UID = uid
-	userModel.Name = req.Name
-	userModel.Vercode = fmt.Sprintf("%s@%d", util.GenerUUID(), common.User)
-	userModel.QRVercode = fmt.Sprintf("%s@%d", util.GenerUUID(), common.QRCode)
-	userModel.Phone = req.Phone
-	userModel.Username = fmt.Sprintf("%s%s", req.Zone, req.Phone)
-	userModel.Zone = req.Zone
-	userModel.Password = util.MD5(util.MD5(req.Password))
-	userModel.ShortNo = util.Ten2Hex(time.Now().UnixNano())
-	userModel.IsUploadAvatar = 0
-	userModel.NewMsgNotice = 1
-	userModel.MsgShowDetail = 1
-	userModel.SearchByPhone = 1
-	userModel.SearchByShort = 1
-	userModel.VoiceOn = 1
-	userModel.ShockOn = 1
-	userModel.Sex = req.Sex
-	userModel.Status = int(common.UserAvailable)
+	userModel.UID = &uid
+	userModel.Name = &req.Name
+	userModel.Vercode = &Vercode
+	userModel.QRVercode = &QRVercode
+	userModel.Phone = &req.Phone
+	userModel.Username = &Username
+	userModel.Zone = &req.Zone
+	userModel.Password = &Password
+	userModel.ShortNo = &ShortNo
+	userModel.IsUploadAvatar = &IsUploadAvatar
+	userModel.NewMsgNotice = &NewMsgNotice
+	userModel.MsgShowDetail = &MsgShowDetail
+	userModel.SearchByPhone = &SearchByPhone
+	userModel.SearchByShort = &SearchByShort
+	userModel.VoiceOn = &VoiceOn
+	userModel.ShockOn = &ShockOn
+	userModel.Sex = &req.Sex
+	userModel.Status = &Status
 	err = m.userDB.insertTx(userModel, tx)
 	if err != nil {
 		m.Error("添加用户错误", zap.String("username", req.Phone))
@@ -383,13 +415,12 @@ func (m *Manager) addUser(c *wkhttp.Context) {
 		},
 	}, tx)
 	if err != nil {
-		tx.RollbackUnlessCommitted()
+		tx.Rollback()
 		m.Error("开启事件失败！", zap.Error(err))
 		c.ResponseError(errors.New("开启事件失败！"))
 		return
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		tx.Rollback()
 		m.Error("数据库事物提交失败", zap.Error(err))
 		c.ResponseError(errors.New("数据库事物提交失败"))
@@ -417,7 +448,7 @@ func (m *Manager) list(c *wkhttp.Context) {
 	var userList []*managerUserModel
 	var count int64
 	if keyword == "" {
-		userList, err = m.db.queryUserListWithPage(uint64(pageSize), uint64(pageIndex), int(online))
+		userList, err = m.db.queryUserListWithPage(pageSize, pageIndex, int(online))
 		if err != nil {
 			m.Error("查询用户列表报错", zap.Error(err))
 			c.ResponseError(err)
@@ -431,7 +462,7 @@ func (m *Manager) list(c *wkhttp.Context) {
 			return
 		}
 	} else {
-		userList, err = m.db.queryUserListWithPageAndKeyword(keyword, int(online), uint64(pageSize), uint64(pageIndex))
+		userList, err = m.db.queryUserListWithPageAndKeyword(keyword, int(online), pageSize, pageIndex)
 		if err != nil {
 			m.Error("查询用户列表报错", zap.Error(err))
 			c.ResponseError(err)
@@ -450,7 +481,7 @@ func (m *Manager) list(c *wkhttp.Context) {
 	if len(userList) > 0 {
 		uids := make([]string, 0)
 		for _, user := range userList {
-			uids = append(uids, user.UID)
+			uids = append(uids, *user.UID)
 		}
 		resps, err := m.onlineService.GetUserLastOnlineStatus(uids)
 		respsdata := map[string]*config.OnlinestatusResp{}
@@ -487,37 +518,37 @@ func (m *Manager) list(c *wkhttp.Context) {
 			var online int
 			var lastOnlineTime string = ""
 			if device != nil {
-				deviceModel = device.DeviceModel
-				deviceName = device.DeviceName
-				lastLoginTime = util.ToyyyyMMddHHmm(time.Unix(device.LastLogin, 0))
+				deviceModel = *device.DeviceModel
+				deviceName = *device.DeviceName
+				lastLoginTime = util.ToyyyyMMddHHmm(time.Unix(*device.LastLogin, 0))
 			}
 			/* if i < len(resps) {
 				online = resps[i].Online
 				lastOnlineTime = util.ToyyyyMMddHHmm(time.Unix(int64(resps[i].LastOffline), 0))
 			} */
-			if respsdata[user.UID] != nil {
-				online = respsdata[user.UID].Online
-				lastOnlineTime = util.ToyyyyMMddHHmm(time.Unix(int64(respsdata[user.UID].LastOffline), 0))
+			if respsdata[*user.UID] != nil {
+				online = respsdata[*user.UID].Online
+				lastOnlineTime = util.ToyyyyMMddHHmm(time.Unix(int64(respsdata[*user.UID].LastOffline), 0))
 			}
-			showPhone := getShowPhoneNum(user.Phone)
+			showPhone := getShowPhoneNum(*user.Phone)
 			result = append(result, &managerUserResp{
-				UID:            user.UID,
-				Username:       user.Username,
-				Name:           user.Name,
+				UID:            *user.UID,
+				Username:       *user.Username,
+				Name:           *user.Name,
 				Phone:          showPhone,
-				Sex:            user.Sex,
-				ShortNo:        user.ShortNo,
+				Sex:            *user.Sex,
+				ShortNo:        *user.ShortNo,
 				LastLoginTime:  lastLoginTime,
 				DeviceName:     deviceName,
 				DeviceModel:    deviceModel,
 				Online:         online,
 				LastOnlineTime: lastOnlineTime,
 				RegisterTime:   user.CreatedAt.String(),
-				Status:         user.Status,
-				IsDestroy:      user.IsDestroy,
-				GiteeUID:       user.GiteeUID,
-				GithubUID:      user.GithubUID,
-				WXOpenid:       user.WXOpenid,
+				Status:         *user.Status,
+				IsDestroy:      *user.IsDestroy,
+				GiteeUID:       *user.GiteeUID,
+				GithubUID:      *user.GithubUID,
+				WXOpenid:       *user.WXOpenid,
 			})
 			i++
 		}
@@ -550,9 +581,9 @@ func (m *Manager) friends(c *wkhttp.Context) {
 	if len(list) > 0 {
 		for _, friend := range list {
 			result = append(result, &managerFriendResp{
-				UID:              friend.ToUID,
-				Remark:           friend.Remark,
-				Name:             friend.ToName,
+				UID:              *friend.ToUID,
+				Remark:           *friend.Remark,
+				Name:             *friend.ToName,
 				RelationshipTime: friend.CreatedAt.String(),
 			})
 		}
@@ -581,8 +612,8 @@ func (m *Manager) blacklist(c *wkhttp.Context) {
 	blacklists := []*managerBlackUserResp{}
 	for _, result := range list {
 		blacklists = append(blacklists, &managerBlackUserResp{
-			UID:      result.UID,
-			Name:     result.Name,
+			UID:      *result.UID,
+			Name:     *result.Name,
 			CreateAt: result.UpdatedAt.String(),
 		})
 	}
@@ -597,7 +628,7 @@ func (m *Manager) disableUsers(c *wkhttp.Context) {
 		return
 	}
 	pageIndex, pageSize := c.GetPage()
-	list, err := m.db.queryUserListWithStatus(int(common.UserDisable), uint64(pageSize), uint64(pageIndex))
+	list, err := m.db.queryUserListWithStatus(int(common.UserDisable), pageSize, pageIndex)
 	if err != nil {
 		m.Error("通过状态查询用户列表错误", zap.Error(err))
 		c.ResponseError(errors.New("通过状态查询用户列表错误"))
@@ -612,12 +643,12 @@ func (m *Manager) disableUsers(c *wkhttp.Context) {
 	result := make([]*managerDisableUserResp, 0)
 	if len(list) > 0 {
 		for _, user := range list {
-			showPhone := getShowPhoneNum(user.Phone)
+			showPhone := getShowPhoneNum(*user.Phone)
 			result = append(result, &managerDisableUserResp{
-				Name:         user.Name,
-				ShortNo:      user.ShortNo,
+				Name:         *user.Name,
+				ShortNo:      *user.ShortNo,
 				Phone:        showPhone,
-				UID:          user.UID,
+				UID:          *user.UID,
 				ClosureTime:  user.UpdatedAt.String(),
 				RegisterTime: user.CreatedAt.String(),
 			})
@@ -661,7 +692,7 @@ func (m *Manager) liftBanUser(c *wkhttp.Context) {
 		c.ResponseError(errors.New("操作用户不存在"))
 		return
 	}
-	if userInfo.Status == userStatus {
+	if *userInfo.Status == userStatus {
 		c.ResponseOK()
 		return
 	}
@@ -689,7 +720,7 @@ func (m *Manager) liftBanUser(c *wkhttp.Context) {
 	}
 	token := util.GenerUUID()
 	_, err = m.ctx.UpdateIMToken(config.UpdateIMTokenReq{
-		UID:         userInfo.UID,
+		UID:         *userInfo.UID,
 		Token:       token,
 		DeviceFlag:  config.APP,
 		DeviceLevel: config.DeviceLevelMaster,
@@ -733,7 +764,7 @@ func (m *Manager) updatePwd(c *wkhttp.Context) {
 		c.ResponseError(errors.New("操作用户不存在"))
 		return
 	}
-	if util.MD5(util.MD5(req.Password)) != user.Password {
+	if util.MD5(util.MD5(req.Password)) != *user.Password {
 		c.ResponseError(errors.New("原密码错误"))
 		return
 	}
@@ -788,11 +819,11 @@ func (m *Manager) addFileHelperFriend(uid string) error {
 		return err
 	}
 	if !isFriend {
-		version := m.ctx.GenSeq(common.FriendSeqKey)
+		version, _ := m.ctx.GenSeq(common.FriendSeqKey)
 		err := m.friendDB.Insert(&FriendModel{
-			UID:     uid,
-			ToUID:   m.ctx.GetConfig().Account.FileHelperUID,
-			Version: version,
+			UID:     &uid,
+			ToUID:   &m.ctx.GetConfig().Account.FileHelperUID,
+			Version: &version,
 		})
 		if err != nil {
 			m.Error("注册用户和文件助手成为好友失败")
@@ -814,7 +845,7 @@ func (m *Manager) addSystemFriend(uid string) error {
 		m.Error("查询用户关系失败")
 		return err
 	}
-	tx, _ := m.friendDB.session.Begin()
+	tx := m.friendDB.db.Begin()
 	defer func() {
 		if err := recover(); err != nil {
 			tx.Rollback()
@@ -822,11 +853,11 @@ func (m *Manager) addSystemFriend(uid string) error {
 		}
 	}()
 	if !isFriend {
-		version := m.ctx.GenSeq(common.FriendSeqKey)
+		version, _ := m.ctx.GenSeq(common.FriendSeqKey)
 		err := m.friendDB.InsertTx(&FriendModel{
-			UID:     uid,
-			ToUID:   m.ctx.GetConfig().Account.SystemUID,
-			Version: version,
+			UID:     &uid,
+			ToUID:   &m.ctx.GetConfig().Account.SystemUID,
+			Version: &version,
 		}, tx)
 		if err != nil {
 			m.Error("注册用户和系统账号成为好友失败")
@@ -853,8 +884,7 @@ func (m *Manager) addSystemFriend(uid string) error {
 	// 		return err
 	// 	}
 	// }
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		tx.Rollback()
 		m.Error("用户注册数据库事物提交失败", zap.Error(err))
 		return err
@@ -865,28 +895,35 @@ func (m *Manager) addSystemFriend(uid string) error {
 // 创建一个系统管理账户
 func (m *Manager) createManagerAccount() {
 	user, err := m.userDB.QueryByUID(m.ctx.GetConfig().Account.AdminUID)
-	if err != nil {
+	if err != nil && !errors.Is(err, logger.ErrRecordNotFound) {
 		m.Error("查询系统管理账号错误", zap.Error(err))
 		return
 	}
-	if (user != nil && user.UID != "") || m.ctx.GetConfig().AdminPwd == "" {
+	if (user != nil && *user.UID != "") || m.ctx.GetConfig().AdminPwd == "" {
 		return
 	}
 
 	username := string(wkhttp.SuperAdmin)
 	role := string(wkhttp.SuperAdmin)
 	var pwd = m.ctx.GetConfig().AdminPwd
+	Name := "超级管理员"
+	ShortNo := "30000"
+	Category := "system"
+	Zone := "0086"
+	Phone := "18888888888"
+	Status := 1
+	Password := util.MD5(util.MD5(pwd))
 	err = m.userDB.Insert(&Model{
-		UID:      m.ctx.GetConfig().Account.AdminUID,
-		Name:     "超级管理员",
-		ShortNo:  "30000",
-		Category: "system",
-		Role:     role,
-		Username: username,
-		Zone:     "0086",
-		Phone:    "13000000002",
-		Status:   1,
-		Password: util.MD5(util.MD5(pwd)),
+		UID:      &m.ctx.GetConfig().Account.AdminUID,
+		Name:     &Name,
+		ShortNo:  &ShortNo,
+		Category: &Category,
+		Role:     &role,
+		Username: &username,
+		Zone:     &Zone,
+		Phone:    &Phone,
+		Status:   &Status,
+		Password: &Password,
 	})
 	if err != nil {
 		m.Error("新增系统管理员错误", zap.Error(err))
@@ -987,12 +1024,11 @@ type userOnlineResp struct {
 }
 
 func newUserOnlineResp(m *onlineStatusWeightModel) *userOnlineResp {
-
 	return &userOnlineResp{
-		UID:         m.UID,
-		DeviceFlag:  m.DeviceFlag,
-		LastOnline:  m.LastOnline,
-		LastOffline: m.LastOffline,
-		Online:      m.Online,
+		UID:         *m.UID,
+		DeviceFlag:  *m.DeviceFlag,
+		LastOnline:  *m.LastOnline,
+		LastOffline: *m.LastOffline,
+		Online:      *m.Online,
 	}
 }

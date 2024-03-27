@@ -25,7 +25,7 @@ func init() {
 			SetupAPI: func() register.APIRouter {
 				return New(ctx.(*config.Context))
 			},
-			SQLDir:  register.NewSQLFS(sqlFS),
+			SQLDir:  register.NewSqlFS(sqlFS),
 			Swagger: swaggerContent,
 		}
 	})

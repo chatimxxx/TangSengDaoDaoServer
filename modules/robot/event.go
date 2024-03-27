@@ -108,8 +108,7 @@ func (rb *Robot) robotMessageListen(messages []*config.MessageResp) {
 }
 
 func (rb *Robot) saveRobotMessage(message *config.MessageResp, robotID string) {
-
-	seq := rb.ctx.GenSeq(fmt.Sprintf("%s%s", common.RobotEventSeqKey, robotID))
+	seq, _ := rb.ctx.GenSeq(fmt.Sprintf("%s%s", common.RobotEventSeqKey, robotID))
 	messageUpdateJson := util.ToJson(&robotEvent{
 		EventID: seq,
 		Message: message,

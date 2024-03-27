@@ -36,11 +36,10 @@ func (s *service) CreateOrUpdateMsgAutoDelete(channelID string, channelType uint
 }
 
 func newChannelSettingResp(m *channelSettingModel) *chservice.ChannelSettingResp {
-
 	return &chservice.ChannelSettingResp{
-		ChannelID:         m.ChannelID,
-		ChannelType:       m.ChannelType,
-		ParentChannelID:   m.ParentChannelID,
-		ParentChannelType: m.ParentChannelType,
+		ChannelID:         *m.ChannelID,
+		ChannelType:       *m.ChannelType,
+		ParentChannelID:   *m.ParentChannelID,
+		ParentChannelType: *m.ParentChannelType,
 	}
 }

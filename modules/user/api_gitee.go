@@ -130,7 +130,7 @@ func (u *User) giteeOAuth(c *wkhttp.Context) {
 
 	var loginResp *loginUserDetailResp
 	if userInfoM != nil { // 存在就登录
-		if userInfo == nil || userInfoM.IsDestroy == 1 {
+		if userInfo == nil || *userInfoM.IsDestroy == 1 {
 			c.ResponseError(errors.New("用户不存在"))
 			return
 		}
@@ -141,7 +141,7 @@ func (u *User) giteeOAuth(c *wkhttp.Context) {
 		}
 		// 发送登录消息
 		publicIP := util.GetClientPublicIP(c.Request)
-		go u.sentWelcomeMsg(publicIP, userInfoM.UID)
+		go u.sentWelcomeMsg(publicIP, *userInfoM.UID)
 	} else {
 		// 创建用户
 		uid := util.GenerUUID()
@@ -174,7 +174,12 @@ func (u *User) giteeOAuth(c *wkhttp.Context) {
 				}
 			}
 		}
-		tx, err := u.ctx.DB().Begin()
+		db, err := u.ctx.DB()
+		if err != nil {
+			c.ResponseError(errors.New("开始事务失败"))
+			return
+		}
+		tx := db.Begin()
 		defer func() {
 			if err := recover(); err != nil {
 				tx.Rollback()
@@ -197,8 +202,7 @@ func (u *User) giteeOAuth(c *wkhttp.Context) {
 		// 发送登录消息
 		publicIP := util.GetClientPublicIP(c.Request)
 		loginResp, err = u.createUserWithRespAndTx(loginSpanCtx, model, publicIP, tx, func() error {
-			err := tx.Commit()
-			if err != nil {
+			if err := tx.Commit().Error; err != nil {
 				tx.Rollback()
 				u.Error("数据库事物提交失败", zap.Error(err))
 				c.ResponseError(errors.New("数据库事物提交失败"))

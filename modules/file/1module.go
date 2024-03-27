@@ -11,7 +11,6 @@ import (
 var swaggerContent string
 
 func init() {
-
 	register.AddModule(func(ctx interface{}) register.Module {
 		return register.Module{
 			Name: "file",

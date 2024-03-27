@@ -1,37 +1,41 @@
 package report
 
 import (
+	"fmt"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	dba "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
 )
 
 type db struct {
-	session *dbr.Session
-	ctx     *config.Context
+	db  *gorm.DB
+	ctx *config.Context
 }
 
 func newDB(ctx *config.Context) *db {
+	d, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &db{
-		ctx:     ctx,
-		session: ctx.DB(),
+		ctx: ctx,
+		db:  d,
 	}
 }
 
 func (d *db) queryCategoryAll() ([]*categoryModel, error) {
-	var models []*categoryModel
-	_, err := d.session.Select("*").From("report_category").Load(&models)
-	return models, err
+	var ms []*categoryModel
+	err := d.db.Table("report_category").Find(&ms).Error
+	return ms, err
 }
 
 func (d *db) insertCategory(m *categoryModel) error {
-	_, err := d.session.InsertInto("report_category").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+	err := d.db.Table("report_category").Create(m).Error
 	return err
 }
 
 func (d *db) insert(m *model) error {
-	_, err := d.session.InsertInto("report").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+	err := d.db.Table("report").Create(m).Error
 	return err
 }
 

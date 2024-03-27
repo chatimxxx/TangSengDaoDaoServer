@@ -138,22 +138,22 @@ func (m *Manager) delete(c *wkhttp.Context) {
 	if req.ChannelType == common.ChannelTypePerson.Uint8() {
 		fakeChannelID = common.GetFakeChannelIDWith(req.ChannelID, req.FromUID)
 	}
-	tx, _ := m.ctx.DB().Begin()
-	defer func() {
-		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
-			panic(err)
-		}
-	}()
+	db, err := m.ctx.DB()
+	if err != nil {
+		c.ResponseError(errors.New("开始事务失败"))
+		return
+	}
+	tx := db.Begin()
+	IsDeleted := 1
 	for _, msg := range req.List {
 		version := m.genMessageExtraSeq(fakeChannelID)
 		err := m.managerDB.updateMsgExtraVersionAndDeletedTx(&messageExtraModel{
-			ChannelID:   fakeChannelID,
-			ChannelType: req.ChannelType,
-			MessageID:   msg.MessageID,
-			MessageSeq:  msg.MessageSeq,
-			IsDeleted:   1,
-			Version:     version,
+			ChannelID:   &fakeChannelID,
+			ChannelType: &req.ChannelType,
+			MessageID:   &msg.MessageID,
+			MessageSeq:  &msg.MessageSeq,
+			IsDeleted:   &IsDeleted,
+			Version:     &version,
 		}, tx)
 		if err != nil {
 			tx.Rollback()
@@ -162,7 +162,7 @@ func (m *Manager) delete(c *wkhttp.Context) {
 			return
 		}
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		m.Error("提交事务失败！", zap.Error(err))
 		c.ResponseError(errors.New("提交事务失败！"))
@@ -225,8 +225,9 @@ func (m *Manager) deleteProhibitWords(c *wkhttp.Context) {
 		c.ResponseError(errors.New("操作的违禁词不存在"))
 		return
 	}
-	words.IsDeleted = isDeleted
-	words.Version = m.ctx.GenSeq(common.ProhibitWordKey)
+	words.IsDeleted = &isDeleted
+	version, _ := m.ctx.GenSeq(common.ProhibitWordKey)
+	words.Version = &version
 	err = m.managerDB.updateProhibitWord(words)
 	if err != nil {
 		m.Error(common.ErrData.Error(), zap.Error(err))
@@ -247,7 +248,7 @@ func (m *Manager) prohibitWords(c *wkhttp.Context) {
 	var result []*prohibitWordsModel
 	var count int64 = 0
 	if searchKey == "" {
-		result, err = m.managerDB.queryProhibitWords(uint64(pageIndex), uint64(pageSize))
+		result, err = m.managerDB.queryProhibitWords(pageIndex, pageSize)
 		if err != nil {
 			m.Error(common.ErrData.Error(), zap.Error(err))
 			c.ResponseError(errors.New("查询违禁词列表错误"))
@@ -262,7 +263,7 @@ func (m *Manager) prohibitWords(c *wkhttp.Context) {
 			}
 		}
 	} else {
-		result, err = m.managerDB.queryProhibitWordsWithContentAndPage(searchKey, uint64(pageIndex), uint64(pageSize))
+		result, err = m.managerDB.queryProhibitWordsWithContentAndPage(searchKey, pageIndex, pageSize)
 		if err != nil {
 			m.Error(common.ErrData.Error(), zap.Error(err))
 			c.ResponseError(errors.New("搜索查询违禁词列表错误"))
@@ -284,11 +285,11 @@ func (m *Manager) prohibitWords(c *wkhttp.Context) {
 	if len(result) > 0 {
 		for _, word := range result {
 			list = append(list, &prohibitWordsVO{
-				Content:   word.Content,
+				Content:   *word.Content,
 				CreatedAt: word.CreatedAt.String(),
-				IsDeleted: word.IsDeleted,
-				Version:   word.Version,
-				Id:        word.Id,
+				IsDeleted: *word.IsDeleted,
+				Version:   *word.Version,
+				Id:        *word.Id,
 			})
 		}
 	}
@@ -314,10 +315,11 @@ func (m *Manager) addProhibitWords(c *wkhttp.Context) {
 		c.ResponseError(errors.New("查询违禁词错误"))
 		return
 	}
-	version := m.ctx.GenSeq(common.ProhibitWordKey)
+	version, _ := m.ctx.GenSeq(common.ProhibitWordKey)
+	IsDeleted := 0
 	if model != nil {
-		model.IsDeleted = 0
-		model.Version = version
+		model.IsDeleted = &IsDeleted
+		model.Version = &version
 		err = m.managerDB.updateProhibitWord(model)
 		if err != nil {
 			m.Error(common.ErrData.Error(), zap.Error(err))
@@ -326,9 +328,9 @@ func (m *Manager) addProhibitWords(c *wkhttp.Context) {
 		}
 	} else {
 		err = m.managerDB.insertProhibitWord(&prohibitWordsModel{
-			IsDeleted: 0,
-			Content:   content,
-			Version:   version,
+			IsDeleted: &IsDeleted,
+			Content:   &content,
+			Version:   &version,
 		})
 		if err != nil {
 			m.Error(common.ErrData.Error(), zap.Error(err))
@@ -352,7 +354,7 @@ func (m *Manager) recordpersonal(c *wkhttp.Context) {
 		return
 	}
 	channelID := common.GetFakeChannelIDWith(uid, touid)
-	msgs, err := m.managerDB.queryWithChannelID(channelID, uint64(pageIndex), uint64(pageSize))
+	msgs, err := m.managerDB.queryWithChannelID(channelID, pageIndex, pageSize)
 	if err != nil {
 		m.Error(common.ErrData.Error(), zap.Error(err))
 		c.ResponseError(errors.New("查询消息记录错误"))
@@ -373,8 +375,8 @@ func (m *Manager) recordpersonal(c *wkhttp.Context) {
 	uids := make([]string, 0)
 	msgIds := make([]int64, 0)
 	for _, msg := range msgs {
-		uids = append(uids, msg.FromUID)
-		msgIds = append(msgIds, msg.MessageID)
+		uids = append(uids, *msg.FromUID)
+		msgIds = append(msgIds, *msg.MessageID)
 	}
 	msgExtrs, err := m.managerDB.queryMsgExtrWithMsgIds(msgIds)
 	if err != nil {
@@ -391,7 +393,7 @@ func (m *Manager) recordpersonal(c *wkhttp.Context) {
 	for _, msg := range msgs {
 		sendName := ""
 		for _, user := range userList {
-			if user.UID == msg.FromUID {
+			if user.UID == *msg.FromUID {
 				sendName = user.Name
 			}
 		}
@@ -401,33 +403,33 @@ func (m *Manager) recordpersonal(c *wkhttp.Context) {
 		readedCount := 0
 		var payloadMap map[string]interface{}
 		for _, extr := range msgExtrs {
-			msgID, _ := strconv.ParseInt(extr.MessageID, 10, 64)
-			if msgID == msg.MessageID {
-				isDeleted = extr.IsDeleted
-				revoke = extr.Revoke
-				editedAt = extr.EditedAt
-				readedCount = extr.ReadedCount
-				if extr.ContentEdit.String != "" {
-					err := util.ReadJsonByByte([]byte(extr.ContentEdit.String), &payloadMap)
+			msgID, _ := strconv.ParseInt(*extr.MessageID, 10, 64)
+			if msgID == *msg.MessageID {
+				isDeleted = *extr.IsDeleted
+				revoke = *extr.Revoke
+				editedAt = *extr.EditedAt
+				readedCount = *extr.ReadedCount
+				if *extr.ContentEdit != "" {
+					err := util.ReadJsonByByte([]byte(*extr.ContentEdit), &payloadMap)
 					if err != nil {
-						log.Warn("负荷数据不是json格式！", zap.Error(err), zap.String("payload", string(extr.ContentEdit.String)))
+						log.Warn("负荷数据不是json格式！", zap.Error(err), zap.String("payload", *extr.ContentEdit))
 					}
 				}
 			}
 		}
 		if payloadMap == nil {
-			err := util.ReadJsonByByte(msg.Payload, &payloadMap)
+			err := util.ReadJsonByByte(*msg.Payload, &payloadMap)
 			if err != nil {
-				log.Warn("负荷数据不是json格式！", zap.Error(err), zap.String("payload", string(msg.Payload)))
+				log.Warn("负荷数据不是json格式！", zap.Error(err), zap.String("payload", string(*msg.Payload)))
 			}
 		}
-		messageId := strconv.FormatInt(msg.MessageID, 10)
+		messageId := strconv.FormatInt(*msg.MessageID, 10)
 		list = append(list, &recordVO{
 			MessageID:   messageId,
-			Sender:      msg.FromUID,
+			Sender:      *msg.FromUID,
 			SenderName:  sendName,
 			Payload:     payloadMap,
-			Signal:      msg.Signal,
+			Signal:      *msg.Signal,
 			IsDeleted:   isDeleted,
 			CreatedAt:   msg.CreatedAt.String(),
 			EditedAt:    editedAt,
@@ -448,7 +450,7 @@ func (m *Manager) record(c *wkhttp.Context) {
 	}
 	var channelID = c.Query("channel_id")
 	pageIndex, pageSize := c.GetPage()
-	msgs, err := m.managerDB.queryWithChannelID(channelID, uint64(pageIndex), uint64(pageSize))
+	msgs, err := m.managerDB.queryWithChannelID(channelID, pageIndex, pageSize)
 	if err != nil {
 		m.Error(common.ErrData.Error(), zap.Error(err))
 		c.ResponseError(errors.New("查询消息记录错误"))
@@ -469,8 +471,8 @@ func (m *Manager) record(c *wkhttp.Context) {
 	uids := make([]string, 0)
 	msgIds := make([]int64, 0)
 	for _, msg := range msgs {
-		uids = append(uids, msg.FromUID)
-		msgIds = append(msgIds, msg.MessageID)
+		uids = append(uids, *msg.FromUID)
+		msgIds = append(msgIds, *msg.MessageID)
 	}
 	msgExtrs, err := m.managerDB.queryMsgExtrWithMsgIds(msgIds)
 	if err != nil {
@@ -487,7 +489,7 @@ func (m *Manager) record(c *wkhttp.Context) {
 	for _, msg := range msgs {
 		sendName := ""
 		for _, user := range userList {
-			if user.UID == msg.FromUID {
+			if user.UID == *msg.FromUID {
 				sendName = user.Name
 			}
 		}
@@ -497,33 +499,33 @@ func (m *Manager) record(c *wkhttp.Context) {
 		readedCount := 0
 		var payloadMap map[string]interface{}
 		for _, extr := range msgExtrs {
-			msgID, _ := strconv.ParseInt(extr.MessageID, 10, 64)
-			if msgID == msg.MessageID {
-				isDeleted = extr.IsDeleted
-				revoke = extr.Revoke
-				editedAt = extr.EditedAt
-				readedCount = extr.ReadedCount
-				if extr.ContentEdit.String != "" {
-					err := util.ReadJsonByByte([]byte(extr.ContentEdit.String), &payloadMap)
+			msgID, _ := strconv.ParseInt(*extr.MessageID, 10, 64)
+			if msgID == *msg.MessageID {
+				isDeleted = *extr.IsDeleted
+				revoke = *extr.Revoke
+				editedAt = *extr.EditedAt
+				readedCount = *extr.ReadedCount
+				if *extr.ContentEdit != "" {
+					err := util.ReadJsonByByte([]byte(*extr.ContentEdit), &payloadMap)
 					if err != nil {
-						log.Warn("负荷数据不是json格式！", zap.Error(err), zap.String("payload", string(extr.ContentEdit.String)))
+						log.Warn("负荷数据不是json格式！", zap.Error(err), zap.String("payload", *extr.ContentEdit))
 					}
 				}
 			}
 		}
 		if payloadMap == nil {
-			err := util.ReadJsonByByte(msg.Payload, &payloadMap)
+			err := util.ReadJsonByByte(*msg.Payload, &payloadMap)
 			if err != nil {
-				log.Warn("负荷数据不是json格式！", zap.Error(err), zap.String("payload", string(msg.Payload)))
+				log.Warn("负荷数据不是json格式！", zap.Error(err), zap.String("payload", string(*msg.Payload)))
 			}
 		}
 
-		messageId := strconv.FormatInt(msg.MessageID, 10)
+		messageId := strconv.FormatInt(*msg.MessageID, 10)
 
 		list = append(list, &recordVO{
 			MessageID:   messageId,
-			MessageSeq:  msg.MessageSeq,
-			Sender:      msg.FromUID,
+			MessageSeq:  *msg.MessageSeq,
+			Sender:      *msg.FromUID,
 			SenderName:  sendName,
 			Payload:     payloadMap,
 			Signal:      0,
@@ -659,15 +661,17 @@ func (m *Manager) sendMsg(c *wkhttp.Context) {
 		return
 	}
 	// 添加发送消息记录
+	HandlerUID := c.GetLoginUID()
+	HandlerName := c.GetLoginName()
 	err = m.managerDB.insertMsgHistory(&managerMsgModel{
-		Sender:              req.Sender,
-		SenderName:          req.SenderName,
-		ReceiverChannelType: req.ReceivedChannelType,
-		Receiver:            req.ReceivedChannelID,
-		ReceiverName:        receiverName,
-		HandlerUID:          c.GetLoginUID(),
-		HandlerName:         c.GetLoginName(),
-		Content:             req.Content,
+		Sender:              &req.Sender,
+		SenderName:          &req.SenderName,
+		ReceiverChannelType: &req.ReceivedChannelType,
+		Receiver:            &req.ReceivedChannelID,
+		ReceiverName:        &receiverName,
+		HandlerUID:          &HandlerUID,
+		HandlerName:         &HandlerName,
+		Content:             &req.Content,
 	})
 	if err != nil {
 		m.Error("添加发送消息记录错误", zap.Error(err))
@@ -685,7 +689,7 @@ func (m *Manager) list(c *wkhttp.Context) {
 		return
 	}
 	pageIndex, pageSize := c.GetPage()
-	list, err := m.managerDB.queryMsgWithPage(uint64(pageSize), uint64(pageIndex))
+	list, err := m.managerDB.queryMsgWithPage(pageSize, pageIndex)
 	if err != nil {
 		m.Error("查询代发消息记录错误", zap.Error(err))
 		c.ResponseError(errors.New("查询代发消息记录错误"))
@@ -700,14 +704,14 @@ func (m *Manager) list(c *wkhttp.Context) {
 	result := make([]*managerSendMsgResp, 0)
 	for _, model := range list {
 		result = append(result, &managerSendMsgResp{
-			Sender:              model.Sender,
-			SenderName:          model.SenderName,
-			Receiver:            model.Receiver,
-			ReceiverName:        model.ReceiverName,
-			ReceiverChannelType: model.ReceiverChannelType,
-			HandlerUID:          model.HandlerUID,
-			HandlerName:         model.HandlerName,
-			Content:             model.Content,
+			Sender:              *model.Sender,
+			SenderName:          *model.SenderName,
+			Receiver:            *model.Receiver,
+			ReceiverName:        *model.ReceiverName,
+			ReceiverChannelType: *model.ReceiverChannelType,
+			HandlerUID:          *model.HandlerUID,
+			HandlerName:         *model.HandlerName,
+			Content:             *model.Content,
 			CreatedAt:           model.CreatedAt.String(),
 		})
 	}
@@ -734,7 +738,8 @@ func (m *managerSendMsgReq) check() error {
 }
 
 func (m *Manager) genMessageExtraSeq(channelID string) int64 {
-	return m.ctx.GenSeq(fmt.Sprintf("%s:%s", common.MessageExtraSeqKey, channelID))
+	seq, _ := m.ctx.GenSeq(fmt.Sprintf("%s:%s", common.MessageExtraSeqKey, channelID))
+	return seq
 }
 
 type managerSendMsgReq struct {

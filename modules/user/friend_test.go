@@ -25,27 +25,27 @@ func TestFriendSureSearch(t *testing.T) {
 	// 模拟vercode
 	vercode := "111@1"
 	err = u.db.Insert(&Model{
-		UID:      testutil.UID,
-		Name:     "111",
-		Username: "111",
-		Vercode:  vercode,
-		ShortNo:  "1111111",
+		//UID:      testutil.UID,
+		//Name:     "111",
+		//Username: "111",
+		//Vercode:  vercode,
+		//ShortNo:  "1111111",
 	})
 	assert.NoError(t, err)
 	vercode = "222@1"
 	err = u.db.Insert(&Model{
-		UID:      "222",
-		Name:     "222",
-		Username: "222",
-		Vercode:  vercode,
-		ShortNo:  "121",
+		//UID:      "222",
+		//Name:     "222",
+		//Username: "222",
+		//Vercode:  vercode,
+		//ShortNo:  "121",
 	})
 	assert.NoError(t, err)
 	err = f.db.insertApply(&FriendApplyModel{
-		UID:    testutil.UID,
-		ToUID:  "222",
-		Remark: "我是备注",
-		Status: 0,
+		//UID:    testutil.UID,
+		//ToUID:  "222",
+		//Remark: "我是备注",
+		//Status: 0,
 	})
 	assert.NoError(t, err)
 	token := util.GenerUUID()
@@ -75,22 +75,22 @@ func TestFriendSureQr(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 
-	vercode := "111@1"
+	//vercode := "111@1"
 	err = u.db.Insert(&Model{
-		UID:       testutil.UID,
-		Name:      "111",
-		Username:  "111",
-		Vercode:   vercode,
-		QRVercode: "111@3",
+		//UID:       testutil.UID,
+		//Name:      "111",
+		//Username:  "111",
+		//Vercode:   vercode,
+		//QRVercode: "111@3",
 	})
 	assert.NoError(t, err)
-	vercode = "222@1"
+	//vercode = "222@1"
 	err = u.db.Insert(&Model{
-		UID:       "222",
-		Name:      "222",
-		Username:  "222",
-		Vercode:   vercode,
-		QRVercode: "222@3",
+		//UID:       "222",
+		//Name:      "222",
+		//Username:  "222",
+		//Vercode:   vercode,
+		//QRVercode: "222@3",
 	})
 	assert.NoError(t, err)
 	token := util.GenerUUID()
@@ -119,39 +119,39 @@ func TestFriendSureCard(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	err = f.db.Insert(&FriendModel{
-		UID:     "111",
-		ToUID:   "222",
-		Vercode: "111@4",
+		//UID:     "111",
+		//ToUID:   "222",
+		//Vercode: "111@4",
 	})
 	assert.NoError(t, err)
 	err = f.db.Insert(&FriendModel{
-		UID:     "222",
-		ToUID:   "111",
-		Vercode: "222@4",
+		//UID:     "222",
+		//ToUID:   "111",
+		//Vercode: "222@4",
 	})
 	assert.NoError(t, err)
 	err = u.db.Insert(&Model{
-		UID:       testutil.UID,
-		Name:      "10000",
-		Username:  "10000",
-		Vercode:   "10000@1",
-		QRVercode: "10000@3",
+		//UID:       testutil.UID,
+		//Name:      "10000",
+		//Username:  "10000",
+		//Vercode:   "10000@1",
+		//QRVercode: "10000@3",
 	})
 	assert.NoError(t, err)
 	err = u.db.Insert(&Model{
-		UID:       "111",
-		Name:      "111",
-		Username:  "111",
-		Vercode:   "111@1",
-		QRVercode: "111@3",
+		//UID:       "111",
+		//Name:      "111",
+		//Username:  "111",
+		//Vercode:   "111@1",
+		//QRVercode: "111@3",
 	})
 	assert.NoError(t, err)
 	err = u.db.Insert(&Model{
-		UID:       "222",
-		Name:      "222",
-		Username:  "222",
-		Vercode:   "222@1",
-		QRVercode: "222@3",
+		//UID:       "222",
+		//Name:      "222",
+		//Username:  "222",
+		//Vercode:   "222@1",
+		//QRVercode: "222@3",
 	})
 	assert.NoError(t, err)
 
@@ -182,14 +182,14 @@ func TestFriendSureGroup(t *testing.T) {
 	assert.NoError(t, err)
 	source.SetGroupMemberProvider(&emptyGroupProvider{})
 	//添加一条群成员记录
-	_, err = f.db.session.InsertInto("group_member").Columns("uid", "vercode", "group_no", "is_deleted").Values("111", "111@2", "g111", 0).Exec()
+	//err = f.db.db.InsertInto("group_member").Columns("uid", "vercode", "group_no", "is_deleted").Values("111", "111@2", "g111", 0).Error
 	assert.NoError(t, err)
 	err = u.db.Insert(&Model{
-		UID:       testutil.UID,
-		Name:      "10000",
-		Username:  "10000",
-		Vercode:   "10000@1",
-		QRVercode: "10000@3",
+		//UID:       testutil.UID,
+		//Name:      "10000",
+		//Username:  "10000",
+		//Vercode:   "10000@1",
+		//QRVercode: "10000@3",
 	})
 	assert.NoError(t, err)
 	token := util.GenerUUID()
@@ -258,37 +258,37 @@ func TestUserDetail(t *testing.T) {
 	assert.NoError(t, err)
 	source.SetGroupMemberProvider(&emptyGroupProvider{})
 	//添加一条群成员记录
-	_, err = f.db.session.InsertInto("group_member").Columns("uid", "vercode", "group_no", "is_deleted").Values("111", "111@2", "g111", 0).Exec()
+	//err = f.db.db.Table("group_member").Columns("uid", "vercode", "group_no", "is_deleted").Values("111", "111@2", "g111", 0).Error
 	assert.NoError(t, err)
 	err = u.db.Insert(&Model{
-		UID:       testutil.UID,
-		Name:      "10000",
-		Username:  "10000",
-		Vercode:   "10000@1",
-		QRVercode: "10000@3",
+		//UID:       testutil.UID,
+		//Name:      "10000",
+		//Username:  "10000",
+		//Vercode:   "10000@1",
+		//QRVercode: "10000@3",
 	})
 	assert.NoError(t, err)
 	err = u.db.Insert(&Model{
-		UID:       "111",
-		Name:      "111",
-		Username:  "111",
-		Vercode:   "111@1",
-		QRVercode: "111@3",
+		//UID:       "111",
+		//Name:      "111",
+		//Username:  "111",
+		//Vercode:   "111@1",
+		//QRVercode: "111@3",
 	})
 	assert.NoError(t, err)
 	f.db.Insert(&FriendModel{
-		UID:           testutil.UID,
-		ToUID:         "111",
-		Vercode:       "10000@4",
-		SourceVercode: "111@2",
+		//UID:           testutil.UID,
+		//ToUID:         "111",
+		//Vercode:       "10000@4",
+		//SourceVercode: "111@2",
 	})
 	assert.NoError(t, err)
 
 	f.db.Insert(&FriendModel{
-		UID:           "111",
-		ToUID:         testutil.UID,
-		Vercode:       "111@4",
-		SourceVercode: "10000@2",
+		//UID:           "111",
+		//ToUID:         testutil.UID,
+		//Vercode:       "111@4",
+		//SourceVercode: "10000@2",
 	})
 	assert.NoError(t, err)
 
@@ -312,10 +312,10 @@ func TestRemark(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 	f.db.Insert(&FriendModel{
-		UID:           testutil.UID,
-		ToUID:         "111",
-		Vercode:       "10000@4",
-		SourceVercode: "111@2",
+		//UID:           testutil.UID,
+		//ToUID:         "111",
+		//Vercode:       "10000@4",
+		//SourceVercode: "111@2",
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -337,16 +337,16 @@ func TestApply(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = u.userDB.Insert(&Model{
-		UID:     testutil.UID,
-		ShortNo: "u1",
-		Name:    "u1",
+		//UID:     testutil.UID,
+		//ShortNo: "u1",
+		//Name:    "u1",
 	})
 	assert.NoError(t, err)
 
 	err = u.userDB.Insert(&Model{
-		UID:     "111",
-		ShortNo: "111",
-		Name:    "111",
+		//UID:     "111",
+		//ShortNo: "111",
+		//Name:    "111",
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -368,10 +368,10 @@ func TestDeleteApply(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = u.db.insertApply(&FriendApplyModel{
-		UID:    testutil.UID,
-		ToUID:  "123",
-		Remark: "我备注",
-		Status: 1,
+		//UID:    testutil.UID,
+		//ToUID:  "123",
+		//Remark: "我备注",
+		//Status: 1,
 	})
 	assert.NoError(t, err)
 

@@ -55,13 +55,13 @@ func (s *service) GetAppConfig() (*AppConfigResp, error) {
 	}
 
 	return &AppConfigResp{
-		RSAPublicKey:           appConfigM.RSAPublicKey,
-		Version:                appConfigM.Version,
-		SuperToken:             appConfigM.SuperToken,
-		SuperTokenOn:           appConfigM.SuperTokenOn,
-		WelcomeMessage:         appConfigM.WelcomeMessage,
-		NewUserJoinSystemGroup: appConfigM.NewUserJoinSystemGroup,
-		SearchByPhone:          appConfigM.SearchByPhone,
+		RSAPublicKey:           *appConfigM.RSAPublicKey,
+		Version:                *appConfigM.Version,
+		SuperToken:             *appConfigM.SuperToken,
+		SuperTokenOn:           *appConfigM.SuperTokenOn,
+		WelcomeMessage:         *appConfigM.WelcomeMessage,
+		NewUserJoinSystemGroup: *appConfigM.NewUserJoinSystemGroup,
+		SearchByPhone:          *appConfigM.SearchByPhone,
 	}, nil
 }
 

@@ -51,7 +51,6 @@ func (ch *Channel) channelGet(c *wkhttp.Context) {
 	channelID := c.Param("channel_id")
 	channelTypeI64, _ := strconv.ParseInt(c.Param("channel_type"), 10, 64)
 	channelType := uint8(channelTypeI64)
-
 	modules := register.GetModules(ch.ctx)
 	var err error
 	var channelResp *model.ChannelResp
@@ -86,20 +85,19 @@ func (ch *Channel) channelGet(c *wkhttp.Context) {
 		return
 	}
 	if channelSettingM != nil {
-		if channelSettingM.ParentChannelID != "" {
+		if *channelSettingM.ParentChannelID != "" {
 			channelResp.ParentChannel = &struct {
 				ChannelID   string `json:"channel_id"`
 				ChannelType uint8  `json:"channel_type"`
 			}{
-				ChannelID:   channelSettingM.ParentChannelID,
-				ChannelType: channelSettingM.ParentChannelType,
+				ChannelID:   *channelSettingM.ParentChannelID,
+				ChannelType: *channelSettingM.ParentChannelType,
 			}
 		}
-		if channelSettingM.MsgAutoDelete > 0 {
+		if *channelSettingM.MsgAutoDelete > 0 {
 			channelResp.Extra["msg_auto_delete"] = channelSettingM.MsgAutoDelete
 		}
 	}
-
 	c.JSON(http.StatusOK, channelResp)
 
 }

@@ -39,7 +39,7 @@ func (g *Group) handleRegisterUserEvent(data []byte, commit config.EventCommit) 
 		commit(err)
 		return
 	}
-	tx, err := g.db.session.Begin()
+	tx := g.db.db.Begin()
 	if err != nil {
 		g.Error("开启事物失败")
 		tx.Rollback()
@@ -48,20 +48,21 @@ func (g *Group) handleRegisterUserEvent(data []byte, commit config.EventCommit) 
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			commit(err.(error))
 			panic(err)
 		}
 	}()
 	if groupModel == nil {
 		//创建群
-		version := g.ctx.GenSeq(common.GroupSeqKey)
+		version, _ := g.ctx.GenSeq(common.GroupSeqKey)
+		Status := GroupStatusNormal
 		err = g.db.InsertTx(&Model{
-			GroupNo: g.ctx.GetConfig().Account.SystemGroupID,
-			Name:    g.ctx.GetConfig().Account.SystemGroupName,
-			Creator: g.ctx.GetConfig().Account.SystemUID,
-			Status:  GroupStatusNormal,
-			Version: version,
+			GroupNo: &g.ctx.GetConfig().Account.SystemGroupID,
+			Name:    &g.ctx.GetConfig().Account.SystemGroupName,
+			Creator: &g.ctx.GetConfig().Account.SystemUID,
+			Status:  &Status,
+			Version: &version,
 		}, tx)
 		if err != nil {
 			g.Error("创建群聊失败")
@@ -70,13 +71,15 @@ func (g *Group) handleRegisterUserEvent(data []byte, commit config.EventCommit) 
 			return
 		}
 		//添加创建者
-		memberVersion := g.ctx.GenSeq(common.GroupMemberSeqKey)
+		memberVersion, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
+		Role := MemberRoleCreator
+		Status = int(common.GroupMemberStatusNormal)
 		err = g.db.InsertMemberTx(&MemberModel{
-			GroupNo: g.ctx.GetConfig().Account.SystemGroupID,
-			UID:     g.ctx.GetConfig().Account.SystemUID,
-			Role:    MemberRoleCreator,
-			Status:  int(common.GroupMemberStatusNormal),
-			Version: memberVersion,
+			GroupNo: &g.ctx.GetConfig().Account.SystemGroupID,
+			UID:     &g.ctx.GetConfig().Account.SystemUID,
+			Role:    &Role,
+			Status:  &Status,
+			Version: &memberVersion,
 		}, tx)
 		if err != nil {
 			g.Error("设置系统群创建者失败")
@@ -99,9 +102,7 @@ func (g *Group) handleRegisterUserEvent(data []byte, commit config.EventCommit) 
 			return
 		}
 	}
-
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		g.Error("事物提交失败")
 		tx.Rollback()
 		commit(err)
@@ -153,7 +154,7 @@ func (g *Group) handleOrgOrDeptCreateEvent(data []byte, commit config.EventCommi
 		commit(err)
 		return
 	}
-	tx, err := g.db.session.Begin()
+	tx := g.db.db.Begin()
 	if err != nil {
 		g.Error("开启事物失败")
 		tx.Rollback()
@@ -162,23 +163,26 @@ func (g *Group) handleOrgOrDeptCreateEvent(data []byte, commit config.EventCommi
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			commit(err.(error))
 			panic(err)
 		}
 	}()
 	if groupModel == nil {
 		// 创建群
-		version := g.ctx.GenSeq(common.GroupSeqKey)
+		Status := GroupStatusNormal
+		Invite := 1
+		AllowViewHistoryMsg := 1
+		version, _ := g.ctx.GenSeq(common.GroupSeqKey)
 		err = g.db.InsertTx(&Model{
-			GroupNo:             req.GroupNo,
-			Name:                req.Name,
-			Creator:             req.Operator,
-			Status:              GroupStatusNormal,
-			Version:             version,
-			Invite:              1,
-			AllowViewHistoryMsg: 1,
-			Category:            req.GroupCategory,
+			GroupNo:             &req.GroupNo,
+			Name:                &req.Name,
+			Creator:             &req.Operator,
+			Status:              &Status,
+			Version:             &version,
+			Invite:              &Invite,
+			AllowViewHistoryMsg: &AllowViewHistoryMsg,
+			Category:            &req.GroupCategory,
 		}, tx)
 		if err != nil {
 			g.Error("创建群聊失败")
@@ -188,14 +192,17 @@ func (g *Group) handleOrgOrDeptCreateEvent(data []byte, commit config.EventCommi
 		}
 
 		//添加创建者
-		memberVersion := g.ctx.GenSeq(common.GroupMemberSeqKey)
+		Role := MemberRoleCreator
+		Status = int(common.GroupMemberStatusNormal)
+		memberVersion, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
+		Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember)
 		err = g.db.InsertMemberTx(&MemberModel{
-			GroupNo: req.GroupNo,
-			UID:     req.Operator,
-			Role:    MemberRoleCreator,
-			Status:  int(common.GroupMemberStatusNormal),
-			Version: memberVersion,
-			Vercode: fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember),
+			GroupNo: &req.GroupNo,
+			UID:     &req.Operator,
+			Role:    &Role,
+			Status:  &Status,
+			Version: &memberVersion,
+			Vercode: &Vercode,
 		}, tx)
 		if err != nil {
 			g.Error("设置群创建者失败")
@@ -205,16 +212,19 @@ func (g *Group) handleOrgOrDeptCreateEvent(data []byte, commit config.EventCommi
 		}
 		realMemberUids := make([]string, 0)
 		if len(req.Members) > 0 {
+			Role := MemberRoleCommon
+			Status = int(common.GroupMemberStatusNormal)
+			memberVersion, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
+			Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember)
 			for _, member := range req.Members {
 				realMemberUids = append(realMemberUids, member.EmployeeUid)
-				memberVersion := g.ctx.GenSeq(common.GroupMemberSeqKey)
 				err = g.db.InsertMemberTx(&MemberModel{
-					GroupNo: req.GroupNo,
-					UID:     member.EmployeeUid,
-					Role:    MemberRoleCommon,
-					Status:  int(common.GroupMemberStatusNormal),
-					Version: memberVersion,
-					Vercode: fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember),
+					GroupNo: &req.GroupNo,
+					UID:     &member.EmployeeUid,
+					Role:    &Role,
+					Status:  &Status,
+					Version: &memberVersion,
+					Vercode: &Vercode,
 				}, tx)
 				if err != nil {
 					g.Error("添加群成员错误")
@@ -239,8 +249,7 @@ func (g *Group) handleOrgOrDeptCreateEvent(data []byte, commit config.EventCommi
 			return
 		}
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		g.Error("事物提交失败")
 		tx.Rollback()
 		commit(err)
@@ -300,7 +309,7 @@ func (g *Group) handleOrgOrDeptEmployeeUpdate(data []byte, commit config.EventCo
 	for _, m := range req.Members {
 		isAdd := false
 		for _, g := range groups {
-			if m.GroupNo == g.GroupNo {
+			if m.GroupNo == *g.GroupNo {
 				isAdd = true
 				break
 			}
@@ -339,7 +348,7 @@ func (g *Group) handleOrgOrDeptEmployeeUpdate(data []byte, commit config.EventCo
 		})
 		list[m.GroupNo] = tempDatas
 	}
-	tx, err := g.db.session.Begin()
+	tx := g.db.db.Begin()
 	if err != nil {
 		g.Error("开启事物失败")
 		tx.Rollback()
@@ -348,7 +357,7 @@ func (g *Group) handleOrgOrDeptEmployeeUpdate(data []byte, commit config.EventCo
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			commit(err.(error))
 			panic(err)
 		}
@@ -357,7 +366,7 @@ func (g *Group) handleOrgOrDeptEmployeeUpdate(data []byte, commit config.EventCo
 	// 添加或修改群成员
 	for groupNo, members := range list {
 		for _, member := range members {
-			version := g.ctx.GenSeq(common.GroupMemberSeqKey)
+			version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
 			existDelete, err := g.db.ExistMemberDelete(member.EmployeeUid, groupNo)
 			if err != nil {
 				g.Error("查询是否存在删除成员失败！", zap.Error(err))
@@ -366,14 +375,17 @@ func (g *Group) handleOrgOrDeptEmployeeUpdate(data []byte, commit config.EventCo
 				return
 			}
 			if member.Action == "add" {
+				Vercode := fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember)
+				Status := int(common.GroupMemberStatusNormal)
+				Robot := 0
 				newMember := &MemberModel{
-					GroupNo:   groupNo,
-					InviteUID: member.Operator,
-					UID:       member.EmployeeUid,
-					Vercode:   fmt.Sprintf("%s@%d", util.GenerUUID(), common.GroupMember),
-					Version:   version,
-					Status:    int(common.GroupMemberStatusNormal),
-					Robot:     0,
+					GroupNo:   &groupNo,
+					InviteUID: &member.Operator,
+					UID:       &member.EmployeeUid,
+					Vercode:   &Vercode,
+					Version:   &version,
+					Status:    &Status,
+					Robot:     &Robot,
 				}
 				if existDelete {
 					err = g.db.recoverMemberTx(newMember, tx)
@@ -432,8 +444,8 @@ func (g *Group) handleOrgOrDeptEmployeeUpdate(data []byte, commit config.EventCo
 	for _, m := range addMembers {
 		groupName := ""
 		for _, group := range groups {
-			if m.GroupNo == group.GroupNo {
-				groupName = group.Name
+			if m.GroupNo == *group.GroupNo {
+				groupName = *group.Name
 				break
 			}
 		}
@@ -455,7 +467,7 @@ func (g *Group) handleOrgOrDeptEmployeeUpdate(data []byte, commit config.EventCo
 		})
 		if err != nil {
 			g.Error("调用IM的订阅接口失败！", zap.Error(err))
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			commit(err)
 			return
 		}
@@ -479,12 +491,12 @@ func (g *Group) handleOrgOrDeptEmployeeUpdate(data []byte, commit config.EventCo
 		if err != nil {
 			g.Error("发送新增组织或部门群成员消息错误", zap.Error(err))
 			commit(nil)
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			return
 		}
 	}
 
-	if err = tx.Commit(); err != nil {
+	if err = tx.Commit().Error; err != nil {
 		g.Error("事物提交失败")
 		tx.Rollback()
 		commit(err)
@@ -611,14 +623,14 @@ func (g *Group) handleOrgEmployeeExit(data []byte, commit config.EventCommit) {
 	realGroups := make([]string, 0)
 	for _, groupNo := range req.GroupNos {
 		for _, group := range groups {
-			if groupNo == group.GroupNo {
+			if groupNo == *group.GroupNo {
 				realGroups = append(realGroups, groupNo)
 				break
 			}
 		}
 	}
 
-	tx, err := g.db.session.Begin()
+	tx := g.db.db.Begin()
 	if err != nil {
 		g.Error("开启事物失败")
 		tx.Rollback()
@@ -627,13 +639,13 @@ func (g *Group) handleOrgEmployeeExit(data []byte, commit config.EventCommit) {
 	}
 	defer func() {
 		if err := recover(); err != nil {
-			tx.RollbackUnlessCommitted()
+			tx.Rollback()
 			commit(err.(error))
 			panic(err)
 		}
 	}()
 	for _, groupNo := range realGroups {
-		version := g.ctx.GenSeq(common.GroupMemberSeqKey)
+		version, _ := g.ctx.GenSeq(common.GroupMemberSeqKey)
 		err = g.db.DeleteMemberTx(groupNo, req.Operator, version, tx)
 		if err != nil {
 			g.Error("删除群成员失败！", zap.Error(err))
@@ -642,8 +654,7 @@ func (g *Group) handleOrgEmployeeExit(data []byte, commit config.EventCommit) {
 			return
 		}
 	}
-	err = tx.Commit()
-	if err != nil {
+	if err = tx.Commit().Error; err != nil {
 		g.Error("提交事物错误", zap.Error(err))
 		tx.Rollback()
 		commit(err)

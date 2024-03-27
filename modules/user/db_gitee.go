@@ -1,38 +1,41 @@
 package user
 
 import (
+	"fmt"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/gocraft/dbr/v2"
+	"gorm.io/gorm"
 )
 
 type giteeDB struct {
-	session *dbr.Session
-	ctx     *config.Context
+	db  *gorm.DB
+	ctx *config.Context
 }
 
 func newGiteeDB(ctx *config.Context) *giteeDB {
-
+	d, err := ctx.DB()
+	if err != nil {
+		panic(fmt.Sprintf("服务初始化失败   %v", err))
+	}
 	return &giteeDB{
-		ctx:     ctx,
-		session: ctx.DB(),
+		ctx: ctx,
+		db:  d,
 	}
 }
 
 func (d *giteeDB) insert(m *gitUserInfoModel) error {
-	_, err := d.session.InsertInto("gitee_user").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+	err := d.db.Table("gitee_user").Create(m).Error
 	return err
 }
 
-func (d *giteeDB) insertTx(m *gitUserInfoModel, tx *dbr.Tx) error {
-	_, err := tx.InsertInto("gitee_user").Columns(util.AttrToUnderscore(m)...).Record(m).Exec()
+func (d *giteeDB) insertTx(m *gitUserInfoModel, tx *gorm.DB) error {
+	err := tx.Table("gitee_user").Create(m).Error
 	return err
 }
 func (d *giteeDB) queryWithLogin(login string) (*gitUserInfoModel, error) {
-	var m *gitUserInfoModel
-	_, err := d.session.Select("*").From("gitee_user").Where("login=?", login).Load(&m)
-	return m, err
+	var m gitUserInfoModel
+	err := d.db.Table("gitee_user").Where("login=?", login).First(&m).Error
+	return &m, err
 }
 
 type gitUserInfoModel struct {

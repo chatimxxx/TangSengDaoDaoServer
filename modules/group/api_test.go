@@ -2,6 +2,7 @@ package group
 
 import (
 	"bytes"
+	"github.com/chatimxxx/TangSengDaoDaoServerLib/module"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -19,15 +20,18 @@ func TestGroupCreate(t *testing.T) {
 	s, ctx := testutil.NewTestServer()
 	f := New(ctx)
 	f.Route(s.GetRoute())
-
+	UID := "10009"
+	Name := "张九"
 	err := f.userDB.Insert(&user.Model{
-		UID:  "10009",
-		Name: "张九",
+		UID:  &UID,
+		Name: &Name,
 	})
 	assert.NoError(t, err)
+	UID = "10010"
+	Name = "李十"
 	err = f.userDB.Insert(&user.Model{
-		UID:  "10010",
-		Name: "李十",
+		UID:  &UID,
+		Name: &Name,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -52,16 +56,40 @@ func TestGroupGet(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 
-	err = f.db.Insert(&Model{
+	temp := struct {
+		GroupNo            string
+		Name               string
+		Creator            string
+		Version            int64
+		Status             int
+		ForbiddenAddFriend int
+	}{
 		GroupNo:            "1",
 		Name:               "test",
 		Creator:            testutil.UID,
 		Version:            1,
 		Status:             1,
 		ForbiddenAddFriend: 1,
-	})
+	}
+	var d Model
+
+	err = module.StructToDatabaseModel(&temp, &d)
+	if err != nil {
+		return
+	}
+	err = f.db.Insert(&d)
 	assert.NoError(t, err)
-	err = f.settingDB.InsertSetting(&Setting{
+	set := struct {
+		GroupNo         string
+		UID             string
+		Mute            int
+		Save            int
+		ShowNick        int
+		Top             int
+		ChatPwdOn       int
+		JoinGroupRemind int
+	}{
+
 		GroupNo:         "1",
 		UID:             "10000",
 		Mute:            1,
@@ -70,7 +98,13 @@ func TestGroupGet(t *testing.T) {
 		Top:             1,
 		ChatPwdOn:       1,
 		JoinGroupRemind: 1,
-	})
+	}
+	var ts Setting
+	err = module.StructToDatabaseModel(&set, &ts)
+	if err != nil {
+		return
+	}
+	err = f.settingDB.InsertSetting(&ts)
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -92,23 +126,29 @@ func TestGroupMemberAdd(t *testing.T) {
 	// 先清空旧数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-
+	UID := "10009"
+	Name := "张九"
 	err = f.userDB.Insert(&user.Model{
-		UID:  "10009",
-		Name: "张九",
+		UID:  &UID,
+		Name: &Name,
 	})
 	assert.NoError(t, err)
+	UID = "10010"
+	Name = "李十"
 	err = f.userDB.Insert(&user.Model{
-		UID:  "10010",
-		Name: "李十",
+		UID:  &UID,
+		Name: &Name,
 	})
 	assert.NoError(t, err)
-
+	GroupNo := "1"
+	Name = "test"
+	Creator := testutil.UID
+	Status := 1
 	err = f.db.Insert(&Model{
-		GroupNo: "1",
-		Name:    "test",
-		Creator: testutil.UID,
-		Status:  1,
+		GroupNo: &GroupNo,
+		Name:    &Name,
+		Creator: &Creator,
+		Status:  &Status,
 	})
 	assert.NoError(t, err)
 
@@ -132,23 +172,30 @@ func TestGroupMemberRemove(t *testing.T) {
 	// 先清空旧数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-
+	UID := "10009"
+	Name := "张九"
 	err = f.userDB.Insert(&user.Model{
-		UID:  "10009",
-		Name: "张九",
+		UID:  &UID,
+		Name: &Name,
 	})
 	assert.NoError(t, err)
+	UID = "10010"
+	Name = "李十"
 	err = f.userDB.Insert(&user.Model{
-		UID:  "10010",
-		Name: "李十",
+		UID:  &UID,
+		Name: &Name,
 	})
 	assert.NoError(t, err)
 
+	GroupNo := "1"
+	Name = "test"
+	Creator := testutil.UID
+	Status := 1
 	err = f.db.Insert(&Model{
-		GroupNo: "1",
-		Name:    "test",
-		Creator: testutil.UID,
-		Status:  1,
+		GroupNo: &GroupNo,
+		Name:    &Name,
+		Creator: &Creator,
+		Status:  &Status,
 	})
 	assert.NoError(t, err)
 
@@ -172,36 +219,47 @@ func TestSyncMembers(t *testing.T) {
 	// 先清空旧数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-
+	UID := "10009"
+	Name := "张九"
 	err = f.userDB.Insert(&user.Model{
-		UID:  "10009",
-		Name: "张九",
+		UID:  &UID,
+		Name: &Name,
 	})
 	assert.NoError(t, err)
+	UID = "10010"
+	Name = "李十"
 	err = f.userDB.Insert(&user.Model{
-		UID:  "10010",
-		Name: "李十",
+		UID:  &UID,
+		Name: &Name,
 	})
 	assert.NoError(t, err)
-
+	GroupNo := "1"
+	Name = "test"
+	Creator := testutil.UID
+	Status := 1
 	err = f.db.Insert(&Model{
-		GroupNo: "1",
-		Name:    "test",
-		Creator: testutil.UID,
-		Status:  1,
+		GroupNo: &GroupNo,
+		Name:    &Name,
+		Creator: &Creator,
+		Status:  &Status,
 	})
 	assert.NoError(t, err)
-
+	GroupNo = "1"
+	UID = "10009"
+	Version := int64(2)
 	err = f.db.InsertMember(&MemberModel{
-		GroupNo: "1",
-		UID:     "10009",
-		Version: 2,
+		GroupNo: &GroupNo,
+		UID:     &UID,
+		Version: &Version,
 	})
 	assert.NoError(t, err)
+	GroupNo = "1"
+	UID = "10010"
+	Version = int64(1)
 	err = f.db.InsertMember(&MemberModel{
-		GroupNo: "1",
-		UID:     "10010",
-		Version: 1,
+		GroupNo: &GroupNo,
+		UID:     &UID,
+		Version: &Version,
 	})
 	assert.NoError(t, err)
 
@@ -224,18 +282,24 @@ func TestGroupSettingUpdate(t *testing.T) {
 	// 先清空旧数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
+	GroupNo := "1"
+	Name := "test"
+	Version := int64(1)
+	Status := 1
 	err = f.db.Insert(&Model{
-		GroupNo: "1",
-		Name:    "test",
-		Creator: testutil.UID,
-		Version: 1,
-		Status:  1,
+		GroupNo: &GroupNo,
+		Name:    &Name,
+		Creator: &testutil.UID,
+		Version: &Version,
+		Status:  &Status,
 	})
 	assert.NoError(t, err)
+	GroupNo = "1"
+	Role := 1
 	err = f.db.InsertMember(&MemberModel{
-		UID:     testutil.UID,
-		GroupNo: "1",
-		Role:    1,
+		UID:     &testutil.UID,
+		GroupNo: &GroupNo,
+		Role:    &Role,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()
@@ -261,19 +325,24 @@ func TestGroupUpdate(t *testing.T) {
 	// 先清空旧数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-
+	GroupNo := "1"
+	Name := "test"
+	Version := int64(1)
+	Status := 1
 	err = f.db.Insert(&Model{
-		GroupNo: "1",
-		Name:    "test",
-		Creator: testutil.UID,
-		Version: 1,
-		Status:  1,
+		GroupNo: &GroupNo,
+		Name:    &Name,
+		Creator: &testutil.UID,
+		Version: &Version,
+		Status:  &Status,
 	})
 	assert.NoError(t, err)
+	GroupNo = "1"
+	Role := MemberRoleCreator
 	err = f.db.InsertMember(&MemberModel{
-		GroupNo: "1",
-		UID:     testutil.UID,
-		Role:    MemberRoleCreator,
+		GroupNo: &GroupNo,
+		UID:     &testutil.UID,
+		Role:    &Role,
 	})
 	assert.NoError(t, err)
 
@@ -296,19 +365,24 @@ func TestList(t *testing.T) {
 	// 先清空旧数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-
+	GroupNo := "1"
+	Name := "test"
+	Version := int64(1)
+	Status := 1
 	err = f.db.Insert(&Model{
-		GroupNo: "1",
-		Name:    "test",
-		Creator: testutil.UID,
-		Version: 1,
-		Status:  1,
+		GroupNo: &GroupNo,
+		Name:    &Name,
+		Creator: &testutil.UID,
+		Version: &Version,
+		Status:  &Status,
 	})
 	assert.NoError(t, err)
+	GroupNo = "1"
+	Save := 1
 	err = f.settingDB.InsertSetting(&Setting{
-		UID:     testutil.UID,
-		GroupNo: "1",
-		Save:    1,
+		UID:     &testutil.UID,
+		GroupNo: &GroupNo,
+		Save:    &Save,
 	})
 	assert.NoError(t, err)
 	w := httptest.NewRecorder()

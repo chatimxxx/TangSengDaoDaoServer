@@ -2,29 +2,33 @@ package webhook
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"hash/crc32"
+	"time"
 
 	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/gocraft/dbr/v2"
 )
 
 type messageDB struct {
 	ctx *config.Context
-	db  *dbr.Session
+	db  *gorm.DB
 }
 
 func newMessageDB(ctx *config.Context) *messageDB {
-
+	db, err := ctx.DB()
+	if err != nil {
+		panic("服务初始化失败")
+		return nil
+	}
 	return &messageDB{
 		ctx: ctx,
-		db:  ctx.DB(),
+		db:  db,
 	}
 }
 
-func (m *messageDB) insertOrUpdateTx(model *messageModel, tx *dbr.Tx) error {
-	tbl := m.getTable(model.ChannelID)
-	_, err := tx.InsertBySql(fmt.Sprintf("insert into %s(message_id,message_seq,client_msg_no,header,setting,`signal`,from_uid,channel_id,channel_type,expire,expire_at,timestamp,payload,is_deleted) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE payload=payload", tbl), model.MessageID, model.MessageSeq, model.ClientMsgNo, model.Header, model.Setting, model.Signal, model.FromUID, model.ChannelID, model.ChannelType, model.Expire, model.ExpireAt, model.Timestamp, model.Payload, model.IsDeleted).Exec()
+func (m *messageDB) insertOrUpdateTx(model *messageModel, tx *gorm.DB) error {
+	tbl := m.getTable(*model.ChannelID)
+	err := tx.Exec(fmt.Sprintf("insert into %s(message_id,message_seq,client_msg_no,header,setting,`signal`,from_uid,channel_id,channel_type,expire,expire_at,timestamp,payload,is_deleted) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE payload=payload", tbl), model.MessageID, model.MessageSeq, model.ClientMsgNo, model.Header, model.Setting, model.Signal, model.FromUID, model.ChannelID, model.ChannelType, model.Expire, model.ExpireAt, model.Timestamp, model.Payload, model.IsDeleted).Error
 	return err
 }
 
@@ -38,19 +42,21 @@ func (m *messageDB) getTable(channelID string) string {
 }
 
 type messageModel struct {
-	MessageID   string
-	MessageSeq  int64
-	ClientMsgNo string
-	Header      string
-	Setting     uint8
-	Signal      uint8 // 是否signal加密
-	FromUID     string
-	ChannelID   string
-	ChannelType uint8
-	Expire      uint32
-	ExpireAt    uint32
-	Timestamp   int32
-	Payload     string
-	IsDeleted   int
-	db.BaseModel
+	MessageID   *string
+	MessageSeq  *int64
+	ClientMsgNo *string
+	Header      *string
+	Setting     *uint8
+	Signal      *uint8 // 是否signal加密
+	FromUID     *string
+	ChannelID   *string
+	ChannelType *uint8
+	Expire      *uint32
+	ExpireAt    *uint32
+	Timestamp   *int32
+	Payload     *string
+	IsDeleted   *int
+	Id          *int64
+	CreatedAt   *time.Time
+	UpdatedAt   *time.Time
 }
