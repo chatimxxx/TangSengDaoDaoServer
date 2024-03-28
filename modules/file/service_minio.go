@@ -119,6 +119,30 @@ func (sm *ServiceMinio) UploadFile(filePath string, contentType string, copyFile
 	}, err
 }
 
+func (sm *ServiceMinio) UploadUrl(bucketName string, objectName string) (string, error) {
+	minioConfig := sm.ctx.GetConfig().Minio
+	uploadUl, _ := url.Parse(minioConfig.UploadURL)
+	endpoint := uploadUl.Host
+	accessKeyID := minioConfig.AccessKeyID
+	secretAccessKey := minioConfig.SecretAccessKey
+
+	minioClient, err := minio.New(endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(accessKeyID, secretAccessKey, ""),
+		Secure: false,
+	})
+	if err != nil {
+		return "", err
+	}
+	// 设置过期时间
+	expiry := 10 * time.Second
+	// 生成一个服务端签名的URL
+	signedURL, err := minioClient.PresignedPutObject(context.Background(), bucketName, objectName, expiry)
+	if err != nil {
+		return "", err
+	}
+	return signedURL.String(), nil
+}
+
 func (sm *ServiceMinio) DownloadURL(ph string, filename string) (string, error) {
 	minioConfig := sm.ctx.GetConfig().Minio
 	vals := url.Values{}

@@ -10,13 +10,10 @@ import (
 
 // 处理上下线通知
 func (u *User) handleOnlineStatus(onlineStatuses []config.OnlineStatus) {
-
 	u.Debug("收到在线通知")
-
 	if onlineStatuses == nil || len(onlineStatuses) <= 0 {
 		return
 	}
-
 	for _, onlineStatus := range onlineStatuses {
 		if u.ctx.GetConfig().IsVisitor(onlineStatus.UID) { // 如果是访客不做处理
 			continue
@@ -142,10 +139,8 @@ func (u *User) getMainDeviceFlag() uint8 {
 		if deviceFlagM.Weight > mainDeviceFlagM.Weight {
 			mainDeviceFlagM = deviceFlagM
 		}
-
 	}
 	return mainDeviceFlagM.DeviceFlag
-
 }
 
 func (u *User) getDeviceFlags() ([]*deviceFlagModel, error) {

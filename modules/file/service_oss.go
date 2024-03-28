@@ -18,7 +18,6 @@ type ServiceOSS struct {
 
 // NewServiceOSS NewServiceOSS
 func NewServiceOSS(ctx *config.Context) *ServiceOSS {
-
 	return &ServiceOSS{
 		Log: log.NewTLog("ServiceOSS"),
 		ctx: ctx,
@@ -64,6 +63,11 @@ func (s *ServiceOSS) UploadFile(filePath string, contentType string, copyFileWri
 	}
 
 	return map[string]interface{}{}, nil
+}
+
+func (s *ServiceOSS) UploadUrl(bucketName string, objectName string) (string, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (s *ServiceOSS) DownloadURL(path string, filename string) (string, error) {

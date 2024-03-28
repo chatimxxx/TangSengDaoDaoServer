@@ -47,6 +47,8 @@ func (f *File) Route(r *wkhttp.WKHttp) {
 		auth.GET("/upload", f.getFilePath)
 		//上传文件
 		auth.POST("/upload", f.uploadFile)
+		// 获取签名url
+		auth.GET("/sign_url", f.signUrl)
 	}
 }
 
@@ -142,6 +144,36 @@ func (f *File) uploadFile(c *wkhttp.Context) {
 
 	c.Response(map[string]string{
 		"path": fmt.Sprintf("file/preview/%s%s", fileType, path),
+	})
+}
+
+func (f *File) signUrl(c *wkhttp.Context) {
+	loginUID := c.GetLoginUID()
+	uploadPath := c.Query("path")
+	fileType := c.Query("type")
+	err := f.checkReq(Type(fileType), uploadPath)
+	if err != nil {
+		c.ResponseError(err)
+		return
+	}
+	var path string
+	if Type(fileType) == TypeMomentCover {
+		// 动态封面
+		path = fmt.Sprintf("file/upload?type=%s&path=/%s.png", f.ctx.GetConfig().External.APIBaseURL, fileType, loginUID)
+	} else if Type(fileType) == TypeSticker {
+		// 自定义表情
+		path = fmt.Sprintf("file/upload?type=%s&path=/%s/%s.gif", f.ctx.GetConfig().External.APIBaseURL, fileType, loginUID, util.GenerUUID())
+	} else if Type(fileType) == TypeWorkplaceBanner {
+		// 工作台横幅
+		path = fmt.Sprintf("file/upload?type=%s&path=/workplace/banner/%s", f.ctx.GetConfig().External.APIBaseURL, fileType, path)
+	} else if Type(fileType) == TypeWorkplaceAppIcon {
+		// 工作台appIcon
+		path = fmt.Sprintf("file/upload?type=%s&path=/workplace/appicon/%s", f.ctx.GetConfig().External.APIBaseURL, fileType, path)
+	} else {
+		path = fmt.Sprintf("%s/file/upload?type=%s&path=%s", f.ctx.GetConfig().External.APIBaseURL, fileType, uploadPath)
+	}
+	c.Response(map[string]string{
+		"url": path,
 	})
 }
 

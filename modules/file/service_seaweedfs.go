@@ -36,6 +36,11 @@ func (s *SeaweedFS) UploadFile(filePath string, contentType string, copyFileWrit
 	return resultMap, err
 }
 
+func (s *SeaweedFS) UploadUrl(bucketName string, objectName string) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (s *SeaweedFS) DownloadURL(path string, filename string) (string, error) {
 	seaweedConfig := s.ctx.GetConfig().Seaweed
 	rpath, _ := url.JoinPath(seaweedConfig.URL, path)

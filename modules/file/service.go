@@ -28,6 +28,8 @@ import (
 
 type IUploadService interface {
 	UploadFile(filePath string, contentType string, copyFileWriter func(io.Writer) error) (map[string]interface{}, error)
+	// 获取签名url
+	UploadUrl(bucketName string, objectName string) (string, error)
 	// 获取下载地址
 	DownloadURL(path string, filename string) (string, error)
 }
@@ -67,6 +69,10 @@ type Service struct {
 	log.Log
 	ctx           *config.Context
 	uploadService IUploadService
+}
+
+func (s *Service) UploadUrl(bucketName string, objectName string) (string, error) {
+	return s.uploadService.UploadUrl(bucketName, objectName)
 }
 
 func (s *Service) UploadFile(filePath string, contentType string, copyFileWriter func(io.Writer) error) (map[string]interface{}, error) {

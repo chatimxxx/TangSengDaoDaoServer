@@ -30,7 +30,6 @@ func (o *onlineDB) insertOrUpdateUserOnlineTx(m *onlineStatusModel, tx *dbr.Tx) 
 	} else {
 		_, err = tx.UpdateBySql("insert into user_online (uid,device_flag,last_offline,online,version) values(?,?,?,0,?) ON DUPLICATE KEY UPDATE last_offline=VALUES(last_offline),online=VALUES(online),updated_at=NOW(),version=VALUES(version)", m.UID, m.DeviceFlag, m.LastOffline, m.Version).Exec()
 	}
-
 	return err
 }
 
