@@ -1,18 +1,18 @@
 build:
-	docker build -t tsdd_server .
+	docker build -t xochat_im_server .
 push:
 	docker login
-	docker tag tsdd_server zyuan909/tsdd_server:latest
-	docker push zyuan909/tsdd_server:latest
+	docker tag xochat_im_server zyuan909/xochat_im_server:latest
+	docker push zyuan909/xochat_im_server:latest
 deploy:
 	docker login
-	docker build -t tsdd_server .
-	docker tag tsdd_server zyuan909/tsdd_server:v1.0.5
-	docker push zyuan909/tsdd_server:v1.0.5
+	docker build -t xochat_im_server .
+	docker tag xochat_im_server zyuan909/xochat_im_server:latest
+	docker push zyuan909/xochat_im_server:latest
 deploy-v1.5:
-	docker build -t tsdd_server .
-	docker tag tsdd_server zyuan909/tsdd_server:v1.5
-	docker push zyuan909/tsdd_server:v1.5
+	docker build -t xochat_im_server .
+	docker tag xochat_im_server zyuan909/xochat_im_server:v1.5
+	docker push zyuan909/xochat_im_server:v1.5
 run-dev:
 	docker-compose build;docker-compose up -d
 stop-dev:

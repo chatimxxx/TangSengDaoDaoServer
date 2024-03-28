@@ -34,12 +34,12 @@ services:
   #    networks:
   #      - common
   #    restart: always
-  wukongim: # wukongim底层通讯服务
-    image: zyuan909/wukongim:latest
+  xochat_im_server: # wukongim底层通讯服务
+    image: zyuan909/xochat_im_server:latest
     container_name: tsdd_im
     restart: always
     volumes:
-      - ${DATA_PATH_HOST}:/root/wukongim
+      - ${DATA_PATH_HOST}:/root/xochat_im_server
     environment:
       WK_MODE: "debug"
       WK_EXTERNAL_IP: "192.168.99.219"
@@ -72,4 +72,4 @@ services:
     networks:
       - common
     depends_on:
-      - wukongim
+      - xochat_im_server

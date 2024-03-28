@@ -17,7 +17,7 @@
 ![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/xochat/xochat_im_server)
 [![Go Report Card](https://goreportcard.com/badge/github.com/xochat/xochat_im_server)](https://goreportcard.com/report/github.com/xochat/xochat_im_server)
 ![License: Apache 2.0](https://img.shields.io/github/license/WuKongIM/WuKongIM)
-<a href="https://join.slack.com/t/wukongim/shared_invite/zt-22o7we8on-2iKNUmgigB9ERdF9XUivmw"><img src="https://img.shields.io/badge/Slack-99%2B-blueviolet?logo=slack&amp;logoColor=white"></a>
+<a href="https://join.slack.com/t/xochat_im_server/shared_invite/zt-22o7we8on-2iKNUmgigB9ERdF9XUivmw"><img src="https://img.shields.io/badge/Slack-99%2B-blueviolet?logo=slack&amp;logoColor=white"></a>
 
 <!-- [![Release](https://img.shields.io/github/v/release/xochat/xochat_im_server.svg?style=flat-square)](https://github.com/xochat/xochat_im_server) -->
 
