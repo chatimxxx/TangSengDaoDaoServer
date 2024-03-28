@@ -26,7 +26,7 @@ services:
     ports:
       - "8090:8090"
     volumes:
-      - ./configs/tsdd.yaml:/home/configs/tsdd.yaml
+      - ./configs/xo.yaml:/home/configs/xo.yaml
       - ./logs/tsdd:/home/logs
   tangsengdaodaoweb: # 唐僧叨叨的web服务
     image: registry.cn-shanghai.aliyuncs.com/xochat_im_server/tangsengdaodaoweb:latest

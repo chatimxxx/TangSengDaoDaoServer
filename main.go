@@ -37,7 +37,7 @@ func loadConfigFromFile(cfgFile string) *viper.Viper {
 
 func main() {
 	var CfgFile string //config file
-	flag.StringVar(&CfgFile, "config", "configs/tsdd.yaml", "config file")
+	flag.StringVar(&CfgFile, "config", "configs/xo.yaml", "config file")
 	flag.Parse()
 	vp := loadConfigFromFile(CfgFile)
 	vp.SetEnvPrefix("ts")
