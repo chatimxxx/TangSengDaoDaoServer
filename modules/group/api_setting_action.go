@@ -8,7 +8,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkevent"
+	"github.com/xochat/xochat_im_server_lib/pkg/xoevent"
 	"go.uber.org/zap"
 )
 
@@ -89,9 +89,9 @@ func (g *groupUpdateContext) commmitGroupUpdateEvent(key, value string) error {
 	util.CheckErr(err)
 	groupNo := g.groupModel.GroupNo
 	// 发布群信息更新事件
-	eventID, err := g.g.ctx.EventBegin(&wkevent.Data{
+	eventID, err := g.g.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupUpdate,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: &config.MsgGroupUpdateReq{
 			GroupNo:      groupNo,
 			Operator:     g.loginUID,

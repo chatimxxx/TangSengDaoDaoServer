@@ -10,7 +10,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
 	"go.uber.org/zap"
 
-	et "github.com/xochat/xochat_im_server_lib/pkg/wkevent"
+	et "github.com/xochat/xochat_im_server_lib/pkg/xoevent"
 )
 
 const (

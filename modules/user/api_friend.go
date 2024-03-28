@@ -15,8 +15,8 @@ import (
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/register"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkevent"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xoevent"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -48,7 +48,7 @@ func NewFriend(ctx *config.Context) *Friend {
 }
 
 // Route 配置路由规则
-func (f *Friend) Route(r *wkhttp.WKHttp) {
+func (f *Friend) Route(r *xohttp.XOHttp) {
 	friend := r.Group("/v1/friend", f.ctx.AuthMiddleware(r))
 	{
 		friend.POST("/apply", f.friendApply)           // 好友申请
@@ -67,7 +67,7 @@ func (f *Friend) Route(r *wkhttp.WKHttp) {
 }
 
 // 拒绝申请
-func (f *Friend) refuseApply(c *wkhttp.Context) {
+func (f *Friend) refuseApply(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	toUid := c.Param("to_uid")
 	if toUid == "" {
@@ -96,7 +96,7 @@ func (f *Friend) refuseApply(c *wkhttp.Context) {
 }
 
 // 删除好友申请记录
-func (f *Friend) deleteApply(c *wkhttp.Context) {
+func (f *Friend) deleteApply(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	toUid := c.Param("to_uid")
 	if toUid == "" {
@@ -113,7 +113,7 @@ func (f *Friend) deleteApply(c *wkhttp.Context) {
 }
 
 // 好友申请列表
-func (f *Friend) apply(c *wkhttp.Context) {
+func (f *Friend) apply(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	page := c.Query("page_index")
 	size := c.Query("page_size")
@@ -165,7 +165,7 @@ func (f *Friend) apply(c *wkhttp.Context) {
 }
 
 // 删除好友
-func (f *Friend) delete(c *wkhttp.Context) {
+func (f *Friend) delete(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	uid := c.Param("uid")
 	if uid == "" {
@@ -192,9 +192,9 @@ func (f *Friend) delete(c *wkhttp.Context) {
 		return
 	}
 	// 发布删除好友事件
-	eventID, err := f.ctx.EventBegin(&wkevent.Data{
+	eventID, err := f.ctx.EventBegin(&xoevent.Data{
 		Event: event.FriendDelete,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: map[string]interface{}{
 			"uid":    loginUID,
 			"to_uid": uid,
@@ -262,7 +262,7 @@ func (f *Friend) delete(c *wkhttp.Context) {
 }
 
 // 好友申请
-func (f *Friend) friendApply(c *wkhttp.Context) {
+func (f *Friend) friendApply(c *xohttp.Context) {
 	fromUID := c.GetLoginUID()
 	fromName := c.GetLoginName()
 
@@ -453,7 +453,7 @@ func (f *Friend) friendApply(c *wkhttp.Context) {
 }
 
 // 确认好友
-func (f *Friend) friendSure(c *wkhttp.Context) {
+func (f *Friend) friendSure(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	name := c.GetLoginName()
 	var req sureReq
@@ -612,9 +612,9 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 		}
 	}
 	// 发布好友确认事件
-	eventID, err := f.ctx.EventBegin(&wkevent.Data{
+	eventID, err := f.ctx.EventBegin(&xoevent.Data{
 		Event: event.FriendSure,
-		Type:  wkevent.None,
+		Type:  xoevent.None,
 		Data: map[string]interface{}{
 			"uid":    loginUID,
 			"to_uid": applyUID,
@@ -716,7 +716,7 @@ func (f *Friend) friendSure(c *wkhttp.Context) {
 }
 
 // 同步好友
-func (f *Friend) friendSync(c *wkhttp.Context) {
+func (f *Friend) friendSync(c *xohttp.Context) {
 	uid := c.MustGet("uid").(string)
 	limit, _ := strconv.ParseUint(c.Query("limit"), 10, 64)
 	if limit <= 0 {
@@ -774,7 +774,7 @@ func (f *Friend) friendSync(c *wkhttp.Context) {
 	c.JSON(http.StatusOK, resps)
 }
 
-func (f *Friend) friendSearch(c *wkhttp.Context) {
+func (f *Friend) friendSearch(c *xohttp.Context) {
 	uid := c.MustGet("uid").(string)
 	keyword := c.Query("keyword")
 	friends, err := f.db.QueryFriendsWithKeyword(uid, keyword)
@@ -799,7 +799,7 @@ func (f *Friend) friendSearch(c *wkhttp.Context) {
 }
 
 // 设置好友备注
-func (f *Friend) remark(c *wkhttp.Context) {
+func (f *Friend) remark(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	var req remarkReq
 	if err := c.BindJSON(&req); err != nil {

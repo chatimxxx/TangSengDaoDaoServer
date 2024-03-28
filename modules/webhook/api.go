@@ -19,8 +19,8 @@ import (
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/pool"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhook"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohook"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -35,7 +35,7 @@ type Webhook struct {
 	pushMap      map[common.DeviceType]map[string]Push
 	groupService group.IService
 	userService  user.IService
-	wkhook.UnimplementedWebhookServiceServer
+	xohook.UnimplementedWebhookServiceServer
 	grpcServer *grpc.Server
 }
 
@@ -99,7 +99,7 @@ func getSupportTypes() []common.ContentType {
 }
 
 // Route 路由配置
-func (w *Webhook) Route(r *wkhttp.WKHttp) {
+func (w *Webhook) Route(r *xohttp.XOHttp) {
 	r.POST("/v1/webhook", w.webhook)
 
 	r.POST("/v2/webhook", w.webhook)
@@ -121,7 +121,7 @@ func (w *Webhook) Start() error {
 	}
 
 	// 注册grpc服务
-	wkhook.RegisterWebhookServiceServer(w.grpcServer, w)
+	xohook.RegisterWebhookServiceServer(w.grpcServer, w)
 
 	go func() {
 		err = w.grpcServer.Serve(lis)
@@ -138,19 +138,19 @@ func (w *Webhook) Stop() error {
 	return nil
 }
 
-func (w *Webhook) SendWebhook(ctx context.Context, req *wkhook.EventReq) (*wkhook.EventResp, error) {
+func (w *Webhook) SendWebhook(ctx context.Context, req *xohook.EventReq) (*xohook.EventResp, error) {
 	w.Debug("收到webhook grpc事件", zap.String("event", req.Event), zap.String("data", string(req.Data)))
 	_, err := w.handleEvent(req.Event, req.Data)
 	if err != nil {
 		w.Error("处理webhook事件失败！", zap.Error(err))
 		return nil, err
 	}
-	return &wkhook.EventResp{
-		Status: wkhook.EventStatus_Success,
+	return &xohook.EventResp{
+		Status: xohook.EventStatus_Success,
 	}, nil
 }
 
-func (w *Webhook) messageNotify(c *wkhttp.Context) {
+func (w *Webhook) messageNotify(c *xohttp.Context) {
 	var messages []MsgResp
 	if err := c.BindJSON(&messages); err != nil {
 		w.Error("数据格式有误！", zap.Error(err))
@@ -215,7 +215,7 @@ func (w *Webhook) handleMessageNotify(messages []MsgResp) ([]string, error) {
 	return messageIDs, nil
 }
 
-func (w *Webhook) webhook(c *wkhttp.Context) {
+func (w *Webhook) webhook(c *xohttp.Context) {
 
 	event := c.Query("event")
 

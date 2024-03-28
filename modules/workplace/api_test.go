@@ -218,7 +218,7 @@ func TestGetAppWithCategory(t *testing.T) {
 	assert.NoError(t, err)
 	err = wm.db.insertCategoryApp(&categoryAppModel{
 		CategoryNo: categoryNo,
-		AppId:      "wkim",
+		AppId:      "xoim",
 		SortNum:    1,
 	})
 	assert.NoError(t, err)
@@ -229,13 +229,13 @@ func TestGetAppWithCategory(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	err = wp.db.insertUserApp(&userAppModel{
-		AppID:   "wkim",
+		AppID:   "xoim",
 		SortNum: 1,
 		Uid:     uid,
 	})
 	assert.NoError(t, err)
 	err = wm.db.insertAPP(&appModel{
-		AppID:       "wkim",
+		AppID:       "xoim",
 		Icon:        "xxxxx",
 		Name:        "悟空IM",
 		Description: "悟空IM让信息传递更简单",
@@ -262,7 +262,7 @@ func TestGetAppWithCategory(t *testing.T) {
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/v1/workplace/categorys/%s/app", categoryNo), nil)
 	req.Header.Set("token", token)
 	s.GetRoute().ServeHTTP(w, req)
-	assert.Equal(t, true, strings.Contains(w.Body.String(), `"app_id":"wkim"`))
+	assert.Equal(t, true, strings.Contains(w.Body.String(), `"app_id":"xoim"`))
 }
 
 func TestAddRecord(t *testing.T) {
@@ -294,7 +294,7 @@ func TestGetRecord(t *testing.T) {
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
 
-	appID1 := "wkim"
+	appID1 := "xoim"
 	appID2 := "tsdd"
 	err = wm.db.insertAPP(&appModel{
 		AppID:  appID2,

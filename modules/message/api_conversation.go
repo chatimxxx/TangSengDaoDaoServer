@@ -18,7 +18,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -69,7 +69,7 @@ func NewConversation(ctx *config.Context) *Conversation {
 }
 
 // Route 路由配置
-func (co *Conversation) Route(r *wkhttp.WKHttp) {
+func (co *Conversation) Route(r *xohttp.XOHttp) {
 
 	// TODO: 这个里的接口后面移到 conversation的组里，因为单词拼错了 😭
 	coversations := r.Group("/v1/coversations", co.ctx.AuthMiddleware(r))
@@ -123,7 +123,7 @@ func (co *Conversation) handleConversationDeleteEvent(data []byte, commit config
 }
 
 // 最近会话扩展同步
-func (co *Conversation) conversationExtraSync(c *wkhttp.Context) {
+func (co *Conversation) conversationExtraSync(c *xohttp.Context) {
 	var req struct {
 		Version int64 `json:"version"`
 	}
@@ -148,7 +148,7 @@ func (co *Conversation) conversationExtraSync(c *wkhttp.Context) {
 }
 
 // 更新最近会话扩展
-func (co *Conversation) conversationExtraUpdate(c *wkhttp.Context) {
+func (co *Conversation) conversationExtraUpdate(c *xohttp.Context) {
 	var req struct {
 		BrowseTo       uint32 `json:"browse_to"`        // 预览位置 预览到的位置，与会话保持位置不同的是 预览到的位置是用户读到的最大的messageSeq。跟未读消息数量有关系
 		KeepMessageSeq uint32 `json:"keep_message_seq"` // 保存位置的messageSeq
@@ -200,7 +200,7 @@ func (co *Conversation) conversationExtraUpdate(c *wkhttp.Context) {
 }
 
 // 删除最近会话
-func (co *Conversation) deleteConversation(c *wkhttp.Context) {
+func (co *Conversation) deleteConversation(c *xohttp.Context) {
 	channelID := c.Param("channel_id")
 	channelType, _ := strconv.ParseInt(c.Param("channel_type"), 10, 64)
 
@@ -214,7 +214,7 @@ func (co *Conversation) deleteConversation(c *wkhttp.Context) {
 }
 
 // 获取离线的最近会话
-func (co *Conversation) syncUserConversation(c *wkhttp.Context) {
+func (co *Conversation) syncUserConversation(c *xohttp.Context) {
 	var req struct {
 		Version     int64  `json:"version"`       // 当前客户端的会话最大版本号(客户端最新会话的时间戳)
 		LastMsgSeqs string `json:"last_msg_seqs"` // 客户端所有会话的最后一条消息序列号 格式： channelID:channelType:last_msg_seq|channelID:channelType:last_msg_seq
@@ -549,7 +549,7 @@ func (co *Conversation) channelMessageSeqSplit(channelMessageSeqStr string) (cha
 	return
 }
 
-func (co *Conversation) syncUserConversationAck(c *wkhttp.Context) {
+func (co *Conversation) syncUserConversationAck(c *xohttp.Context) {
 	var req struct {
 		CMDVersion int64  `json:"cmd_version"` // cmd版本
 		DeviceUUID string `json:"device_uuid"` // 设备uuid
@@ -693,7 +693,7 @@ func (co *Conversation) setUserConversationMaxVersion(uid string, version int64)
 }
 
 // 获取最近会话列表
-func (co *Conversation) getConversations(c *wkhttp.Context) {
+func (co *Conversation) getConversations(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	resps, err := co.ctx.IMGetConversations(loginUID)
 	if err != nil {
@@ -763,7 +763,7 @@ func (co *Conversation) getConversations(c *wkhttp.Context) {
 }
 
 // 清除最近会话未读数
-func (co *Conversation) clearConversationUnread(c *wkhttp.Context) {
+func (co *Conversation) clearConversationUnread(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	var req clearConversationUnreadReq
 	if err := c.BindJSON(&req); err != nil {

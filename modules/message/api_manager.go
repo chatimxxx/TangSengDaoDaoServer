@@ -13,7 +13,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -38,7 +38,7 @@ func NewManager(ctx *config.Context) *Manager {
 }
 
 // Route 路由配置
-func (m *Manager) Route(r *wkhttp.WKHttp) {
+func (m *Manager) Route(r *xohttp.XOHttp) {
 	auth := r.Group("/v1/manager", m.ctx.AuthMiddleware(r))
 	{
 		auth.POST("/message/send", m.sendMsg)                         // 发送消息
@@ -53,7 +53,7 @@ func (m *Manager) Route(r *wkhttp.WKHttp) {
 		auth.DELETE("/message", m.delete)                             // 删除消息
 	}
 }
-func (m *Manager) sendMsgToFriends(c *wkhttp.Context) {
+func (m *Manager) sendMsgToFriends(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -104,7 +104,7 @@ func (m *Manager) sendMessageToFriends(toUids []string, fromUID string, content 
 	}
 	return nil
 }
-func (m *Manager) delete(c *wkhttp.Context) {
+func (m *Manager) delete(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -200,7 +200,7 @@ func (m *Manager) delete(c *wkhttp.Context) {
 	}
 	c.ResponseOK()
 }
-func (m *Manager) deleteProhibitWords(c *wkhttp.Context) {
+func (m *Manager) deleteProhibitWords(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -236,7 +236,7 @@ func (m *Manager) deleteProhibitWords(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (m *Manager) prohibitWords(c *wkhttp.Context) {
+func (m *Manager) prohibitWords(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -297,7 +297,7 @@ func (m *Manager) prohibitWords(c *wkhttp.Context) {
 		"count": count,
 	})
 }
-func (m *Manager) addProhibitWords(c *wkhttp.Context) {
+func (m *Manager) addProhibitWords(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -338,7 +338,7 @@ func (m *Manager) addProhibitWords(c *wkhttp.Context) {
 	}
 	c.ResponseOK()
 }
-func (m *Manager) recordpersonal(c *wkhttp.Context) {
+func (m *Manager) recordpersonal(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -440,7 +440,7 @@ func (m *Manager) recordpersonal(c *wkhttp.Context) {
 		List:  list,
 	})
 }
-func (m *Manager) record(c *wkhttp.Context) {
+func (m *Manager) record(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -539,7 +539,7 @@ func (m *Manager) record(c *wkhttp.Context) {
 		List:  list,
 	})
 }
-func (m *Manager) sendMsgToAllUsers(c *wkhttp.Context) {
+func (m *Manager) sendMsgToAllUsers(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -597,7 +597,7 @@ func (m *Manager) sendMessageBatch(uids [][]string, content string) error {
 }
 
 // 发送消息
-func (m *Manager) sendMsg(c *wkhttp.Context) {
+func (m *Manager) sendMsg(c *xohttp.Context) {
 	//err := c.CheckLoginRoleIsSuperAdmin()
 	//if err != nil {
 	//	c.ResponseError(err)
@@ -678,7 +678,7 @@ func (m *Manager) sendMsg(c *wkhttp.Context) {
 }
 
 // 代发消息列表
-func (m *Manager) list(c *wkhttp.Context) {
+func (m *Manager) list(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)

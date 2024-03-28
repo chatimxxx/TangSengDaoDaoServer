@@ -10,12 +10,12 @@ import (
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
 // 提醒已完成
-func (m *Message) reminderDone(c *wkhttp.Context) {
+func (m *Message) reminderDone(c *xohttp.Context) {
 	var ids []int64
 	if err := c.BindJSON(&ids); err != nil {
 		c.ResponseError(errors.New("数据格式有误！"))
@@ -71,7 +71,7 @@ func (m *Message) reminderDone(c *wkhttp.Context) {
 }
 
 // 提醒内容同步
-func (m *Message) reminderSync(c *wkhttp.Context) {
+func (m *Message) reminderSync(c *xohttp.Context) {
 	var req struct {
 		Version    int64    `json:"version"`
 		Limit      uint64   `json:"limit"`

@@ -41,8 +41,8 @@ services:
     volumes:
       - ${DATA_PATH_HOST}:/root/xochat_im_server
     environment:
-      WK_MODE: "debug"
-      WK_EXTERNAL_IP: "192.168.99.219"
+      XO_MODE: "debug"
+      XO_EXTERNAL_IP: "192.168.99.219"
     ports:
       - 35001:5001 # http api 端口
       - 35100:5100 # tcp端口

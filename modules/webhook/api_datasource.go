@@ -7,12 +7,12 @@ import (
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/pkg/register"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
 // 数据源
-func (w *Webhook) datasource(c *wkhttp.Context) {
+func (w *Webhook) datasource(c *xohttp.Context) {
 	var cmdReq struct {
 		CMD  string                 `json:"cmd"`
 		Data map[string]interface{} `json:"data"`

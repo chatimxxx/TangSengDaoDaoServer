@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 )
 
-func (w *Webhook) github(c *wkhttp.Context) {
+func (w *Webhook) github(c *xohttp.Context) {
 	fmt.Println("github webhook-->", c.Params)
 
 	result, _ := ioutil.ReadAll(c.Request.Body)

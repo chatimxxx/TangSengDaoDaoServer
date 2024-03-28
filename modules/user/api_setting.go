@@ -5,7 +5,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -22,7 +22,7 @@ func NewSetting(ctx *config.Context) *Setting {
 }
 
 // 用户设置
-func (u *Setting) userSettingUpdate(c *wkhttp.Context) {
+func (u *Setting) userSettingUpdate(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	toUID := c.Param("uid")
 	var settingMap map[string]interface{}

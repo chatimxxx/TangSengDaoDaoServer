@@ -17,7 +17,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -40,7 +40,7 @@ func New(ctx *config.Context) *Common {
 }
 
 // Route 路由配置
-func (cn *Common) Route(r *wkhttp.WKHttp) {
+func (cn *Common) Route(r *xohttp.XOHttp) {
 	common := r.Group("/v1/common", cn.ctx.AuthMiddleware(r))
 	{
 		common.POST("/appversion", cn.addAppVersion)             // 添加APP版本
@@ -58,7 +58,7 @@ func (cn *Common) Route(r *wkhttp.WKHttp) {
 		commonNoAuth.GET("/updater/:os/:version", cn.updater) // 版本更新检查（兼容tauri）
 	}
 
-	r.GET("/v1/health", func(c *wkhttp.Context) {
+	r.GET("/v1/health", func(c *xohttp.Context) {
 		var (
 			statusMap = map[string]string{
 				"status": "up",
@@ -101,7 +101,7 @@ func (cn *Common) Route(r *wkhttp.WKHttp) {
 }
 
 // 获取后台运行引导视频
-func (cn *Common) getKeepAliveVideo(c *wkhttp.Context) {
+func (cn *Common) getKeepAliveVideo(c *xohttp.Context) {
 	videoName := c.Query("video_name")
 	if videoName == "" {
 		c.ResponseError(errors.New("视频名称不能为空"))
@@ -118,7 +118,7 @@ func (cn *Common) getKeepAliveVideo(c *wkhttp.Context) {
 	c.Writer.Write(videoBytes)
 }
 
-func (cn *Common) updater(c *wkhttp.Context) {
+func (cn *Common) updater(c *xohttp.Context) {
 	os := c.Param("os")
 	oldVersion := c.Param("version")
 
@@ -143,7 +143,7 @@ func (cn *Common) updater(c *wkhttp.Context) {
 }
 
 // 查询app模块
-func (cn *Common) appModule(c *wkhttp.Context) {
+func (cn *Common) appModule(c *xohttp.Context) {
 	modules, err := cn.db.queryAppModule()
 	if err != nil {
 		cn.Error("查询所有app模块错误", zap.Error(err))
@@ -165,7 +165,7 @@ func (cn *Common) appModule(c *wkhttp.Context) {
 }
 
 // 查询聊天背景列表
-func (cn *Common) chatBgList(c *wkhttp.Context) {
+func (cn *Common) chatBgList(c *xohttp.Context) {
 	list, err := cn.db.queryChatBgs()
 	if err != nil {
 		cn.Error("查询所有聊天背景错误", zap.Error(err))
@@ -249,7 +249,7 @@ func (cn *Common) insertAppConfigIfNeed() (*appConfigModel, error) {
 	return appConfigM, err
 }
 
-func (cn *Common) appConfig(c *wkhttp.Context) {
+func (cn *Common) appConfig(c *xohttp.Context) {
 	versionStr := c.Query("version")
 	appConfigM, err := cn.appConfigDB.query()
 	if err != nil {
@@ -288,12 +288,12 @@ func (cn *Common) appConfig(c *wkhttp.Context) {
 	})
 }
 
-func (cn *Common) countriesList(c *wkhttp.Context) {
+func (cn *Common) countriesList(c *xohttp.Context) {
 	c.JSON(http.StatusOK, Countrys())
 }
 
 // 添加app版本
-func (cn *Common) addAppVersion(c *wkhttp.Context) {
+func (cn *Common) addAppVersion(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -325,7 +325,7 @@ func (cn *Common) addAppVersion(c *wkhttp.Context) {
 }
 
 // 获取最新版本
-func (cn *Common) getNewVersion(c *wkhttp.Context) {
+func (cn *Common) getNewVersion(c *xohttp.Context) {
 	os := c.Param("os")
 	version := c.Param("version")
 	if os == "" {
@@ -357,7 +357,7 @@ func (cn *Common) getNewVersion(c *wkhttp.Context) {
 }
 
 // 查询总记录
-func (cn *Common) appVersionList(c *wkhttp.Context) {
+func (cn *Common) appVersionList(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)

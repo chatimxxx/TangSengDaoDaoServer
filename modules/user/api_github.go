@@ -15,11 +15,11 @@ import (
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/network"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
-func (u *User) github(c *wkhttp.Context) {
+func (u *User) github(c *xohttp.Context) {
 	cfg := u.ctx.GetConfig()
 	authcode := c.Query("authcode")
 	redirectURL := fmt.Sprintf("%s%s", cfg.External.APIBaseURL, "/user/oauth/github")
@@ -28,7 +28,7 @@ func (u *User) github(c *wkhttp.Context) {
 }
 
 // githubOAuth githubOAuth授权
-func (u *User) githubOAuth(c *wkhttp.Context) {
+func (u *User) githubOAuth(c *xohttp.Context) {
 	code := c.Query("code")
 	if len(code) == 0 {
 		c.ResponseError(errors.New("code不能为空"))

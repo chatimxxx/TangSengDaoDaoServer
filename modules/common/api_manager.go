@@ -6,7 +6,7 @@ import (
 
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +29,7 @@ func NewManager(ctx *config.Context) *Manager {
 }
 
 // Route 配置路由规则
-func (m *Manager) Route(r *wkhttp.WKHttp) {
+func (m *Manager) Route(r *xohttp.XOHttp) {
 	auth := r.Group("/v1/manager", m.ctx.AuthMiddleware(r))
 	{
 		auth.GET("/common/appconfig", m.appconfig)               // 获取app配置
@@ -40,7 +40,7 @@ func (m *Manager) Route(r *wkhttp.WKHttp) {
 		auth.DELETE("/common/:sid/appmodule", m.deleteAppModule) // 删除app模块
 	}
 }
-func (m *Manager) deleteAppModule(c *wkhttp.Context) {
+func (m *Manager) deleteAppModule(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -72,7 +72,7 @@ func (m *Manager) deleteAppModule(c *wkhttp.Context) {
 }
 
 // 新增app模块
-func (m *Manager) addAppModule(c *wkhttp.Context) {
+func (m *Manager) addAppModule(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -117,7 +117,7 @@ func (m *Manager) addAppModule(c *wkhttp.Context) {
 	}
 	c.ResponseOK()
 }
-func (m *Manager) updateAppModule(c *wkhttp.Context) {
+func (m *Manager) updateAppModule(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -162,7 +162,7 @@ func (m *Manager) updateAppModule(c *wkhttp.Context) {
 }
 
 // 获取app模块
-func (m *Manager) getAppModule(c *wkhttp.Context) {
+func (m *Manager) getAppModule(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -187,7 +187,7 @@ func (m *Manager) getAppModule(c *wkhttp.Context) {
 	}
 	c.Response(list)
 }
-func (m *Manager) updateConfig(c *wkhttp.Context) {
+func (m *Manager) updateConfig(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -223,7 +223,7 @@ func (m *Manager) updateConfig(c *wkhttp.Context) {
 	}
 	c.ResponseOK()
 }
-func (m *Manager) appconfig(c *wkhttp.Context) {
+func (m *Manager) appconfig(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)

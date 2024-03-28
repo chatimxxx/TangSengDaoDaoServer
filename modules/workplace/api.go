@@ -6,7 +6,7 @@ import (
 	"github.com/xochat/xochat_im_server/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/config"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +25,7 @@ func New(ctx *config.Context) *Workplace {
 }
 
 // Route 路由配置
-func (w *Workplace) Route(r *wkhttp.WKHttp) {
+func (w *Workplace) Route(r *xohttp.XOHttp) {
 	auth := r.Group("/v1/workplace", w.ctx.AuthMiddleware(r))
 	{
 		auth.GET("/banner", w.getBanner)                              // 获取横幅
@@ -41,7 +41,7 @@ func (w *Workplace) Route(r *wkhttp.WKHttp) {
 	}
 }
 
-func (w *Workplace) deleteRecord(c *wkhttp.Context) {
+func (w *Workplace) deleteRecord(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	appId := c.Query("app_id")
 	if appId == "" {
@@ -57,7 +57,7 @@ func (w *Workplace) deleteRecord(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (w *Workplace) getRecord(c *wkhttp.Context) {
+func (w *Workplace) getRecord(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	records, err := w.db.queryRecordWithUid(loginUID)
 	if err != nil {
@@ -104,7 +104,7 @@ func (w *Workplace) getRecord(c *wkhttp.Context) {
 }
 
 // 添加app使用记录
-func (w *Workplace) addRecord(c *wkhttp.Context) {
+func (w *Workplace) addRecord(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	appId := c.Param("app_id")
 	if appId == "" {
@@ -149,7 +149,7 @@ func (w *Workplace) addRecord(c *wkhttp.Context) {
 	}
 	c.ResponseOK()
 }
-func (w *Workplace) getAppWithCategory(c *wkhttp.Context) {
+func (w *Workplace) getAppWithCategory(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	categoryNo := c.Param("category_no")
 	if categoryNo == "" {
@@ -190,7 +190,7 @@ func (w *Workplace) getAppWithCategory(c *wkhttp.Context) {
 }
 
 // 排序用户app
-func (w *Workplace) reorderApp(c *wkhttp.Context) {
+func (w *Workplace) reorderApp(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	type reqVO struct {
 		AppIds []string `json:"app_ids"`
@@ -231,7 +231,7 @@ func (w *Workplace) reorderApp(c *wkhttp.Context) {
 }
 
 // 移除一个app
-func (w *Workplace) deleteApp(c *wkhttp.Context) {
+func (w *Workplace) deleteApp(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	appId := c.Param("app_id")
 	if appId == "" {
@@ -248,7 +248,7 @@ func (w *Workplace) deleteApp(c *wkhttp.Context) {
 }
 
 // 添加app
-func (w *Workplace) addApp(c *wkhttp.Context) {
+func (w *Workplace) addApp(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	appId := c.Param("app_id")
 	if appId == "" {
@@ -299,7 +299,7 @@ func (w *Workplace) addApp(c *wkhttp.Context) {
 }
 
 // 获取分类
-func (w *Workplace) getCategory(c *wkhttp.Context) {
+func (w *Workplace) getCategory(c *xohttp.Context) {
 	models, err := w.db.queryCategory()
 	if err != nil {
 		c.ResponseError(errors.New("查询分类错误"))
@@ -320,7 +320,7 @@ func (w *Workplace) getCategory(c *wkhttp.Context) {
 }
 
 // 获取用户app
-func (w *Workplace) getApps(c *wkhttp.Context) {
+func (w *Workplace) getApps(c *xohttp.Context) {
 	models, err := w.db.queryUserApp(c.GetLoginUID())
 	if err != nil {
 		c.ResponseError(errors.New("查询用户应用错误"))
@@ -369,7 +369,7 @@ func (w *Workplace) getApps(c *wkhttp.Context) {
 }
 
 // 获取横幅
-func (w *Workplace) getBanner(c *wkhttp.Context) {
+func (w *Workplace) getBanner(c *xohttp.Context) {
 	models, err := w.db.queryBanner()
 	if err != nil {
 		c.ResponseError(errors.New("查询横幅数据错误"))

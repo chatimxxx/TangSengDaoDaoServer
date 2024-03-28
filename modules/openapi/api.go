@@ -11,7 +11,7 @@ import (
 	"github.com/xochat/xochat_im_server/modules/user"
 	"github.com/xochat/xochat_im_server/pkg/util"
 	"github.com/xochat/xochat_im_server_lib/config"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 )
 
 type OpenAPI struct {
@@ -34,7 +34,7 @@ func New(ctx *config.Context) *OpenAPI {
 }
 
 // Route 路由配置
-func (o *OpenAPI) Route(r *wkhttp.WKHttp) {
+func (o *OpenAPI) Route(r *xohttp.XOHttp) {
 	// 不需要认证
 	openapinoauth := r.Group("/v1")
 	{
@@ -50,7 +50,7 @@ func (o *OpenAPI) Route(r *wkhttp.WKHttp) {
 	}
 }
 
-func (o *OpenAPI) accessTokenGet(c *wkhttp.Context) {
+func (o *OpenAPI) accessTokenGet(c *xohttp.Context) {
 	authcode := c.Query("authcode")
 
 	appKey := c.Query("app_key")
@@ -93,7 +93,7 @@ func (o *OpenAPI) accessTokenGet(c *wkhttp.Context) {
 
 }
 
-func (o *OpenAPI) userinfoGet(c *wkhttp.Context) {
+func (o *OpenAPI) userinfoGet(c *xohttp.Context) {
 	accessToken := c.Query("access_token")
 
 	appID, uid, err := o.getOpenapiAccessToken(accessToken)
@@ -123,7 +123,7 @@ func (o *OpenAPI) userinfoGet(c *wkhttp.Context) {
 	})
 }
 
-func (o *OpenAPI) authcodeGet(c *wkhttp.Context) {
+func (o *OpenAPI) authcodeGet(c *xohttp.Context) {
 	uid := c.GetLoginUID()
 
 	appID := c.Query("app_id")

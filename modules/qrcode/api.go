@@ -13,7 +13,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -52,13 +52,13 @@ func New(ctx *config.Context) *QRCode {
 }
 
 // Route 路由配置
-func (q *QRCode) Route(r *wkhttp.WKHttp) {
+func (q *QRCode) Route(r *xohttp.XOHttp) {
 	// 获取二维码内的信息
 	r.GET(q.ctx.GetConfig().QRCodeInfoURL, q.ctx.AuthMiddleware(r), q.handleQRCodeInfo)
 }
 
 // 处理二维码信息
-func (q *QRCode) handleQRCodeInfo(c *wkhttp.Context) {
+func (q *QRCode) handleQRCodeInfo(c *xohttp.Context) {
 	token := c.GetHeader("token")
 	if token == "" {
 		c.ResponseError(errors.New("token不能为空！"))

@@ -7,12 +7,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
 // 上传用户通讯录好友
-func (u *User) addMaillist(c *wkhttp.Context) {
+func (u *User) addMaillist(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	var req []*mailListReq
 	if err := c.BindJSON(&req); err != nil {
@@ -67,7 +67,7 @@ func (u *User) addMaillist(c *wkhttp.Context) {
 }
 
 // 获取用户通讯录好友
-func (u *User) getMailList(c *wkhttp.Context) {
+func (u *User) getMailList(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	result := make([]*mailListResp, 0)
 	mailLists, err := u.maillistDB.query(loginUID)

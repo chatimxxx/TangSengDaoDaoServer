@@ -13,8 +13,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkevent"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xoevent"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -47,7 +47,7 @@ func NewManager(ctx *config.Context) *Manager {
 }
 
 // Route 配置路由规则
-func (m *Manager) Route(r *wkhttp.WKHttp) {
+func (m *Manager) Route(r *xohttp.XOHttp) {
 	friend := r.Group("/v1/manager")
 	{
 		friend.POST("/login", m.login) // 账号登录
@@ -67,7 +67,7 @@ func (m *Manager) Route(r *wkhttp.WKHttp) {
 		auth.POST("/user/updatepassword", m.updatePwd)        // 修改用户密码
 	}
 }
-func (m *Manager) online(c *wkhttp.Context) {
+func (m *Manager) online(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -100,7 +100,7 @@ func (m *Manager) online(c *wkhttp.Context) {
 }
 
 // 用户登录
-func (m *Manager) login(c *wkhttp.Context) {
+func (m *Manager) login(c *xohttp.Context) {
 	var req managerLoginReq
 	if err := c.BindJSON(&req); err != nil {
 		c.ResponseError(errors.New("请求数据格式有误！"))
@@ -124,7 +124,7 @@ func (m *Manager) login(c *wkhttp.Context) {
 		c.ResponseError(errors.New("用户名或密码错误"))
 		return
 	}
-	if userInfo.Role != string(wkhttp.Admin) && userInfo.Role != string(wkhttp.SuperAdmin) {
+	if userInfo.Role != string(xohttp.Admin) && userInfo.Role != string(xohttp.SuperAdmin) {
 		c.ResponseError(errors.New("登录账号未开通管理权限"))
 		return
 	}
@@ -153,7 +153,7 @@ func (m *Manager) login(c *wkhttp.Context) {
 }
 
 // 删除管理员用户
-func (m *Manager) deleteAdminUsers(c *wkhttp.Context) {
+func (m *Manager) deleteAdminUsers(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -178,11 +178,11 @@ func (m *Manager) deleteAdminUsers(c *wkhttp.Context) {
 		c.ResponseError(errors.New("该用户不是管理员账号不能删除"))
 		return
 	}
-	if user.Role == string(wkhttp.SuperAdmin) {
+	if user.Role == string(xohttp.SuperAdmin) {
 		c.ResponseError(errors.New("超级管理员账号不能删除"))
 		return
 	}
-	err = m.db.deleteUserWithUIDAndRole(uid, string(wkhttp.Admin))
+	err = m.db.deleteUserWithUIDAndRole(uid, string(xohttp.Admin))
 	if err != nil {
 		m.Error("删除管理员错误", zap.Error(err))
 		c.ResponseError(errors.New("删除管理员错误"))
@@ -206,13 +206,13 @@ func (m *Manager) deleteAdminUsers(c *wkhttp.Context) {
 }
 
 // 查询管理员列表
-func (m *Manager) getAdminUsers(c *wkhttp.Context) {
+func (m *Manager) getAdminUsers(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
 		return
 	}
-	users, err := m.db.queryUsersWithRole(string(wkhttp.Admin))
+	users, err := m.db.queryUsersWithRole(string(xohttp.Admin))
 	if err != nil {
 		m.Error("查询管理员用户错误", zap.Error(err))
 		c.ResponseError(errors.New("查询管理员用户错误"))
@@ -233,7 +233,7 @@ func (m *Manager) getAdminUsers(c *wkhttp.Context) {
 }
 
 // 添加一个管理员
-func (m *Manager) addAdminUser(c *wkhttp.Context) {
+func (m *Manager) addAdminUser(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -261,7 +261,7 @@ func (m *Manager) addAdminUser(c *wkhttp.Context) {
 		c.ResponseError(errors.New("密码不能为空"))
 		return
 	}
-	user, err := m.db.queryUserWithNameAndRole(req.Name, string(wkhttp.Admin))
+	user, err := m.db.queryUserWithNameAndRole(req.Name, string(xohttp.Admin))
 	if err != nil {
 		m.Error("查询用户是否存在错误", zap.String("username", req.Name))
 		c.ResponseError(errors.New("查询用户是否存在错误"))
@@ -279,7 +279,7 @@ func (m *Manager) addAdminUser(c *wkhttp.Context) {
 	userModel.Phone = ""
 	userModel.Username = req.LoginName
 	userModel.Zone = ""
-	userModel.Role = string(wkhttp.Admin)
+	userModel.Role = string(xohttp.Admin)
 	userModel.Password = util.MD5(util.MD5(req.Password))
 	userModel.ShortNo = util.Ten2Hex(time.Now().UnixNano())
 	userModel.IsUploadAvatar = 0
@@ -301,7 +301,7 @@ func (m *Manager) addAdminUser(c *wkhttp.Context) {
 }
 
 // 添加一个用户
-func (m *Manager) addUser(c *wkhttp.Context) {
+func (m *Manager) addUser(c *xohttp.Context) {
 	//err := c.CheckLoginRoleIsSuperAdmin()
 	//if err != nil {
 	//	c.ResponseError(err)
@@ -375,9 +375,9 @@ func (m *Manager) addUser(c *wkhttp.Context) {
 		return
 	}
 	//发送用户注册事件
-	eventID, err := m.ctx.EventBegin(&wkevent.Data{
+	eventID, err := m.ctx.EventBegin(&xoevent.Data{
 		Event: event.EventUserRegister,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: map[string]interface{}{
 			"uid": uid,
 		},
@@ -400,7 +400,7 @@ func (m *Manager) addUser(c *wkhttp.Context) {
 }
 
 // 用户列表
-func (m *Manager) list(c *wkhttp.Context) {
+func (m *Manager) list(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -529,7 +529,7 @@ func (m *Manager) list(c *wkhttp.Context) {
 }
 
 // 查询某个用户的好友
-func (m *Manager) friends(c *wkhttp.Context) {
+func (m *Manager) friends(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -561,7 +561,7 @@ func (m *Manager) friends(c *wkhttp.Context) {
 }
 
 // 查询某个用户的黑名单
-func (m *Manager) blacklist(c *wkhttp.Context) {
+func (m *Manager) blacklist(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -590,7 +590,7 @@ func (m *Manager) blacklist(c *wkhttp.Context) {
 }
 
 // 查看封禁用户列表
-func (m *Manager) disableUsers(c *wkhttp.Context) {
+func (m *Manager) disableUsers(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -630,7 +630,7 @@ func (m *Manager) disableUsers(c *wkhttp.Context) {
 }
 
 // 封禁或解禁用户
-func (m *Manager) liftBanUser(c *wkhttp.Context) {
+func (m *Manager) liftBanUser(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -703,7 +703,7 @@ func (m *Manager) liftBanUser(c *wkhttp.Context) {
 }
 
 // 修改登录密码
-func (m *Manager) updatePwd(c *wkhttp.Context) {
+func (m *Manager) updatePwd(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -873,8 +873,8 @@ func (m *Manager) createManagerAccount() {
 		return
 	}
 
-	username := string(wkhttp.SuperAdmin)
-	role := string(wkhttp.SuperAdmin)
+	username := string(xohttp.SuperAdmin)
+	role := string(xohttp.SuperAdmin)
 	var pwd = m.ctx.GetConfig().AdminPwd
 	err = m.userDB.Insert(&Model{
 		UID:      m.ctx.GetConfig().Account.AdminUID,

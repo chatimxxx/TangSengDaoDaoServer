@@ -23,8 +23,8 @@ import (
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/register"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkevent"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xoevent"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -63,7 +63,7 @@ func New(ctx *config.Context) *Group {
 }
 
 // Route 路由配置
-func (g *Group) Route(r *wkhttp.WKHttp) {
+func (g *Group) Route(r *xohttp.XOHttp) {
 	group := r.Group("/v1/group", g.ctx.AuthMiddleware(r))
 	{
 		group.POST("/create", g.groupCreate)
@@ -109,7 +109,7 @@ func (g *Group) Route(r *wkhttp.WKHttp) {
 	go g.CheckForbiddenLoop()
 }
 
-func (g *Group) membersGet(c *wkhttp.Context) {
+func (g *Group) membersGet(c *xohttp.Context) {
 	keyword := c.Query("keyword")
 	groupNo := c.Param("group_no")
 	limit, _ := strconv.ParseUint(c.Query("limit"), 10, 64)
@@ -141,7 +141,7 @@ func (g *Group) membersGet(c *wkhttp.Context) {
 	c.Response(resps)
 }
 
-func (g *Group) avatarGet(c *wkhttp.Context) {
+func (g *Group) avatarGet(c *xohttp.Context) {
 	groupNo := c.Param("group_no")
 	v := c.Query("v")
 	//是否为系统群
@@ -195,7 +195,7 @@ func (g *Group) avatarGet(c *wkhttp.Context) {
 
 }
 
-func (g *Group) avatarUpload(c *wkhttp.Context) {
+func (g *Group) avatarUpload(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	groupNo := c.Param("group_no")
 	if c.Request.MultipartForm == nil {
@@ -259,7 +259,7 @@ func (g *Group) avatarUpload(c *wkhttp.Context) {
 }
 
 // 同步群成员
-func (g *Group) syncMembers(c *wkhttp.Context) {
+func (g *Group) syncMembers(c *xohttp.Context) {
 	groupNo := c.Param("group_no")
 
 	if g.ctx.GetConfig().IsVisitorChannel(groupNo) {
@@ -305,7 +305,7 @@ func (g *Group) syncMembers(c *wkhttp.Context) {
 }
 
 // 获取群详情
-func (g *Group) groupGet(c *wkhttp.Context) {
+func (g *Group) groupGet(c *xohttp.Context) {
 	groupNo := c.Param("group_no")
 	// if g.ctx.GetConfig().IsVisitorChannel(groupNo) { // 访客频道
 	// 	c.Request.URL.Path = fmt.Sprintf("/v1/hotline/visitor/channel/%s", groupNo)
@@ -323,7 +323,7 @@ func (g *Group) groupGet(c *wkhttp.Context) {
 }
 
 // 获取群详情
-func (g *Group) groupDetailGet(c *wkhttp.Context) {
+func (g *Group) groupDetailGet(c *xohttp.Context) {
 	groupNo := c.Param("group_no")
 	groupModel, err := g.db.QueryWithGroupNo(groupNo)
 	if err != nil {
@@ -346,7 +346,7 @@ func (g *Group) groupDetailGet(c *wkhttp.Context) {
 }
 
 // list 我保存的群聊
-func (g *Group) list(c *wkhttp.Context) {
+func (g *Group) list(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	models, err := g.db.querySavedGroups(loginUID)
 	if err != nil {
@@ -363,7 +363,7 @@ func (g *Group) list(c *wkhttp.Context) {
 }
 
 // 创建群
-func (g *Group) groupCreate(c *wkhttp.Context) {
+func (g *Group) groupCreate(c *xohttp.Context) {
 	creator := c.MustGet("uid").(string)
 	creatorName := c.MustGet("name").(string)
 	var req groupReq
@@ -499,9 +499,9 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 		return
 	}
 	// 发布群创建事件
-	eventID, err := g.ctx.EventBegin(&wkevent.Data{
+	eventID, err := g.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupCreate,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: &config.MsgGroupCreateReq{
 			GroupNo:     groupNo,
 			Creator:     creator,
@@ -519,9 +519,9 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 	var unableAddDestroyAccount int64 = 0
 	if len(destroyUserBaseVos) > 0 {
 		// 发布无法添加到群聊用户
-		unableAddDestroyAccount, err = g.ctx.EventBegin(&wkevent.Data{
+		unableAddDestroyAccount, err = g.ctx.EventBegin(&xoevent.Data{
 			Event: event.GroupUnableAddDestroyAccount,
-			Type:  wkevent.Message,
+			Type:  xoevent.Message,
 			Data: &config.MsgGroupCreateReq{
 				GroupNo:     groupNo,
 				Creator:     creator,
@@ -537,9 +537,9 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 			return
 		}
 	}
-	groupAvatarEventID, err := g.ctx.EventBegin(&wkevent.Data{
+	groupAvatarEventID, err := g.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupAvatarUpdate,
-		Type:  wkevent.CMD,
+		Type:  xoevent.CMD,
 		Data: &config.CMDGroupAvatarUpdateReq{
 			GroupNo: groupNo,
 			Members: realMemberUids,
@@ -592,7 +592,7 @@ func (g *Group) groupCreate(c *wkhttp.Context) {
 }
 
 // 修改群信息
-func (g *Group) groupUpdate(c *wkhttp.Context) {
+func (g *Group) groupUpdate(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	loginName := c.MustGet("name").(string)
 	groupNo := c.Param("group_no")
@@ -659,9 +659,9 @@ func (g *Group) groupUpdate(c *wkhttp.Context) {
 		return
 	}
 	// 发布群创建事件
-	eventID, err := g.ctx.EventBegin(&wkevent.Data{
+	eventID, err := g.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupUpdate,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: &config.MsgGroupUpdateReq{
 			GroupNo:      groupNo,
 			Operator:     loginUID,
@@ -688,7 +688,7 @@ func (g *Group) groupUpdate(c *wkhttp.Context) {
 }
 
 // 添加成员
-func (g *Group) memberAdd(c *wkhttp.Context) {
+func (g *Group) memberAdd(c *xohttp.Context) {
 	operator := c.MustGet("uid").(string)
 	operatorName := c.MustGet("name").(string)
 	var req memberAddReq
@@ -909,9 +909,9 @@ func (g *Group) addMembersTx(members []string, groupNo string, operator, operato
 	/**
 	发布群成员添加事件
 		**/
-	eventID, err := g.ctx.EventBegin(&wkevent.Data{
+	eventID, err := g.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupMemberAdd,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: &config.MsgGroupMemberAddReq{
 			GroupNo:      groupNo,
 			Operator:     operator,
@@ -926,9 +926,9 @@ func (g *Group) addMembersTx(members []string, groupNo string, operator, operato
 	var unableAddDestroyAccount int64 = 0
 	if len(unableAddMemberVos) > 0 {
 		// 发布无法添加到群聊用户
-		unableAddDestroyAccount, err = g.ctx.EventBegin(&wkevent.Data{
+		unableAddDestroyAccount, err = g.ctx.EventBegin(&xoevent.Data{
 			Event: event.GroupUnableAddDestroyAccount,
-			Type:  wkevent.Message,
+			Type:  xoevent.Message,
 			Data: &config.MsgGroupCreateReq{
 				GroupNo: groupNo,
 				Members: unableAddMemberVos,
@@ -970,9 +970,9 @@ func (g *Group) addMembersTx(members []string, groupNo string, operator, operato
 			}
 		}
 
-		groupAvatarEventID, err = g.ctx.EventBegin(&wkevent.Data{
+		groupAvatarEventID, err = g.ctx.EventBegin(&xoevent.Data{
 			Event: event.GroupAvatarUpdate,
-			Type:  wkevent.CMD,
+			Type:  xoevent.CMD,
 			Data: &config.CMDGroupAvatarUpdateReq{
 				GroupNo: groupNo,
 				Members: ninceMembers,
@@ -1032,7 +1032,7 @@ func (g *Group) addMembers(members []string, groupNo string, operator, operatorN
 }
 
 // 添加管理员
-func (g *Group) managerAdd(c *wkhttp.Context) {
+func (g *Group) managerAdd(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	var memberUIDs []string
 	if err := c.BindJSON(&memberUIDs); err != nil {
@@ -1108,7 +1108,7 @@ func (g *Group) managerAdd(c *wkhttp.Context) {
 }
 
 // 移除管理员
-func (g *Group) managerRemove(c *wkhttp.Context) {
+func (g *Group) managerRemove(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	var memberUIDs []string
 	if err := c.BindJSON(&memberUIDs); err != nil {
@@ -1185,7 +1185,7 @@ func (g *Group) managerRemove(c *wkhttp.Context) {
 }
 
 // 群全员禁言
-func (g *Group) groupForbidden(c *wkhttp.Context) {
+func (g *Group) groupForbidden(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	loginName := c.MustGet("name").(string)
 	groupNo := c.Param("group_no")
@@ -1242,9 +1242,9 @@ func (g *Group) groupForbidden(c *wkhttp.Context) {
 		return
 	}
 	// 发布群信息更新事件
-	eventID, err := g.ctx.EventBegin(&wkevent.Data{
+	eventID, err := g.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupUpdate,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: &config.MsgGroupUpdateReq{
 			GroupNo:      groupNo,
 			Operator:     loginUID,
@@ -1300,7 +1300,7 @@ func (g *Group) resetIMWhitelist(whitelist []string, groupNo string) error {
 }
 
 // 获取群二维码信息
-func (g *Group) groupQRCode(c *wkhttp.Context) {
+func (g *Group) groupQRCode(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	groupNo := c.Param("group_no")
 
@@ -1334,7 +1334,7 @@ func (g *Group) groupQRCode(c *wkhttp.Context) {
 }
 
 // 加入群
-func (g *Group) groupScanJoin(c *wkhttp.Context) {
+func (g *Group) groupScanJoin(c *xohttp.Context) {
 	authCode := c.Query("auth_code")
 	groupNo := c.Param("group_no")
 	authInfo, err := g.ctx.GetRedisConn().GetString(fmt.Sprintf("%s%s", common.AuthCodeCachePrefix, authCode))
@@ -1433,9 +1433,9 @@ func (g *Group) groupScanJoin(c *wkhttp.Context) {
 			panic(err)
 		}
 	}()
-	eventID, err := g.ctx.EventBegin(&wkevent.Data{
+	eventID, err := g.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupMemberScanJoin,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: config.MsgGroupMemberScanJoin{
 			GroupNo:       groupNo,
 			Generator:     generatorInfo.UID,
@@ -1471,9 +1471,9 @@ func (g *Group) groupScanJoin(c *wkhttp.Context) {
 		}
 		members = append(members, scanerInfo.UID)
 
-		groupAvatarEventID, err = g.ctx.EventBegin(&wkevent.Data{
+		groupAvatarEventID, err = g.ctx.EventBegin(&xoevent.Data{
 			Event: event.GroupAvatarUpdate,
-			Type:  wkevent.CMD,
+			Type:  xoevent.CMD,
 			Data: &config.CMDGroupAvatarUpdateReq{
 				GroupNo: groupNo,
 				Members: members,
@@ -1533,7 +1533,7 @@ func (g *Group) groupScanJoin(c *wkhttp.Context) {
 }
 
 // 群主转让
-func (g *Group) transferGrouper(c *wkhttp.Context) {
+func (g *Group) transferGrouper(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	loginName := c.MustGet("name").(string)
 	toUID := c.Param("to_uid")
@@ -1613,9 +1613,9 @@ func (g *Group) transferGrouper(c *wkhttp.Context) {
 			panic(err)
 		}
 	}()
-	eventID, err := g.ctx.EventBegin(&wkevent.Data{
+	eventID, err := g.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupMemberTransferGrouper,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: config.MsgGroupTransferGrouper{
 			GroupNo:        groupNo,
 			OldGrouper:     loginUID,
@@ -1692,7 +1692,7 @@ func (g *Group) transferGrouper(c *wkhttp.Context) {
 }
 
 // 修改群里群成员信息
-func (g *Group) memberUpdate(c *wkhttp.Context) {
+func (g *Group) memberUpdate(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	memberUID := c.Param("uid")
 	groupNo := c.Param("group_no")
@@ -1754,7 +1754,7 @@ func (g *Group) memberUpdate(c *wkhttp.Context) {
 }
 
 // 移除群成员
-func (g *Group) memberRemove(c *wkhttp.Context) {
+func (g *Group) memberRemove(c *xohttp.Context) {
 	operator := c.GetLoginUID()
 	operatorName := c.GetLoginName()
 	var req memberRemoveReq
@@ -1900,9 +1900,9 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 		OperatorName: operatorName,
 		Members:      userBaseVos,
 	}
-	eventID, err := g.ctx.EventBegin(&wkevent.Data{
+	eventID, err := g.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupMemberRemove,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data:  groupMemberRemoveReq,
 	}, tx)
 	if err != nil {
@@ -1928,9 +1928,9 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 			}
 		}
 		if len(nineMemberUIDs) > 0 {
-			groupAvatarEventID, err = g.ctx.EventBegin(&wkevent.Data{
+			groupAvatarEventID, err = g.ctx.EventBegin(&xoevent.Data{
 				Event: event.GroupAvatarUpdate,
-				Type:  wkevent.CMD,
+				Type:  xoevent.CMD,
 				Data: &config.CMDGroupAvatarUpdateReq{
 					GroupNo: groupNo,
 					Members: nineMemberUIDs,
@@ -1979,7 +1979,7 @@ func (g *Group) memberRemove(c *wkhttp.Context) {
 }
 
 // 修改群设置
-func (g *Group) groupSettingUpdate(c *wkhttp.Context) {
+func (g *Group) groupSettingUpdate(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string) // 登录用户
 	loginName := c.GetLoginName()
 	groupNo := c.Param("group_no")
@@ -2080,7 +2080,7 @@ func (g *Group) groupSettingUpdate(c *wkhttp.Context) {
 }
 
 // 退出群聊
-func (g *Group) groupExit(c *wkhttp.Context) {
+func (g *Group) groupExit(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	groupNo := c.Param("group_no")
 
@@ -2130,9 +2130,9 @@ func (g *Group) groupExit(c *wkhttp.Context) {
 		c.ResponseError(errors.New("开启数据库事务失败！"))
 		return
 	}
-	eventID, err := g.ctx.EventBegin(&wkevent.Data{
+	eventID, err := g.ctx.EventBegin(&xoevent.Data{
 		Event: event.ConversationDelete,
-		Type:  wkevent.CMD,
+		Type:  xoevent.CMD,
 		Data: &config.DeleteConversationReq{
 			ChannelID:   groupNo,
 			ChannelType: common.ChannelTypeGroup.Uint8(),
@@ -2216,7 +2216,7 @@ func (g *Group) groupExit(c *wkhttp.Context) {
 }
 
 // 添加或移除黑名单
-func (g *Group) blacklist(c *wkhttp.Context) {
+func (g *Group) blacklist(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	groupNo := c.Param("group_no")
 	action := c.Param("action")
@@ -2325,7 +2325,7 @@ func (g *Group) blacklist(c *wkhttp.Context) {
 }
 
 // 禁言时长列表
-func (g *Group) forbiddenTimesList(c *wkhttp.Context) {
+func (g *Group) forbiddenTimesList(c *xohttp.Context) {
 	type forbiddenTime struct {
 		Text string `json:"text"`
 		Key  int    `json:"key"`
@@ -2360,7 +2360,7 @@ func (g *Group) forbiddenTimesList(c *wkhttp.Context) {
 }
 
 // 禁言某个群成员
-func (g *Group) forbiddenWithGroupMember(c *wkhttp.Context) {
+func (g *Group) forbiddenWithGroupMember(c *xohttp.Context) {
 	type forbiddenWithGroupMemberReq struct {
 		MemberUID string `json:"member_uid"`
 		Action    int    `json:"action"` // 0.解禁1.禁言

@@ -11,8 +11,8 @@ import (
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkevent"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xoevent"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -37,7 +37,7 @@ func NewManager(ctx *config.Context) *Manager {
 }
 
 // Route 配置路由规则
-func (m *Manager) Route(r *wkhttp.WKHttp) {
+func (m *Manager) Route(r *xohttp.XOHttp) {
 	auth := r.Group("/v1/manager", m.ctx.AuthMiddleware(r))
 	{
 		auth.GET("/group/list", m.list)                              // 群列表
@@ -51,7 +51,7 @@ func (m *Manager) Route(r *wkhttp.WKHttp) {
 }
 
 // 查询群列表
-func (m *Manager) list(c *wkhttp.Context) {
+func (m *Manager) list(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -158,7 +158,7 @@ func (m *Manager) getRespList(list []*managerGroupModel) ([]*managerGroupResp, e
 }
 
 // 封禁群列表
-func (m *Manager) disablelist(c *wkhttp.Context) {
+func (m *Manager) disablelist(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -189,7 +189,7 @@ func (m *Manager) disablelist(c *wkhttp.Context) {
 }
 
 // 封禁或解禁某个群
-func (m *Manager) leftbangroup(c *wkhttp.Context) {
+func (m *Manager) leftbangroup(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -255,9 +255,9 @@ func (m *Manager) leftbangroup(c *wkhttp.Context) {
 		return
 	}
 	// 发布群创建事件
-	eventID, _ := m.ctx.EventBegin(&wkevent.Data{
+	eventID, _ := m.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupUpdate,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: &config.MsgGroupUpdateReq{
 			GroupNo:      groupNo,
 			Operator:     c.GetLoginUID(),
@@ -278,7 +278,7 @@ func (m *Manager) leftbangroup(c *wkhttp.Context) {
 }
 
 // 禁言
-func (m *Manager) forbidden(c *wkhttp.Context) {
+func (m *Manager) forbidden(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -337,9 +337,9 @@ func (m *Manager) forbidden(c *wkhttp.Context) {
 		return
 	}
 	// 发布群信息更新事件
-	eventID, err := m.ctx.EventBegin(&wkevent.Data{
+	eventID, err := m.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupUpdate,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: &config.MsgGroupUpdateReq{
 			GroupNo:      groupNo,
 			Operator:     c.GetLoginUID(),
@@ -369,7 +369,7 @@ func (m *Manager) forbidden(c *wkhttp.Context) {
 }
 
 // 移除群成员
-func (m *Manager) removeMember(c *wkhttp.Context) {
+func (m *Manager) removeMember(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -380,7 +380,7 @@ func (m *Manager) removeMember(c *wkhttp.Context) {
 }
 
 // 群成员
-func (m *Manager) members(c *wkhttp.Context) {
+func (m *Manager) members(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -440,7 +440,7 @@ func (m *Manager) members(c *wkhttp.Context) {
 }
 
 // 群黑名单成员
-func (m *Manager) blacklist(c *wkhttp.Context) {
+func (m *Manager) blacklist(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)

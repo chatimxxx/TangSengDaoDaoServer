@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/xochat/xochat_im_server_lib/config"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 )
 
 // Report 举报
@@ -25,7 +25,7 @@ func New(ctx *config.Context) *Report {
 }
 
 // Route 配置路由规则
-func (r *Report) Route(l *wkhttp.WKHttp) {
+func (r *Report) Route(l *xohttp.XOHttp) {
 	v := l.Group("/v1/report")
 	{
 		v.GET("/categories", r.categoies)
@@ -38,7 +38,7 @@ func (r *Report) Route(l *wkhttp.WKHttp) {
 	}
 }
 
-func (r *Report) reportHTML(c *wkhttp.Context) {
+func (r *Report) reportHTML(c *xohttp.Context) {
 
 	mode := c.Query("mode")
 	if mode == "" {
@@ -59,7 +59,7 @@ func (r *Report) reportHTML(c *wkhttp.Context) {
 }
 
 // 举报
-func (r *Report) report(c *wkhttp.Context) {
+func (r *Report) report(c *xohttp.Context) {
 	var req reportReq
 	if err := c.BindJSON(&req); err != nil {
 		c.ResponseErrorf("请求数据格式有误！", err)
@@ -93,7 +93,7 @@ func (r *Report) report(c *wkhttp.Context) {
 }
 
 // 举报类别
-func (r *Report) categoies(c *wkhttp.Context) {
+func (r *Report) categoies(c *xohttp.Context) {
 	lang := c.Query("lang")
 	if lang == "" {
 		lang = c.GetHeader("Accept-Language")

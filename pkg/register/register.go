@@ -1,10 +1,10 @@
 package register
 
-import "github.com/xochat/xochat_im_server/pkg/wkhttp"
+import "github.com/xochat/xochat_im_server/pkg/xohttp"
 
 // APIRouter api路由者
 type APIRouter interface {
-	Route(r *wkhttp.WKHttp)
+	Route(r *xohttp.XOHttp)
 }
 
 var apiRoutes = make([]APIRouter, 0)

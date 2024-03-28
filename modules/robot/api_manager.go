@@ -7,7 +7,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -26,7 +26,7 @@ func NewManager(ctx *config.Context) *Manager {
 }
 
 // 路由配置
-func (m *Manager) Route(r *wkhttp.WKHttp) {
+func (m *Manager) Route(r *xohttp.XOHttp) {
 	auth := r.Group("/v1/manager", m.ctx.AuthMiddleware(r))
 	{
 		auth.GET("/robot/menus", m.list)                                 // 机器人菜单
@@ -36,7 +36,7 @@ func (m *Manager) Route(r *wkhttp.WKHttp) {
 }
 
 // 查询某个机器人菜单
-func (m *Manager) list(c *wkhttp.Context) {
+func (m *Manager) list(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -72,7 +72,7 @@ func (m *Manager) list(c *wkhttp.Context) {
 	c.Response(resps)
 }
 
-func (m *Manager) delete(c *wkhttp.Context) {
+func (m *Manager) delete(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -126,7 +126,7 @@ func (m *Manager) delete(c *wkhttp.Context) {
 }
 
 // 启用或禁用机器人
-func (m *Manager) updateRobotStatus(c *wkhttp.Context) {
+func (m *Manager) updateRobotStatus(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)

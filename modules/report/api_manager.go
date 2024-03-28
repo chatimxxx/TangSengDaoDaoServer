@@ -10,7 +10,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -37,7 +37,7 @@ func NewManager(ctx *config.Context) *Manager {
 }
 
 // Route 配置路由规则
-func (m *Manager) Route(l *wkhttp.WKHttp) {
+func (m *Manager) Route(l *xohttp.XOHttp) {
 
 	auth := l.Group("/v1/manager", l.AuthMiddleware(m.ctx.Cache(), m.ctx.GetConfig().Cache.TokenCachePrefix))
 	{
@@ -46,7 +46,7 @@ func (m *Manager) Route(l *wkhttp.WKHttp) {
 }
 
 // 举报列表
-func (m *Manager) reportList(c *wkhttp.Context) {
+func (m *Manager) reportList(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)

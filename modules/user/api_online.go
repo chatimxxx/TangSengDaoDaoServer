@@ -7,12 +7,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/config"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
 // 退出pc登录
-func (u *User) pcQuit(c *wkhttp.Context) {
+func (u *User) pcQuit(c *xohttp.Context) {
 
 	err := u.ctx.QuitUserDevice(c.GetLoginUID(), int(config.Web)) // 退出web
 	if err != nil {
@@ -42,7 +42,7 @@ func (u *User) pcQuit(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (u *User) onlinelistWithUIDs(c *wkhttp.Context) {
+func (u *User) onlinelistWithUIDs(c *xohttp.Context) {
 	var uids []string
 	if err := c.BindJSON(&uids); err != nil {
 		c.ResponseError(err)
@@ -67,7 +67,7 @@ func (u *User) onlinelistWithUIDs(c *wkhttp.Context) {
 }
 
 // onlineList 查询在线用户 包含我的pc设备
-func (u *User) onlineList(c *wkhttp.Context) {
+func (u *User) onlineList(c *xohttp.Context) {
 	if !u.ctx.GetConfig().OnlineStatusOn {
 		c.Response(make([]string, 0))
 		return

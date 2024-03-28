@@ -7,7 +7,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 )
 
 // Service Service
@@ -32,7 +32,7 @@ func NewService(ctx *config.Context) *Service {
 }
 
 // Route Route
-func (s *Service) Route(r *wkhttp.WKHttp) {
+func (s *Service) Route(r *xohttp.XOHttp) {
 
 }
 

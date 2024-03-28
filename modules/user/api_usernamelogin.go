@@ -13,12 +13,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
 // 通过用户名注册
-func (u *User) usernameRegister(c *wkhttp.Context) {
+func (u *User) usernameRegister(c *xohttp.Context) {
 	if !u.ctx.GetConfig().Register.UsernameOn {
 		c.ResponseError(errors.New("暂不支持用户名注册"))
 		return
@@ -55,7 +55,7 @@ func (u *User) usernameRegister(c *wkhttp.Context) {
 }
 
 // 用户名登录
-func (u *User) usernameLogin(c *wkhttp.Context) {
+func (u *User) usernameLogin(c *xohttp.Context) {
 	var req loginReq
 	if err := c.BindJSON(&req); err != nil {
 		c.ResponseError(errors.New("请求数据格式有误！"))
@@ -109,7 +109,7 @@ func (u *User) usernameLogin(c *wkhttp.Context) {
 	publicIP := util.GetClientPublicIP(c.Request)
 	go u.sentWelcomeMsg(publicIP, userInfo.UID)
 }
-func (u *User) registerWithUsername(username string, name string, password string, flag int, device *deviceReq, c *wkhttp.Context) {
+func (u *User) registerWithUsername(username string, name string, password string, flag int, device *deviceReq, c *xohttp.Context) {
 	registerSpan := u.ctx.Tracer().StartSpan(
 		"user.register",
 		opentracing.ChildOf(c.GetSpanContext()),
@@ -161,7 +161,7 @@ func (u *User) registerWithUsername(username string, name string, password strin
 }
 
 // 通过web3公钥重置登录密码
-func (u *User) resetPwdWithWeb3PublicKey(c *wkhttp.Context) {
+func (u *User) resetPwdWithWeb3PublicKey(c *xohttp.Context) {
 	type reqVO struct {
 		Username   string `json:"username"`
 		Password   string `json:"password"`
@@ -267,7 +267,7 @@ func (u *User) verifySignature(publicKey, verifyText, signText string) (bool, er
 }
 
 // 上传web3Key
-func (u *User) uploadWeb3PublicKey(c *wkhttp.Context) {
+func (u *User) uploadWeb3PublicKey(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	type reqVO struct {
 		Web3PublicKey string `json:"web3_public_key"`
@@ -309,7 +309,7 @@ func (u *User) uploadWeb3PublicKey(c *wkhttp.Context) {
 }
 
 // 验签
-func (u *User) web3verifySignature(c *wkhttp.Context) {
+func (u *User) web3verifySignature(c *xohttp.Context) {
 	type reqVO struct {
 		VerifyText string `json:"verify_text"`
 		SignText   string `json:"sign_text"`
@@ -382,7 +382,7 @@ func (u *User) web3verifySignature(c *wkhttp.Context) {
 }
 
 // 获取验证字符串
-func (u *User) getVerifyText(c *wkhttp.Context) {
+func (u *User) getVerifyText(c *xohttp.Context) {
 	username := c.Query("username")
 	verifyType := c.Query("type")
 	if username == "" {
@@ -425,7 +425,7 @@ func (u *User) getVerifyText(c *wkhttp.Context) {
 }
 
 // 修改登录密码
-func (u *User) updatePwd(c *wkhttp.Context) {
+func (u *User) updatePwd(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	type reqVO struct {
 		Password    string `json:"password"`

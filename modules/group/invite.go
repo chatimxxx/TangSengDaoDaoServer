@@ -11,13 +11,13 @@ import (
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkevent"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xoevent"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
 // 群邀请添加
-func (g *Group) groupMemberInviteAdd(c *wkhttp.Context) {
+func (g *Group) groupMemberInviteAdd(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	loginName := c.MustGet("name").(string)
 	groupNo := c.Param("group_no")
@@ -48,9 +48,9 @@ func (g *Group) groupMemberInviteAdd(c *wkhttp.Context) {
 			panic(err)
 		}
 	}()
-	eventID, err := g.ctx.EventBegin(&wkevent.Data{
+	eventID, err := g.ctx.EventBegin(&xoevent.Data{
 		Event: event.GroupMemberInviteRequest,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: config.MsgGroupMemberInviteReq{
 			GroupNo:     groupNo,
 			InviteNo:    inviteNo,
@@ -108,7 +108,7 @@ func (g *Group) groupMemberInviteAdd(c *wkhttp.Context) {
 }
 
 // 获取群成员邀请详情的h5
-func (g *Group) getToGroupMemberConfirmInviteDetailH5(c *wkhttp.Context) {
+func (g *Group) getToGroupMemberConfirmInviteDetailH5(c *xohttp.Context) {
 	groupNo := c.Param("group_no")
 	inviteNo := c.Query("invite_no")
 	loginUID := c.MustGet("uid").(string)
@@ -138,7 +138,7 @@ func (g *Group) getToGroupMemberConfirmInviteDetailH5(c *wkhttp.Context) {
 }
 
 // 群邀请确认
-func (g *Group) groupMemberInviteSure(c *wkhttp.Context) {
+func (g *Group) groupMemberInviteSure(c *xohttp.Context) {
 	authCode := c.Query("auth_code")
 	authInfo, err := g.ctx.GetRedisConn().GetString(fmt.Sprintf("%s%s", common.AuthCodeCachePrefix, authCode))
 	if err != nil {
@@ -252,7 +252,7 @@ func (g *Group) groupMemberInviteSure(c *wkhttp.Context) {
 }
 
 // groupMemberInviteDetail 获取群成员邀请详情
-func (g *Group) groupMemberInviteDetail(c *wkhttp.Context) {
+func (g *Group) groupMemberInviteDetail(c *xohttp.Context) {
 	inviteNo := c.Param("invite_no")
 	inviteDetilModel, err := g.db.QueryInviteDetail(inviteNo)
 	if err != nil {

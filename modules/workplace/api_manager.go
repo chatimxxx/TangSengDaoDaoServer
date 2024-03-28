@@ -9,7 +9,7 @@ import (
 	"github.com/xochat/xochat_im_server/pkg/util"
 	"github.com/xochat/xochat_im_server_lib/common"
 	"github.com/xochat/xochat_im_server_lib/config"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -30,7 +30,7 @@ func NewManager(ctx *config.Context) *manager {
 }
 
 // Route 路由配置
-func (m *manager) Route(r *wkhttp.WKHttp) {
+func (m *manager) Route(r *xohttp.XOHttp) {
 	auth := r.Group("/v1/manager/workplace", m.ctx.AuthMiddleware(r))
 	{
 		auth.POST("/category", m.addCategory)                                    // 添加分类
@@ -55,7 +55,7 @@ func (m *manager) Route(r *wkhttp.WKHttp) {
 }
 
 // 排序横幅
-func (m *manager) reorderBanner(c *wkhttp.Context) {
+func (m *manager) reorderBanner(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -99,7 +99,7 @@ func (m *manager) reorderBanner(c *wkhttp.Context) {
 }
 
 // 编辑分类
-func (m *manager) updateCategory(c *wkhttp.Context) {
+func (m *manager) updateCategory(c *xohttp.Context) {
 	categoryNo := c.Param("category_no")
 	if categoryNo == "" {
 		c.ResponseError(errors.New("分类ID不能为空"))
@@ -135,7 +135,7 @@ func (m *manager) updateCategory(c *wkhttp.Context) {
 }
 
 // 删除分类
-func (m *manager) deleteCategory(c *wkhttp.Context) {
+func (m *manager) deleteCategory(c *xohttp.Context) {
 	categoryNo := c.Param("category_no")
 	if categoryNo == "" {
 		c.ResponseError(errors.New("分类ID不能为空"))
@@ -150,7 +150,7 @@ func (m *manager) deleteCategory(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (m *manager) getApps(c *wkhttp.Context) {
+func (m *manager) getApps(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -214,7 +214,7 @@ func (m *manager) getApps(c *wkhttp.Context) {
 	})
 }
 
-func (m *manager) deleteCategoryApp(c *wkhttp.Context) {
+func (m *manager) deleteCategoryApp(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -239,7 +239,7 @@ func (m *manager) deleteCategoryApp(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (m *manager) addCategoryApp(c *wkhttp.Context) {
+func (m *manager) addCategoryApp(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -339,7 +339,7 @@ func (m *manager) addCategoryApp(c *wkhttp.Context) {
 	}
 	c.ResponseOK()
 }
-func (m *manager) reorderCategoryApp(c *wkhttp.Context) {
+func (m *manager) reorderCategoryApp(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -391,7 +391,7 @@ func (m *manager) reorderCategoryApp(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (m *manager) getCategoryApps(c *wkhttp.Context) {
+func (m *manager) getCategoryApps(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -430,7 +430,7 @@ func (m *manager) getCategoryApps(c *wkhttp.Context) {
 	c.Response(list)
 }
 
-func (m *manager) updateBanner(c *wkhttp.Context) {
+func (m *manager) updateBanner(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -471,7 +471,7 @@ func (m *manager) updateBanner(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (m *manager) getBanners(c *wkhttp.Context) {
+func (m *manager) getBanners(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -501,7 +501,7 @@ func (m *manager) getBanners(c *wkhttp.Context) {
 	c.Response(list)
 }
 
-func (m *manager) deleteBanner(c *wkhttp.Context) {
+func (m *manager) deleteBanner(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -521,7 +521,7 @@ func (m *manager) deleteBanner(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (m *manager) getCategory(c *wkhttp.Context) {
+func (m *manager) getCategory(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -546,7 +546,7 @@ func (m *manager) getCategory(c *wkhttp.Context) {
 	c.Response(list)
 }
 
-func (m *manager) addBanner(c *wkhttp.Context) {
+func (m *manager) addBanner(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -581,7 +581,7 @@ func (m *manager) addBanner(c *wkhttp.Context) {
 	}
 	c.ResponseOK()
 }
-func (m *manager) updateApp(c *wkhttp.Context) {
+func (m *manager) updateApp(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -630,7 +630,7 @@ func (m *manager) updateApp(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (m *manager) deleteApp(c *wkhttp.Context) {
+func (m *manager) deleteApp(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -695,7 +695,7 @@ func (m *manager) deleteApp(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (m *manager) reorderCategory(c *wkhttp.Context) {
+func (m *manager) reorderCategory(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -738,7 +738,7 @@ func (m *manager) reorderCategory(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (m *manager) addApp(c *wkhttp.Context) {
+func (m *manager) addApp(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)
@@ -785,7 +785,7 @@ func (m *manager) addApp(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (m *manager) addCategory(c *wkhttp.Context) {
+func (m *manager) addCategory(c *xohttp.Context) {
 	err := c.CheckLoginRoleIsSuperAdmin()
 	if err != nil {
 		c.ResponseError(err)

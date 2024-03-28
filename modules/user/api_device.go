@@ -6,11 +6,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
-func (u *User) deviceDelete(c *wkhttp.Context) {
+func (u *User) deviceDelete(c *xohttp.Context) {
 	deviceID := c.Param("device_id")
 
 	err := u.deviceDB.deleteDeviceWithDeviceIDAndUID(deviceID, c.GetLoginUID())
@@ -23,7 +23,7 @@ func (u *User) deviceDelete(c *wkhttp.Context) {
 }
 
 // 登录设备列表
-func (u *User) deviceList(c *wkhttp.Context) {
+func (u *User) deviceList(c *xohttp.Context) {
 
 	devices, err := u.deviceDB.queryDeviceWithUID(c.GetLoginUID())
 	if err != nil {

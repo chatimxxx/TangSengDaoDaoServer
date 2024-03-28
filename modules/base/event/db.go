@@ -6,7 +6,7 @@ import (
 	"github.com/gocraft/dbr/v2"
 	"github.com/xochat/xochat_im_server_lib/pkg/db"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkevent"
+	"github.com/xochat/xochat_im_server_lib/pkg/xoevent"
 )
 
 // DB 事件的db
@@ -46,7 +46,7 @@ func (d *DB) QueryWithID(id int64) (*Model, error) {
 // QueryAllWait 查询所有等待事件
 func (d *DB) QueryAllWait(limit uint64) ([]*Model, error) {
 	var models []*Model
-	_, err := d.session.Select("*").From("event").Where("status=? and created_at<?", wkevent.Wait.Int(), util.ToyyyyMMddHHmmss(time.Now().Add(-time.Second*60))).Limit(limit).Load(&models)
+	_, err := d.session.Select("*").From("event").Where("status=? and created_at<?", xoevent.Wait.Int(), util.ToyyyyMMddHHmmss(time.Now().Add(-time.Second*60))).Limit(limit).Load(&models)
 	return models, err
 }
 

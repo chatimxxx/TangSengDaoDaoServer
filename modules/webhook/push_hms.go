@@ -78,11 +78,11 @@ func (h *HMSPush) GetPayload(msg msgOfflineNotify, ctx *config.Context, toUser *
 // Push 推送
 func (h *HMSPush) Push(deviceToken string, payload Payload) error {
 	hmsPayload := payload.(*HMSPayload)
-	channelID := "wk_new_msg_notification"
+	channelID := "xo_new_msg_notification"
 	sound := "/raw/newmsg"
 	category := "IM"
 	if hmsPayload.GetRTCPayload() != nil && hmsPayload.GetRTCPayload().GetOperation() != "cancel" {
-		channelID = "wk_new_rtc_notification"
+		channelID = "xo_new_rtc_notification"
 		sound = "/raw/newrtc"
 		category = "VOIP"
 	}

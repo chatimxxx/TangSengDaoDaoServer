@@ -231,7 +231,7 @@ func TestUpdateAPP(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-	appId := "wkim"
+	appId := "xoim"
 	err = wm.db.insertAPP(&appModel{
 		AppID:       appId,
 		Icon:        "xxxxx",
@@ -268,7 +268,7 @@ func TestDeleteAPP(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-	appId := "wkim"
+	appId := "xoim"
 	err = wm.db.insertAPP(&appModel{
 		AppID:       appId,
 		Icon:        "xxxxx",
@@ -299,7 +299,7 @@ func TestAppList(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-	appId := "wkim"
+	appId := "xoim"
 	err = wm.db.insertAPP(&appModel{
 		AppID:       appId,
 		Icon:        "xxxxx",
@@ -337,7 +337,7 @@ func TestGetCategoryApps(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-	appId1 := "wkim"
+	appId1 := "xoim"
 	appId2 := "tsdd"
 	err = wm.db.insertAPP(&appModel{
 		AppID:       appId1,
@@ -390,7 +390,7 @@ func TestReorderCategoryApp(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-	appId1 := "wkim"
+	appId1 := "xoim"
 	appId2 := "tsdd"
 	categoryNo := "no1"
 	err = wm.db.insertCategoryApp(&categoryAppModel{
@@ -428,7 +428,7 @@ func TestAddCategoryApp(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-	appId1 := "wkim"
+	appId1 := "xoim"
 	appId2 := "tsdd"
 	categoryNo := "no1"
 	err = wm.db.insertCategoryApp(&categoryAppModel{
@@ -489,7 +489,7 @@ func TestDeleteCategoryApp(t *testing.T) {
 	//清除数据
 	err := testutil.CleanAllTables(ctx)
 	assert.NoError(t, err)
-	appId1 := "wkim"
+	appId1 := "xoim"
 	appId2 := "tsdd"
 	categoryNo := "no1"
 	err = wm.db.insertCategoryApp(&categoryAppModel{

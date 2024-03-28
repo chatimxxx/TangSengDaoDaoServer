@@ -549,8 +549,8 @@ github.com/xdg-go/stringprep v1.0.2/go.mod h1:8F9zXuvzgwmyT5DUm4GUfZGDdT3W+LCvS6
 github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c/go.mod h1:lB8K/P019DLNhemzwFU4jHLhdvlE6uDZjXFejJXr49I=
 github.com/xdg/stringprep v0.0.0-20180714160509-73f8eece6fdc/go.mod h1:Jhud4/sHMO4oL310DaZAKk9ZaJ08SJfe+sJh0HrGL1Y=
 github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e h1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=
-github.com/xochat/xochat_im_server_lib v1.0.5 h1:16ESrrre77YnTR701kdBCvLWw0FyHNmneVxkgI9RzMc=
-github.com/xochat/xochat_im_server_lib v1.0.5/go.mod h1:C011afmExGksbARK0r9YM3OJhx4bWFGOoql2z4AX2nM=
+github.com/xochat/xochat_im_server_lib v1.0.5-3e12f6790a2280d0202ce509b4c65bebc9ccbd01 h1:ev81GDfUE32E7qlMibrWFPwNTkvWRdiB0QnfL2TzXek=
+github.com/xochat/xochat_im_server_lib v1.0.5-3e12f6790a2280d0202ce509b4c65bebc9ccbd01/go.mod h1:C011afmExGksbARK0r9YM3OJhx4bWFGOoql2z4AX2nM=
 github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d h1:splanxYIlg+5LfHAM6xpdFEAYOk8iySO56hMFq6uLyA=
 github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d/go.mod h1:rHwXgn7JulP+udvsHwJoVG1YGAP6VLg4y9I5dyZdqmA=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

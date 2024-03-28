@@ -33,7 +33,7 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.3
 	github.com/tidwall/gjson v1.15.0
-	github.com/xochat/xochat_im_server_lib v1.0.5
+	github.com/xochat/xochat_im_server_lib v1.0.5-3e12f6790a2280d0202ce509b4c65bebc9ccbd01
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.14.0
 	google.golang.org/api v0.122.0
@@ -163,4 +163,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-

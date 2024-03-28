@@ -14,7 +14,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/register"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -37,7 +37,7 @@ func New(ctx *config.Context) *Channel {
 }
 
 // Route 路由配置
-func (ch *Channel) Route(r *wkhttp.WKHttp) {
+func (ch *Channel) Route(r *xohttp.XOHttp) {
 	auth := r.Group("/v1", ch.ctx.AuthMiddleware(r))
 	{
 		auth.GET("/channel/state", ch.state)
@@ -46,7 +46,7 @@ func (ch *Channel) Route(r *wkhttp.WKHttp) {
 	}
 }
 
-func (ch *Channel) channelGet(c *wkhttp.Context) {
+func (ch *Channel) channelGet(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	channelID := c.Param("channel_id")
 	channelTypeI64, _ := strconv.ParseInt(c.Param("channel_type"), 10, 64)
@@ -104,7 +104,7 @@ func (ch *Channel) channelGet(c *wkhttp.Context) {
 
 }
 
-func (ch *Channel) state(c *wkhttp.Context) {
+func (ch *Channel) state(c *xohttp.Context) {
 	channelID := c.Query("channel_id")
 	channelTypeI64, _ := strconv.ParseInt(c.Query("channel_type"), 10, 64)
 
@@ -148,7 +148,7 @@ func (ch *Channel) state(c *wkhttp.Context) {
 
 }
 
-func (ch *Channel) setAutoDeleteForMessage(c *wkhttp.Context) {
+func (ch *Channel) setAutoDeleteForMessage(c *xohttp.Context) {
 	channelID := c.Param("channel_id")
 	channelTypeI64, _ := strconv.ParseInt(c.Param("channel_type"), 10, 64)
 	channelType := uint8(channelTypeI64)

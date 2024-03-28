@@ -21,7 +21,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/network"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -74,7 +74,7 @@ func New(ctx *config.Context) *Message {
 }
 
 // Route 路由配置
-func (m *Message) Route(r *wkhttp.WKHttp) {
+func (m *Message) Route(r *xohttp.XOHttp) {
 	message := r.Group("/v1/message", m.ctx.AuthMiddleware(r))
 	{
 
@@ -116,7 +116,7 @@ func (m *Message) Route(r *wkhttp.WKHttp) {
 	m.ctx.AddMessagesListener(m.listenerMessages) // 监听消息
 }
 
-func (m *Message) sendMsg(c *wkhttp.Context) {
+func (m *Message) sendMsg(c *xohttp.Context) {
 	if !m.ctx.GetConfig().Message.SendMessageOn {
 		c.ResponseError(errors.New("不支持代发消息"))
 		return
@@ -224,7 +224,7 @@ func (m *Message) sendMessage(channelID string, channelType uint8, fromUID strin
 }
 
 // 消息编辑
-func (m *Message) messageEdit(c *wkhttp.Context) {
+func (m *Message) messageEdit(c *xohttp.Context) {
 	var req struct {
 		MessageID   string `json:"message_id"`
 		MessageSeq  uint32 `json:"message_seq"`
@@ -301,7 +301,7 @@ func (m *Message) messageEdit(c *wkhttp.Context) {
 }
 
 // 消息已读
-func (m *Message) messageReaded(c *wkhttp.Context) {
+func (m *Message) messageReaded(c *xohttp.Context) {
 	var req struct {
 		MessageIDs  []string `json:"message_ids"`
 		ChannelID   string   `json:"channel_id"`
@@ -440,7 +440,7 @@ func (m *Message) messageReaded(c *wkhttp.Context) {
 }
 
 // 消息回执列表
-func (m *Message) messageReceiptList(c *wkhttp.Context) {
+func (m *Message) messageReceiptList(c *xohttp.Context) {
 	messageIDStr := c.Param("message_id")
 
 	readed := c.Query("readed") // 查询已读未读的消息，0.未读 1.已读
@@ -520,7 +520,7 @@ func (m *Message) setMessageExtraVersion(uid, channelID string, channelType uint
 }
 
 // 同步扩展消息数据
-func (m *Message) syncMessageExtra(c *wkhttp.Context) {
+func (m *Message) syncMessageExtra(c *xohttp.Context) {
 	var req struct {
 		ChannelID    string `json:"channel_id"`
 		ChannelType  uint8  `json:"channel_type"`
@@ -578,7 +578,7 @@ func (m *Message) syncMessageExtra(c *wkhttp.Context) {
 }
 
 // 同步频道消息
-func (m *Message) syncChannelMessage(c *wkhttp.Context) {
+func (m *Message) syncChannelMessage(c *xohttp.Context) {
 	var req config.SyncChannelMessageReq
 	if err := c.BindJSON(&req); err != nil {
 		m.Error("数据格式有误！", zap.Error(err))
@@ -617,7 +617,7 @@ func (m *Message) syncChannelMessage(c *wkhttp.Context) {
 }
 
 // 输入中
-func (m *Message) typing(c *wkhttp.Context) {
+func (m *Message) typing(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	loginName := c.MustGet("name").(string)
 	var req struct {
@@ -654,7 +654,7 @@ func (m *Message) typing(c *wkhttp.Context) {
 }
 
 // 搜索消息
-func (m *Message) search(c *wkhttp.Context) {
+func (m *Message) search(c *xohttp.Context) {
 	var req struct {
 		UID         string `json:"uid"` // 搜索的消息限定这某个用户内
 		ChannelID   string `json:"channel_id"`
@@ -693,7 +693,7 @@ func (m *Message) search(c *wkhttp.Context) {
 }
 
 // 语音消息设置为已读
-func (m *Message) voiceReaded(c *wkhttp.Context) {
+func (m *Message) voiceReaded(c *xohttp.Context) {
 	var req *voiceReadedReq
 	if err := c.BindJSON(&req); err != nil {
 		c.ResponseErrorf("数据格式有误！", err)
@@ -721,7 +721,7 @@ func (m *Message) voiceReaded(c *wkhttp.Context) {
 }
 
 // 同步回应数据
-func (m *Message) syncReaction(c *wkhttp.Context) {
+func (m *Message) syncReaction(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	var req struct {
 		ChannelID   string `json:"channel_id"`
@@ -785,7 +785,7 @@ func (m *Message) syncReaction(c *wkhttp.Context) {
 }
 
 // 添加或取消回应
-func (m *Message) addOrCancelReaction(c *wkhttp.Context) {
+func (m *Message) addOrCancelReaction(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	loginName := c.GetLoginName()
 	var req struct {
@@ -882,7 +882,7 @@ func (m *Message) handlerIMError(resp *rest.Response) error {
 }
 
 // 同步消息回执
-func (m *Message) syncack(c *wkhttp.Context) {
+func (m *Message) syncack(c *xohttp.Context) {
 	uid := c.MustGet("uid").(string)
 	lastMessageSeqStr := c.Param("last_message_seq")
 	lastMessageSeq, err := strconv.ParseUint(lastMessageSeqStr, 10, 64)
@@ -904,7 +904,7 @@ func (m *Message) syncack(c *wkhttp.Context) {
 }
 
 // 同步消息
-func (m *Message) sync(c *wkhttp.Context) {
+func (m *Message) sync(c *xohttp.Context) {
 	uid := c.MustGet("uid").(string)
 	var req syncReq
 	if err := c.BindJSON(&req); err != nil {
@@ -974,7 +974,7 @@ func (m *Message) sync(c *wkhttp.Context) {
 }
 
 // 删除消息
-func (m *Message) delete(c *wkhttp.Context) {
+func (m *Message) delete(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	var reqs []*deleteReq
 	if err := c.BindJSON(&reqs); err != nil {
@@ -1049,7 +1049,7 @@ func (m *Message) genMessageReactionSeq(channelID string) int64 {
 }
 
 // 消息偏移
-func (m *Message) offset(c *wkhttp.Context) {
+func (m *Message) offset(c *xohttp.Context) {
 	var req struct {
 		ChannelID   string `json:"channel_id"`
 		ChannelType uint8  `json:"channel_type"`
@@ -1198,7 +1198,7 @@ func (m *Message) cancelMentionReminderIfNeed(message *messageModel) {
 }
 
 // 撤回消息
-func (m *Message) revoke(c *wkhttp.Context) {
+func (m *Message) revoke(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	messageID := c.Query("message_id")
 	clientMsgNo := c.Query("client_msg_no") // TODO：后续版本不再使用messageID撤回，使用client_msg_no撤回，因为存在重试消息，clientMsgNo一样 但是messageID不一样
@@ -1324,7 +1324,7 @@ func (m *Message) revoke(c *wkhttp.Context) {
 }
 
 // 同步违禁词
-func (m *Message) synccProhibitWords(c *wkhttp.Context) {
+func (m *Message) synccProhibitWords(c *xohttp.Context) {
 	version := c.Query("version")
 	maxVersion, _ := strconv.ParseInt(version, 10, 64)
 	list, err := m.db.queryProhibitWordsWithVersion(maxVersion)
@@ -1348,7 +1348,7 @@ func (m *Message) synccProhibitWords(c *wkhttp.Context) {
 }
 
 // 同步敏感词
-func (m *Message) syncSensitiveWords(c *wkhttp.Context) {
+func (m *Message) syncSensitiveWords(c *xohttp.Context) {
 	type resp struct {
 		Tips    string   `json:"tips"`
 		List    []string `json:"list"`
@@ -1369,7 +1369,7 @@ func (m *Message) syncSensitiveWords(c *wkhttp.Context) {
 }
 
 // // 接受IM的消息
-// func (m *Message) notify(c *wkhttp.Context) {
+// func (m *Message) notify(c *xohttp.Context) {
 // 	data, err := c.GetRawData()
 // 	if err != nil {
 // 		m.Error("notify读取数据失败！", zap.Error(err))

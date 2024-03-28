@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"github.com/xochat/xochat_im_server_lib/testutil"
 )
 
@@ -47,7 +47,7 @@ func TestLogin(t *testing.T) {
 		Username: "superAdmin",
 		Name:     "超级管理员",
 		Password: util.MD5(util.MD5("admiN123456")),
-		Role:     string(wkhttp.SuperAdmin),
+		Role:     string(xohttp.SuperAdmin),
 	})
 	assert.NoError(t, err)
 	req, _ := http.NewRequest("POST", "/v1/manager/login", bytes.NewReader([]byte(util.ToJson(map[string]interface{}{

@@ -16,7 +16,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/network"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +24,7 @@ const (
 	ThirdAuthcodePrefix = "thirdlogin:authcode:"
 )
 
-func (u *User) thirdAuthcode(c *wkhttp.Context) {
+func (u *User) thirdAuthcode(c *xohttp.Context) {
 	authcode := util.GenerUUID()
 	err := u.ctx.GetRedisConn().SetAndExpire(fmt.Sprintf("%s%s", ThirdAuthcodePrefix, authcode), "1", time.Minute*5)
 	if err != nil {
@@ -38,7 +38,7 @@ func (u *User) thirdAuthcode(c *wkhttp.Context) {
 	})
 }
 
-func (u *User) thirdAuthStatus(c *wkhttp.Context) {
+func (u *User) thirdAuthStatus(c *xohttp.Context) {
 	authcode := c.Query("authcode")
 	key := fmt.Sprintf("%s%s", ThirdAuthcodePrefix, authcode)
 	result, err := u.ctx.GetRedisConn().GetString(key)
@@ -82,7 +82,7 @@ func (u *User) thirdAuthStatus(c *wkhttp.Context) {
 }
 
 // 获取gitee授权地址
-func (u *User) gitee(c *wkhttp.Context) {
+func (u *User) gitee(c *xohttp.Context) {
 	cfg := u.ctx.GetConfig()
 	authcode := c.Query("authcode")
 	redirectURL := fmt.Sprintf("%s%s", cfg.External.APIBaseURL, "/user/oauth/gitee")
@@ -91,7 +91,7 @@ func (u *User) gitee(c *wkhttp.Context) {
 }
 
 // giteeOAuth gitee授权
-func (u *User) giteeOAuth(c *wkhttp.Context) {
+func (u *User) giteeOAuth(c *xohttp.Context) {
 	code := c.Query("code")
 	if len(code) == 0 {
 		c.ResponseError(errors.New("code不能为空"))

@@ -20,7 +20,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -58,7 +58,7 @@ func New(ctx *config.Context) *Robot {
 }
 
 // Route 路由配置
-func (rb *Robot) Route(r *wkhttp.WKHttp) {
+func (rb *Robot) Route(r *xohttp.XOHttp) {
 
 	auth := r.Group("/v1", rb.ctx.AuthMiddleware(r))
 	{
@@ -82,7 +82,7 @@ func (rb *Robot) Route(r *wkhttp.WKHttp) {
 	rb.insertSystemRobot()
 }
 
-func (rb *Robot) streamStart(c *wkhttp.Context) {
+func (rb *Robot) streamStart(c *xohttp.Context) {
 	var req config.MessageStreamStartReq
 	if err := c.BindJSON(&req); err != nil {
 		rb.Error("数据格式有误！", zap.Error(err))
@@ -101,7 +101,7 @@ func (rb *Robot) streamStart(c *wkhttp.Context) {
 	})
 }
 
-func (rb *Robot) streamEnd(c *wkhttp.Context) {
+func (rb *Robot) streamEnd(c *xohttp.Context) {
 	var req config.MessageStreamEndReq
 	if err := c.BindJSON(&req); err != nil {
 		rb.Error("数据格式有误！", zap.Error(err))
@@ -117,9 +117,9 @@ func (rb *Robot) streamEnd(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (rb *Robot) authRobot() wkhttp.HandlerFunc {
+func (rb *Robot) authRobot() xohttp.HandlerFunc {
 
-	return func(c *wkhttp.Context) {
+	return func(c *xohttp.Context) {
 		robotID := c.Param("robot_id")
 		appKey := c.Param("app_key")
 
@@ -161,7 +161,7 @@ func (rb *Robot) authRobot() wkhttp.HandlerFunc {
 	}
 }
 
-func (rb *Robot) typing(c *wkhttp.Context) {
+func (rb *Robot) typing(c *xohttp.Context) {
 	var req *TypingReq
 	if err := c.BindJSON(&req); err != nil {
 		rb.Error("数据格式有误！", zap.Error(err))
@@ -194,7 +194,7 @@ func (rb *Robot) typing(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (rb *Robot) sendMessage(c *wkhttp.Context) {
+func (rb *Robot) sendMessage(c *xohttp.Context) {
 	var messageReq *MessageReq
 	if err := c.BindJSON(&messageReq); err != nil {
 		rb.Error("数据格式有误！", zap.Error(err))
@@ -281,7 +281,7 @@ func (rb *Robot) allowSendToChannel(channelID string, channelType uint8) bool {
 	return true
 }
 
-func (rb *Robot) answerInlineQuery(c *wkhttp.Context) {
+func (rb *Robot) answerInlineQuery(c *xohttp.Context) {
 	var result *InlineQueryResult
 	if err := c.BindJSON(&result); err != nil {
 		rb.Error("数据格式有误！", zap.Error(err))
@@ -301,7 +301,7 @@ func (rb *Robot) answerInlineQuery(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (rb *Robot) inlineQuery(c *wkhttp.Context) {
+func (rb *Robot) inlineQuery(c *xohttp.Context) {
 	var req struct {
 		Offset      string `json:"offset"`
 		Query       string `json:"query"`
@@ -483,7 +483,7 @@ func (rb *Robot) removeEvent(robotID string, eventID int64) error {
 	return err
 }
 
-func (rb *Robot) getEventsForPost(c *wkhttp.Context) {
+func (rb *Robot) getEventsForPost(c *xohttp.Context) {
 	robotID := c.Param("robot_id")
 	var req struct {
 		Limit   int64 `json:"limit"`
@@ -508,7 +508,7 @@ func (rb *Robot) getEventsForPost(c *wkhttp.Context) {
 	})
 }
 
-func (rb *Robot) getEventsForGet(c *wkhttp.Context) {
+func (rb *Robot) getEventsForGet(c *xohttp.Context) {
 	robotID := c.Param("robot_id")
 	eventID := c.Query("event_id")
 	limit, _ := strconv.ParseInt(c.Query("limit"), 10, 64)
@@ -530,7 +530,7 @@ func (rb *Robot) getEventsForGet(c *wkhttp.Context) {
 
 }
 
-func (rb *Robot) eventAck(c *wkhttp.Context) {
+func (rb *Robot) eventAck(c *xohttp.Context) {
 	robotID := c.Param("robot_id")
 	eventID, _ := strconv.ParseInt(c.Param("event_id"), 10, 64)
 
@@ -596,7 +596,7 @@ func (rb *Robot) insertSystemRobot() {
 }
 
 // 同步机器人菜单
-func (rb *Robot) sync(c *wkhttp.Context) {
+func (rb *Robot) sync(c *xohttp.Context) {
 	type req struct {
 		RobotID  string `json:"robot_id"` // TODO: robotID为了兼容老版本，新版用username
 		Version  int64  `json:"version"`

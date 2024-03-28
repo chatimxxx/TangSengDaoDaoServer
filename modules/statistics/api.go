@@ -7,7 +7,7 @@ import (
 	"github.com/xochat/xochat_im_server/modules/user"
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -30,7 +30,7 @@ func NewStatistics(ctx *config.Context) *Statistics {
 }
 
 // Route 路由配置
-func (s *Statistics) Route(r *wkhttp.WKHttp) {
+func (s *Statistics) Route(r *xohttp.XOHttp) {
 	v := r.Group("/v1/statistics", s.ctx.AuthMiddleware(r))
 	{
 		v.GET("/countnum", s.countNum)                                                // 统计数量
@@ -40,7 +40,7 @@ func (s *Statistics) Route(r *wkhttp.WKHttp) {
 }
 
 // 统计数量
-func (s *Statistics) countNum(c *wkhttp.Context) {
+func (s *Statistics) countNum(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -92,7 +92,7 @@ func (s *Statistics) countNum(c *wkhttp.Context) {
 }
 
 // 某个时间区间的注册数据
-func (s *Statistics) registerUserListWithDateSpace(c *wkhttp.Context) {
+func (s *Statistics) registerUserListWithDateSpace(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)
@@ -113,7 +113,7 @@ func (s *Statistics) registerUserListWithDateSpace(c *wkhttp.Context) {
 }
 
 // 获取某个时间段的建群数量
-func (s *Statistics) createGroupWithDateSpace(c *wkhttp.Context) {
+func (s *Statistics) createGroupWithDateSpace(c *xohttp.Context) {
 	err := c.CheckLoginRole()
 	if err != nil {
 		c.ResponseError(err)

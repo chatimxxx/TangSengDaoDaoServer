@@ -11,7 +11,7 @@ import (
 	"github.com/xochat/xochat_im_server_lib/config"
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -32,7 +32,7 @@ func New(ctx *config.Context) *File {
 }
 
 // Route 路由
-func (f *File) Route(r *wkhttp.WKHttp) {
+func (f *File) Route(r *xohttp.XOHttp) {
 	api := r.Group("/v1/file")
 	{ // 文件上传
 		// api.POST("/upload/*path", f.upload)
@@ -52,7 +52,7 @@ func (f *File) Route(r *wkhttp.WKHttp) {
 	}
 }
 
-func (f *File) makeImageCompose(c *wkhttp.Context) {
+func (f *File) makeImageCompose(c *xohttp.Context) {
 	var imageURLs []string
 	if err := c.BindJSON(&imageURLs); err != nil {
 		f.Error("数据格式有误！", zap.Error(err))
@@ -81,7 +81,7 @@ func (f *File) makeImageCompose(c *wkhttp.Context) {
 }
 
 // 获取上传文件地址
-func (f *File) getFilePath(c *wkhttp.Context) {
+func (f *File) getFilePath(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	uploadPath := c.Query("path")
 	fileType := c.Query("type")
@@ -112,7 +112,7 @@ func (f *File) getFilePath(c *wkhttp.Context) {
 }
 
 // 上传文件
-func (f *File) uploadFile(c *wkhttp.Context) {
+func (f *File) uploadFile(c *xohttp.Context) {
 	uploadPath := c.Query("path")
 	fileType := c.Query("type")
 	contentType := c.DefaultPostForm("contenttype", "application/octet-stream")
@@ -147,7 +147,7 @@ func (f *File) uploadFile(c *wkhttp.Context) {
 	})
 }
 
-func (f *File) signUrl(c *wkhttp.Context) {
+func (f *File) signUrl(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	uploadPath := c.Query("path")
 	fileType := c.Query("type")
@@ -178,7 +178,7 @@ func (f *File) signUrl(c *wkhttp.Context) {
 }
 
 // 获取文件
-func (f *File) getFile(c *wkhttp.Context) {
+func (f *File) getFile(c *xohttp.Context) {
 	ph := c.Param("path")
 	if ph == "" {
 		c.Response(errors.New("访问路径不能为空"))

@@ -34,8 +34,8 @@ import (
 	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"github.com/xochat/xochat_im_server_lib/pkg/network"
 	"github.com/xochat/xochat_im_server_lib/pkg/util"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkevent"
-	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/pkg/xoevent"
+	"github.com/xochat/xochat_im_server_lib/pkg/xohttp"
 	"go.uber.org/zap"
 )
 
@@ -112,7 +112,7 @@ func New(ctx *config.Context) *User {
 }
 
 // Route 路由配置
-func (u *User) Route(r *wkhttp.WKHttp) {
+func (u *User) Route(r *xohttp.XOHttp) {
 	auth := r.Group("/v1", u.ctx.AuthMiddleware(r))
 	{
 
@@ -203,7 +203,7 @@ func (u *User) Route(r *wkhttp.WKHttp) {
 }
 
 // 清除红点
-func (u *User) clearRedDot(c *wkhttp.Context) {
+func (u *User) clearRedDot(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	category := c.Param("category")
 	if category == "" {
@@ -229,7 +229,7 @@ func (u *User) clearRedDot(c *wkhttp.Context) {
 }
 
 // 获取用户红点
-func (u *User) getRedDot(c *wkhttp.Context) {
+func (u *User) getRedDot(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	category := c.Param("category")
 	if category == "" {
@@ -290,7 +290,7 @@ func (u *User) updateSystemUserToken() {
 }
 
 // UserAvatar 用户头像
-func (u *User) UserAvatar(c *wkhttp.Context) {
+func (u *User) UserAvatar(c *xohttp.Context) {
 	uid := c.Param("uid")
 	v := c.Query("v")
 	if u.ctx.GetConfig().IsVisitor(uid) {
@@ -383,7 +383,7 @@ func (u *User) UserAvatar(c *wkhttp.Context) {
 }
 
 // uploadAvatar 上传用户头像
-func (u *User) uploadAvatar(c *wkhttp.Context) {
+func (u *User) uploadAvatar(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	if c.Request.MultipartForm == nil {
 		err := c.Request.ParseMultipartForm(1024 * 1024 * 20) // 20M
@@ -444,7 +444,7 @@ func (u *User) uploadAvatar(c *wkhttp.Context) {
 }
 
 // 获取用户的IM连接地址
-func (u *User) userIM(c *wkhttp.Context) {
+func (u *User) userIM(c *xohttp.Context) {
 	uid := c.Param("uid")
 	resp, err := network.Get(fmt.Sprintf("%s/route?uid=%s", u.ctx.GetConfig().WuKongIM.APIURL, uid), nil, nil)
 	if err != nil {
@@ -458,10 +458,11 @@ func (u *User) userIM(c *wkhttp.Context) {
 		c.ResponseError(err)
 		return
 	}
+	u.Info(fmt.Sprintf("用户节点信息    %v", resp.Body))
 	c.JSON(resp.StatusCode, resultMap)
 }
 
-func (u *User) qrcodeMy(c *wkhttp.Context) {
+func (u *User) qrcodeMy(c *xohttp.Context) {
 	userModel, err := u.db.QueryByUID(c.GetLoginUID())
 	if err != nil {
 		c.ResponseErrorf("查询当前用户信息失败！", err)
@@ -482,7 +483,7 @@ func (u *User) qrcodeMy(c *wkhttp.Context) {
 }
 
 // 修改用户信息
-func (u *User) userUpdateWithField(c *wkhttp.Context) {
+func (u *User) userUpdateWithField(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 
 	var reqMap map[string]interface{}
@@ -639,7 +640,7 @@ func (u *User) userUpdateWithField(c *wkhttp.Context) {
 	c.ResponseOK()
 }
 
-func (u *User) userUpdateSetting(c *wkhttp.Context) {
+func (u *User) userUpdateSetting(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 
 	var reqMap map[string]interface{}
@@ -681,7 +682,7 @@ func (u *User) userUpdateSetting(c *wkhttp.Context) {
 }
 
 // 获取用户详情
-func (u *User) get(c *wkhttp.Context) {
+func (u *User) get(c *xohttp.Context) {
 	uid := c.Param("uid")
 	loginUID := c.MustGet("uid").(string)
 
@@ -706,7 +707,7 @@ func (u *User) get(c *wkhttp.Context) {
 
 //	获取用户详情
 //
-//	func (u *User) userConversationInfoGet(c *wkhttp.Context) {
+//	func (u *User) userConversationInfoGet(c *xohttp.Context) {
 //		uid := c.Param("uid")
 //		loginUID := c.MustGet("uid").(string)
 //		model, err := u.db.QueryDetailByUID(uid, loginUID)
@@ -727,7 +728,7 @@ func (u *User) get(c *wkhttp.Context) {
 //	}
 //
 // 微信登录
-func (u *User) wxLogin(c *wkhttp.Context) {
+func (u *User) wxLogin(c *xohttp.Context) {
 	type wxLoginReq struct {
 		Code   string     `json:"code"`
 		Flag   int        `json:"flag"`
@@ -850,7 +851,7 @@ func (u *User) wxLogin(c *wkhttp.Context) {
 }
 
 // 登录
-func (u *User) login(c *wkhttp.Context) {
+func (u *User) login(c *xohttp.Context) {
 
 	var req loginReq
 	if err := c.BindJSON(&req); err != nil {
@@ -891,7 +892,7 @@ func (u *User) login(c *wkhttp.Context) {
 }
 
 // 验证登录用户信息
-func (u *User) execLoginAndRespose(userInfo *Model, flag config.DeviceFlag, device *deviceReq, loginSpanCtx context.Context, c *wkhttp.Context) {
+func (u *User) execLoginAndRespose(userInfo *Model, flag config.DeviceFlag, device *deviceReq, loginSpanCtx context.Context, c *xohttp.Context) {
 
 	result, err := u.execLogin(userInfo, flag, device, loginSpanCtx)
 	if err != nil {
@@ -1075,7 +1076,7 @@ func (u *User) sentWelcomeMsg(publicIP, uid string) {
 }
 
 // 注册
-func (u *User) register(c *wkhttp.Context) {
+func (u *User) register(c *xohttp.Context) {
 	var req registerReq
 	if err := c.BindJSON(&req); err != nil {
 		c.ResponseError(errors.New("请求数据格式有误！"))
@@ -1139,7 +1140,7 @@ func (u *User) register(c *wkhttp.Context) {
 }
 
 // 搜索用户
-func (u *User) search(c *wkhttp.Context) {
+func (u *User) search(c *xohttp.Context) {
 	keyword := c.Query("keyword")
 	useModel, err := u.db.QueryByKeyword(keyword)
 	if err != nil {
@@ -1181,7 +1182,7 @@ func (u *User) search(c *wkhttp.Context) {
 }
 
 // 注册用户设备token
-func (u *User) registerUserDeviceToken(c *wkhttp.Context) {
+func (u *User) registerUserDeviceToken(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	var req struct {
 		DeviceToken string `json:"device_token"` // 设备token
@@ -1215,7 +1216,7 @@ func (u *User) registerUserDeviceToken(c *wkhttp.Context) {
 }
 
 // 注册用户设备红点数量
-func (u *User) registerUserDeviceBadge(c *wkhttp.Context) {
+func (u *User) registerUserDeviceBadge(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	var req struct {
 		Badge int `json:"badge"` // 设备红点数量
@@ -1243,7 +1244,7 @@ func (u *User) setUserBadge(uid string, badge int64) error {
 }
 
 // 卸载注册设备token
-func (u *User) unregisterUserDeviceToken(c *wkhttp.Context) {
+func (u *User) unregisterUserDeviceToken(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 
 	err := u.ctx.GetRedisConn().Del(fmt.Sprintf("%s%s", u.userDeviceTokenPrefix, loginUID))
@@ -1256,7 +1257,7 @@ func (u *User) unregisterUserDeviceToken(c *wkhttp.Context) {
 }
 
 // 获取登录的uuid（web登录）
-func (u *User) getLoginUUID(c *wkhttp.Context) {
+func (u *User) getLoginUUID(c *xohttp.Context) {
 	uuid := util.GenerUUID()
 	err := u.ctx.GetRedisConn().SetAndExpire(fmt.Sprintf("%s%s", common.QRCodeCachePrefix, uuid), util.ToJson(common.NewQRCodeModel(common.QRCodeTypeScanLogin, map[string]interface{}{
 		"app_id":  "wukongchat",
@@ -1275,7 +1276,7 @@ func (u *User) getLoginUUID(c *wkhttp.Context) {
 }
 
 // 通过loginUUID获取登录状态
-func (u *User) getloginStatus(c *wkhttp.Context) {
+func (u *User) getloginStatus(c *xohttp.Context) {
 	uuid := c.Query("uuid")
 	qrcodeInfo, err := u.ctx.GetRedisConn().GetString(fmt.Sprintf("%s%s", common.QRCodeCachePrefix, uuid))
 	if err != nil {
@@ -1320,7 +1321,7 @@ func (u *User) getloginStatus(c *wkhttp.Context) {
 }
 
 // 通过authCode登录
-func (u *User) loginWithAuthCode(c *wkhttp.Context) {
+func (u *User) loginWithAuthCode(c *xohttp.Context) {
 	authCode := c.Param("auth_code")
 	authCodeKey := fmt.Sprintf("%s%s", common.AuthCodeCachePrefix, authCode)
 	flagI64, _ := strconv.ParseInt(c.Query("flag"), 10, 64)
@@ -1448,7 +1449,7 @@ func SendQRCodeInfo(uuid string, qrcode *common.QRCodeModel) {
 }
 
 // 授权登录
-func (u *User) grantLogin(c *wkhttp.Context) {
+func (u *User) grantLogin(c *xohttp.Context) {
 	authCode := c.Query("auth_code")
 	loginUID := c.MustGet("uid").(string)
 	encrypt := c.Query("encrypt") // signal相关密钥
@@ -1502,7 +1503,7 @@ func (u *User) grantLogin(c *wkhttp.Context) {
 }
 
 // addBlacklist 添加黑名单
-func (u *User) addBlacklist(c *wkhttp.Context) {
+func (u *User) addBlacklist(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	uid := c.Param("uid")
 	if strings.TrimSpace(uid) == "" {
@@ -1601,7 +1602,7 @@ func (u *User) addBlacklist(c *wkhttp.Context) {
 }
 
 // removeBlacklist 移除黑名单
-func (u *User) removeBlacklist(c *wkhttp.Context) {
+func (u *User) removeBlacklist(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	uid := c.Param("uid")
 	if strings.TrimSpace(uid) == "" {
@@ -1682,7 +1683,7 @@ func (u *User) removeBlacklist(c *wkhttp.Context) {
 }
 
 // blacklists 获取黑名单列表
-func (u *User) blacklists(c *wkhttp.Context) {
+func (u *User) blacklists(c *xohttp.Context) {
 	loginUID := c.MustGet("uid").(string)
 	list, err := u.db.Blacklists(loginUID)
 	if err != nil {
@@ -1702,7 +1703,7 @@ func (u *User) blacklists(c *wkhttp.Context) {
 }
 
 // sendRegisterCode 发送注册短信
-func (u *User) sendRegisterCode(c *wkhttp.Context) {
+func (u *User) sendRegisterCode(c *xohttp.Context) {
 	var req codeReq
 	if err := c.BindJSON(&req); err != nil {
 		c.ResponseError(errors.New("请求数据格式有误！"))
@@ -1754,7 +1755,7 @@ func (u *User) sendRegisterCode(c *wkhttp.Context) {
 }
 
 // setChatPwd 修改用户聊天密码
-func (u *User) setChatPwd(c *wkhttp.Context) {
+func (u *User) setChatPwd(c *xohttp.Context) {
 	var req chatPwdReq
 	if err := c.BindJSON(&req); err != nil {
 		c.ResponseError(errors.New("请求数据格式有误！"))
@@ -1790,7 +1791,7 @@ func (u *User) setChatPwd(c *wkhttp.Context) {
 }
 
 // 设置锁屏密码
-func (u *User) lockScreenAfterMinuteSet(c *wkhttp.Context) {
+func (u *User) lockScreenAfterMinuteSet(c *xohttp.Context) {
 	var req struct {
 		LockAfterMinute int `json:"lock_after_minute"` // 在几分钟后锁屏
 	}
@@ -1817,7 +1818,7 @@ func (u *User) lockScreenAfterMinuteSet(c *wkhttp.Context) {
 }
 
 // 设置锁屏密码
-func (u *User) setLockScreenPwd(c *wkhttp.Context) {
+func (u *User) setLockScreenPwd(c *xohttp.Context) {
 	var req struct {
 		LockScreenPwd string `json:"lock_screen_pwd"`
 	}
@@ -1841,7 +1842,7 @@ func (u *User) setLockScreenPwd(c *wkhttp.Context) {
 }
 
 // 关闭锁屏密码
-func (u *User) closeLockScreenPwd(c *wkhttp.Context) {
+func (u *User) closeLockScreenPwd(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	err := u.db.UpdateUsersWithField("lock_screen_pwd", "", loginUID)
 	if err != nil {
@@ -1853,7 +1854,7 @@ func (u *User) closeLockScreenPwd(c *wkhttp.Context) {
 }
 
 // sendLoginCheckPhoneCode 发送登录验证短信
-func (u *User) sendLoginCheckPhoneCode(c *wkhttp.Context) {
+func (u *User) sendLoginCheckPhoneCode(c *xohttp.Context) {
 	var req struct {
 		UID string `json:"uid"`
 	}
@@ -1901,7 +1902,7 @@ func (u *User) sendLoginCheckPhoneCode(c *wkhttp.Context) {
 }
 
 // loginCheckPhone 登录验证设备短信
-func (u *User) loginCheckPhone(c *wkhttp.Context) {
+func (u *User) loginCheckPhone(c *xohttp.Context) {
 	var req struct {
 		UID  string `json:"uid"`
 		Code string `json:"code"`
@@ -2001,7 +2002,7 @@ func (u *User) loginCheckPhone(c *wkhttp.Context) {
 }
 
 // customerservices 客服列表
-func (u *User) customerservices(c *wkhttp.Context) {
+func (u *User) customerservices(c *xohttp.Context) {
 	list, err := u.db.QueryByCategory(CategoryCustomerService)
 	if err != nil {
 		u.Error("查询客服列表失败", zap.Error(err))
@@ -2021,7 +2022,7 @@ func (u *User) customerservices(c *wkhttp.Context) {
 }
 
 // 发送注销账号验证吗
-func (u *User) sendDestroyCode(c *wkhttp.Context) {
+func (u *User) sendDestroyCode(c *xohttp.Context) {
 	loginUID := c.GetLoginUID()
 	userInfo, err := u.db.QueryByUID(loginUID)
 	if err != nil {
@@ -2042,7 +2043,7 @@ func (u *User) sendDestroyCode(c *wkhttp.Context) {
 }
 
 // 注销账号
-func (u *User) destroyAccount(c *wkhttp.Context) {
+func (u *User) destroyAccount(c *xohttp.Context) {
 	code := c.Param("code")
 	loginUID := c.GetLoginUID()
 	if code == "" {
@@ -2172,7 +2173,7 @@ func (u *User) addSystemFriend(uid string) error {
 }
 
 // 重置登录密码
-func (u *User) pwdforget(c *wkhttp.Context) {
+func (u *User) pwdforget(c *xohttp.Context) {
 	var req resetPwdReq
 	if err := c.BindJSON(&req); err != nil {
 		c.ResponseError(errors.New("请求数据格式有误！"))
@@ -2229,7 +2230,7 @@ func (u *User) pwdforget(c *wkhttp.Context) {
 }
 
 // 获取忘记密码验证码
-func (u *User) getForgetPwdSMS(c *wkhttp.Context) {
+func (u *User) getForgetPwdSMS(c *xohttp.Context) {
 	var req codeReq
 	if err := c.BindJSON(&req); err != nil {
 		c.ResponseError(errors.New("请求数据格式有误！"))
@@ -2281,7 +2282,7 @@ func allowUpdateUserField(field string) bool {
 	return false
 }
 
-func (u *User) createUser(registerSpanCtx context.Context, createUser *createUserModel, c *wkhttp.Context) {
+func (u *User) createUser(registerSpanCtx context.Context, createUser *createUserModel, c *xohttp.Context) {
 	tx, _ := u.db.session.Begin()
 	defer func() {
 		if err := recover(); err != nil {
@@ -2308,7 +2309,7 @@ func (u *User) createUser(registerSpanCtx context.Context, createUser *createUse
 	c.Response(resp)
 }
 
-func (u *User) createUserTx(registerSpanCtx context.Context, createUser *createUserModel, c *wkhttp.Context, commitCallback func() error, tx *dbr.Tx) {
+func (u *User) createUserTx(registerSpanCtx context.Context, createUser *createUserModel, c *xohttp.Context, commitCallback func() error, tx *dbr.Tx) {
 	publicIP := util.GetClientPublicIP(c.Request)
 	resp, err := u.createUserWithRespAndTx(registerSpanCtx, createUser, publicIP, tx, commitCallback)
 	if err != nil {
@@ -2400,9 +2401,9 @@ func (u *User) createUserWithRespAndTx(registerSpanCtx context.Context, createUs
 		return nil, err
 	}
 	//发送用户注册事件
-	eventID, err := u.ctx.EventBegin(&wkevent.Data{
+	eventID, err := u.ctx.EventBegin(&xoevent.Data{
 		Event: event.EventUserRegister,
-		Type:  wkevent.Message,
+		Type:  xoevent.Message,
 		Data: map[string]interface{}{
 			"uid": createUser.UID,
 		},
