@@ -9,11 +9,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/base/event"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/server"
 	"github.com/stretchr/testify/assert"
+	"github.com/xochat/xochat_im_server/modules/base/event"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
+	"github.com/xochat/xochat_im_server_lib/server"
 )
 
 var uid = "10000"

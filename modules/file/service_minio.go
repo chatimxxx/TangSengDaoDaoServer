@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"go.uber.org/zap"
 )
 

@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/user"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/certificate"
+	"github.com/xochat/xochat_im_server/modules/user"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/log"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
 )
 
 // IOSPayload iOS负载

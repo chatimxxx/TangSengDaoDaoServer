@@ -3,8 +3,8 @@ package webhook
 import (
 	"testing"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
 	"github.com/stretchr/testify/assert"
+	"github.com/xochat/xochat_im_server_lib/config"
 )
 
 func TestHMSPush(t *testing.T) {

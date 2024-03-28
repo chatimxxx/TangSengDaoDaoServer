@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
+	"github.com/xochat/xochat_im_server_lib/common"
 )
 
 // IGetGroupMemberProvider 获取群成员提供者

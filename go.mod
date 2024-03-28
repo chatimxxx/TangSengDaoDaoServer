@@ -1,4 +1,4 @@
-module github.com/TangSengDaoDao/TangSengDaoDaoServer
+module github.com/xochat/xochat_im_server
 
 go 1.20
 
@@ -10,7 +10,6 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.62.487
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.7+incompatible
 	github.com/apistd/uni-go-sdk v0.0.2
-	github.com/chatimxxx/TangSengDaoDaoServerLib v1.0.4
 	github.com/disintegration/imaging v1.6.2
 	github.com/eapache/queue v1.1.0
 	github.com/ethereum/go-ethereum v1.12.2
@@ -34,6 +33,7 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.3
 	github.com/tidwall/gjson v1.15.0
+	github.com/xochat/xochat_im_server_lib v1.0.5
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.14.0
 	google.golang.org/api v0.122.0
@@ -114,7 +114,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
@@ -165,4 +164,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-//replace github.com/chatimxxx/TangSengDaoDaoServerLib => /home/code/go/src/chat_im/TangSengDaoDaoServerLib

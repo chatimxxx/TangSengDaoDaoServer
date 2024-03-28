@@ -3,10 +3,10 @@ package event
 import (
 	"fmt"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/pool"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
+	"github.com/xochat/xochat_im_server_lib/common"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/pool"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
 	"go.uber.org/zap"
 )
 

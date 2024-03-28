@@ -1,8 +1,8 @@
 package group
 
 import (
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
 	"github.com/gocraft/dbr/v2"
+	"github.com/xochat/xochat_im_server_lib/pkg/db"
 )
 
 // managerDB managerDB

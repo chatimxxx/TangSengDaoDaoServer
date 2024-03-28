@@ -13,13 +13,13 @@
 </p>
 <div align=center>
 
-<!-- [![Go](https://github.com/TangSengDaoDao/TangSengDaoDaoServer/workflows/Go/badge.svg?branch=main)](https://github.com/TangSengDaoDao/TangSengDaoDaoServer/actions) -->
-![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/TangSengDaoDao/TangSengDaoDaoServer)
-[![Go Report Card](https://goreportcard.com/badge/github.com/TangSengDaoDao/TangSengDaoDaoServer)](https://goreportcard.com/report/github.com/TangSengDaoDao/TangSengDaoDaoServer)
+<!-- [![Go](https://github.com/xochat/xochat_im_server/workflows/Go/badge.svg?branch=main)](https://github.com/xochat/xochat_im_server/actions) -->
+![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/xochat/xochat_im_server)
+[![Go Report Card](https://goreportcard.com/badge/github.com/xochat/xochat_im_server)](https://goreportcard.com/report/github.com/xochat/xochat_im_server)
 ![License: Apache 2.0](https://img.shields.io/github/license/WuKongIM/WuKongIM)
 <a href="https://join.slack.com/t/wukongim/shared_invite/zt-22o7we8on-2iKNUmgigB9ERdF9XUivmw"><img src="https://img.shields.io/badge/Slack-99%2B-blueviolet?logo=slack&amp;logoColor=white"></a>
 
-<!-- [![Release](https://img.shields.io/github/v/release/TangSengDaoDao/TangSengDaoDaoServer.svg?style=flat-square)](https://github.com/TangSengDaoDao/TangSengDaoDaoServer) -->
+<!-- [![Release](https://img.shields.io/github/v/release/xochat/xochat_im_server.svg?style=flat-square)](https://github.com/xochat/xochat_im_server) -->
 
 </div>
 
@@ -99,7 +99,7 @@ WuKongIM会将一些业务层需要的聊天相关的数据通过Webhook的机�
 
 | 项目名                   | Github地址                                                          | Gitee地址                                                         | 文档                                                         | 说明                                                   |
 |-----------------------|-------------------------------------------------------------------|-----------------------------------------------------------------|------------------------------------------------------------|------------------------------------------------------|
-| TangSengDaoDaoServer  | [Github](https://github.com/TangSengDaoDao/TangSengDaoDaoServer)  | [Gitee](https://gitee.com/TangSengDaoDao/TangSengDaoDaoServer)  | [文档](https://tsdaodao.com/dev/backend/deploy-compose.html) | 唐僧叨叨的业务端，负责一些业务逻辑，比如：好友关系，群组，朋友圈等 （通讯端使用的是 WuKongIM） |
+| TangSengDaoDaoServer  | [Github](https://github.com/xochat/xochat_im_server)  | [Gitee](https://gitee.com/xochat/xochat_im_server)  | [文档](https://tsdaodao.com/dev/backend/deploy-compose.html) | 唐僧叨叨的业务端，负责一些业务逻辑，比如：好友关系，群组，朋友圈等 （通讯端使用的是 WuKongIM） |
 | TangSengDaoDaoAndroid | [Github](https://github.com/TangSengDaoDao/TangSengDaoDaoAndroid) | [Gitee](https://gitee.com/TangSengDaoDao/TangSengDaoDaoAndroid) | [文档](https://tsdaodao.com/dev/android/intro.html)          | 唐僧叨叨的Android端                                        |
 | TangSengDaoDaoiOS     | [Github](https://github.com/TangSengDaoDao/TangSengDaoDaoiOS)     | [Gitee](https://gitee.com/TangSengDaoDao/TangSengDaoDaoiOS)     | [文档](https://tsdaodao.com/dev/ios/intro.html)              | 唐僧叨叨的iOS端                                            |
 | TangSengDaoDaoWeb     | [Github](https://github.com/TangSengDaoDao/TangSengDaoDaoWeb)     | [Gitee](https://gitee.com/TangSengDaoDao/TangSengDaoDaoWeb)     | [文档](https://tsdaodao.com/dev/web/intro.html)              | 唐僧叨叨的Web/PC端                                         |

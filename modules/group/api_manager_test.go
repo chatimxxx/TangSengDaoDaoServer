@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/user"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/xochat/xochat_im_server/modules/user"
+	"github.com/xochat/xochat_im_server_lib/testutil"
 )
 
 func TestGroupList(t *testing.T) {

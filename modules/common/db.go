@@ -1,9 +1,9 @@
 package common
 
 import (
-	dbs "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/gocraft/dbr/v2"
+	dbs "github.com/xochat/xochat_im_server_lib/pkg/db"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
 )
 
 type db struct {

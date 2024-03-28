@@ -3,7 +3,7 @@ package user
 import (
 	"errors"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/source"
+	"github.com/xochat/xochat_im_server/modules/source"
 	"go.uber.org/zap"
 )
 

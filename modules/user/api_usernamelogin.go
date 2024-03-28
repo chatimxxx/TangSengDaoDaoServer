@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
+	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
 	"go.uber.org/zap"
 )
 

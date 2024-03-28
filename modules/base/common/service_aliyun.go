@@ -10,10 +10,10 @@ import (
 	sms_intl20180501 "github.com/alibabacloud-go/sms-intl-20180501/client"
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/dysmsapi"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/log"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
 )
 
 type AliyunProvider struct {

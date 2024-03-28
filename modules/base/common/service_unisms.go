@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	unisms "github.com/apistd/uni-go-sdk/sms"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"go.uber.org/zap"
 )
 

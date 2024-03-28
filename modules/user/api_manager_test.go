@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
+	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/testutil"
 )
 
 func TestAddUser(t *testing.T) {

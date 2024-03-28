@@ -1,10 +1,10 @@
 package group
 
 import (
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/gocraft/dbr/v2"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/db"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
 )
 
 // DB DB

@@ -7,10 +7,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/pkg/cache"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/pkg/log"
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
+	"github.com/xochat/xochat_im_server/pkg/cache"
+	"github.com/xochat/xochat_im_server/pkg/log"
 	"go.uber.org/zap"
 )
 

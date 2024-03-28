@@ -1,8 +1,8 @@
 package channel
 
 import (
-	chservice "github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/channel/service"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	chservice "github.com/xochat/xochat_im_server/modules/channel/service"
+	"github.com/xochat/xochat_im_server_lib/config"
 )
 
 type service struct {

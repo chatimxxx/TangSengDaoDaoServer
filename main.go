@@ -8,16 +8,16 @@ import (
 	"runtime"
 	"strings"
 
-	_ "github.com/TangSengDaoDao/TangSengDaoDaoServer/internal"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/base/event"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/module"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/server"
 	"github.com/gin-gonic/gin"
 	"github.com/judwhite/go-svc"
 	"github.com/robfig/cron"
 	"github.com/spf13/viper"
+	_ "github.com/xochat/xochat_im_server/internal"
+	"github.com/xochat/xochat_im_server/modules/base/event"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/module"
+	"github.com/xochat/xochat_im_server_lib/pkg/log"
+	"github.com/xochat/xochat_im_server_lib/server"
 )
 
 // go ldflags

@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/common"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
+	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
 	"go.uber.org/zap"
 )
 

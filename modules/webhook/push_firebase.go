@@ -6,9 +6,9 @@ import (
 	"firebase.google.com/go/v4/messaging"
 	message "firebase.google.com/go/v4/messaging"
 	"fmt"
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/user"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
+	"github.com/xochat/xochat_im_server/modules/user"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/log"
 	"google.golang.org/api/option"
 )
 

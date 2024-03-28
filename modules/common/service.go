@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/xochat/xochat_im_server_lib/config"
 	"go.uber.org/zap"
 )
 

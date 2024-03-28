@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/xochat/xochat_im_server_lib/testutil"
 )
 
 func TestReportList(t *testing.T) {

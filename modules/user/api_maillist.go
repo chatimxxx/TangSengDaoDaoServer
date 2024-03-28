@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
 	"github.com/pkg/errors"
+	"github.com/xochat/xochat_im_server_lib/common"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
+	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
 	"go.uber.org/zap"
 )
 

@@ -4,10 +4,10 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/common"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/log"
+	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
 	"go.uber.org/zap"
 )
 

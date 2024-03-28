@@ -18,11 +18,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
-	limlog "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/disintegration/imaging"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/log"
+	limlog "github.com/xochat/xochat_im_server_lib/pkg/log"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
 	"go.uber.org/zap"
 )
 

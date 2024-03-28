@@ -3,14 +3,14 @@ package event
 import (
 	"fmt"
 
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/file"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/log"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/gocraft/dbr/v2"
+	"github.com/xochat/xochat_im_server/modules/file"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/log"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
 	"go.uber.org/zap"
 
-	et "github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkevent"
+	et "github.com/xochat/xochat_im_server_lib/pkg/wkevent"
 )
 
 const (

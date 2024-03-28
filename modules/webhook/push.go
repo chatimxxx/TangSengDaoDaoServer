@@ -1,9 +1,9 @@
 package webhook
 
 import (
-	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/user"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/common"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
+	"github.com/xochat/xochat_im_server/modules/user"
+	"github.com/xochat/xochat_im_server_lib/common"
+	"github.com/xochat/xochat_im_server_lib/config"
 )
 
 // Payload 推送内容

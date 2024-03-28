@@ -5,9 +5,9 @@ package webhook
 // 	"testing"
 
 // 	"github.com/stretchr/testify/assert"
-// 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/internal/api/group"
-// 	"github.com/TangSengDaoDao/TangSengDaoDaoServer/modules/user"
-// 	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
+// 	"github.com/xochat/xochat_im_server/internal/api/group"
+// 	"github.com/xochat/xochat_im_server/modules/user"
+// 	"github.com/xochat/xochat_im_server_lib/pkg/db"
 // )
 
 // func TestGetThirdName(t *testing.T) {

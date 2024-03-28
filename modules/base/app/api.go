@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/config"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/wkhttp"
+	"github.com/xochat/xochat_im_server_lib/config"
+	"github.com/xochat/xochat_im_server_lib/pkg/wkhttp"
 )
 
 type App struct {

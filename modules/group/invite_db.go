@@ -1,9 +1,9 @@
 package group
 
 import (
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/db"
-	"github.com/chatimxxx/TangSengDaoDaoServerLib/pkg/util"
 	"github.com/gocraft/dbr/v2"
+	"github.com/xochat/xochat_im_server_lib/pkg/db"
+	"github.com/xochat/xochat_im_server_lib/pkg/util"
 )
 
 // InsertInviteTx 添加邀请信息
